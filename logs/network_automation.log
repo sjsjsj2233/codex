@@ -1,0 +1,531 @@
+2025-06-26 17:51:56,743 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 17:51:57,905 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-26 17:51:58,191 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-26 17:51:58,191 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-26 20:50:51,316 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 20:50:52,574 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-26 20:50:52,813 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-26 20:50:52,813 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-26 20:51:03,434 - INFO - [INFO] 로그 파일 열기: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 22:12:13,027 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 22:12:13,909 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-26 22:12:14,095 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-26 22:12:14,095 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-26 22:12:31,031 - DEBUG - [192.168.0.151] SSH 연결 시도 중...
+2025-06-26 22:12:31,043 - DEBUG - starting thread (client mode): 0x862e80
+2025-06-26 22:12:31,043 - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.2.0
+2025-06-26 22:12:31,048 - DEBUG - Remote version/idstring: SSH-1.99-Cisco-1.25
+2025-06-26 22:12:31,049 - INFO - Connected (version 1.99, client Cisco-1.25)
+2025-06-26 22:12:31,055 - DEBUG - === Key exchange possibilities ===
+2025-06-26 22:12:31,055 - DEBUG - kex algos: diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, diffie-hellman-group1-sha1
+2025-06-26 22:12:31,055 - DEBUG - server key: ssh-rsa
+2025-06-26 22:12:31,055 - DEBUG - client encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:12:31,055 - DEBUG - server encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:12:31,055 - DEBUG - client mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:12:31,056 - DEBUG - server mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:12:31,056 - DEBUG - client compress: none
+2025-06-26 22:12:31,056 - DEBUG - server compress: none
+2025-06-26 22:12:31,056 - DEBUG - client lang: <none>
+2025-06-26 22:12:31,056 - DEBUG - server lang: <none>
+2025-06-26 22:12:31,056 - DEBUG - kex follows: False
+2025-06-26 22:12:31,057 - DEBUG - === Key exchange agreements ===
+2025-06-26 22:12:31,057 - DEBUG - Kex: diffie-hellman-group-exchange-sha1
+2025-06-26 22:12:31,057 - DEBUG - HostKey: ssh-rsa
+2025-06-26 22:12:31,057 - DEBUG - Cipher: aes128-ctr
+2025-06-26 22:12:31,057 - DEBUG - MAC: hmac-sha1
+2025-06-26 22:12:31,058 - DEBUG - Compression: none
+2025-06-26 22:12:31,058 - DEBUG - === End of kex handshake ===
+2025-06-26 22:12:31,067 - DEBUG - Got server p (2048 bits)
+2025-06-26 22:12:31,120 - DEBUG - kex engine KexGex specified hash_algo <built-in function openssl_sha1>
+2025-06-26 22:12:31,120 - DEBUG - Switch to new keys ...
+2025-06-26 22:12:31,121 - DEBUG - Adding ssh-rsa host key for 192.168.0.151: b'02bc37c1139b93fe12ec3800780a1d68'
+2025-06-26 22:12:31,325 - DEBUG - userauth is OK
+2025-06-26 22:12:31,329 - INFO - Auth banner: b'\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n'
+2025-06-26 22:12:31,335 - INFO - Authentication (password) successful!
+2025-06-26 22:12:31,335 - DEBUG - [192.168.0.151] SSH 기본 인증 성공
+2025-06-26 22:12:31,335 - DEBUG - [192.168.0.151] 셸 세션 생성 중...
+2025-06-26 22:12:31,336 - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-06-26 22:12:31,339 - DEBUG - [chan 0] Max packet out: 4096 bytes
+2025-06-26 22:12:31,340 - DEBUG - Secsh channel 0 opened.
+2025-06-26 22:12:31,344 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:12:31,348 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:12:33,358 - DEBUG - [192.168.0.151] [SSH] 초기 프롬프트: '\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:12:33,358 - DEBUG - [192.168.0.151] Enable 모드 진입 중...
+2025-06-26 22:12:33,868 - DEBUG - [192.168.0.151] 이미 Enable 모드
+2025-06-26 22:12:33,868 - DEBUG - [192.168.0.151] 터미널 설정 중...
+2025-06-26 22:12:34,888 - DEBUG - [192.168.0.151] Hostname 추출 중...
+2025-06-26 22:12:34,888 - DEBUG - [192.168.0.151] [HOSTNAME] show running-config 시도
+2025-06-26 22:12:36,899 - DEBUG - [192.168.0.151] [HOSTNAME] running-config 출력: 'show running-config | include hostname\r\nhostname SP-OA-W6-4F-A-R2-L2\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:12:36,899 - DEBUG - [192.168.0.151] [HOSTNAME] running-config에서 추출 성공: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:12:36,899 - DEBUG - [192.168.0.151] [SSH] 추출된 hostname: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:12:36,910 - DEBUG - [192.168.0.151] 명령어 실행 중 (1/10): terminal length 0
+2025-06-26 22:12:37,424 - DEBUG - [192.168.0.151] 명령어 완료 (1/10): terminal length 0
+2025-06-26 22:12:37,424 - DEBUG - [192.168.0.151] 명령어 실행 중 (2/10): show version
+2025-06-26 22:12:37,944 - DEBUG - [192.168.0.151] 명령어 완료 (2/10): show version
+2025-06-26 22:12:37,944 - DEBUG - [192.168.0.151] 명령어 실행 중 (3/10): show running-config | include hostname
+2025-06-26 22:12:38,984 - DEBUG - [192.168.0.151] 명령어 완료 (3/10): show running-config | include hostname
+2025-06-26 22:12:38,984 - DEBUG - [192.168.0.151] 명령어 실행 중 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:12:39,494 - DEBUG - [192.168.0.151] 명령어 완료 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:12:39,494 - DEBUG - [192.168.0.151] 명령어 실행 중 (5/10): show memory statistics
+2025-06-26 22:12:40,004 - DEBUG - [192.168.0.151] 명령어 완료 (5/10): show memory statistics
+2025-06-26 22:12:40,004 - DEBUG - [192.168.0.151] 명령어 실행 중 (6/10): show ip interface brief
+2025-06-26 22:12:40,514 - DEBUG - [192.168.0.151] 명령어 완료 (6/10): show ip interface brief
+2025-06-26 22:12:40,514 - DEBUG - [192.168.0.151] 명령어 실행 중 (7/10): show environment all
+2025-06-26 22:12:41,024 - DEBUG - [192.168.0.151] 명령어 완료 (7/10): show environment all
+2025-06-26 22:12:41,024 - DEBUG - [192.168.0.151] 명령어 실행 중 (8/10): show inventory
+2025-06-26 22:12:41,534 - DEBUG - [192.168.0.151] 명령어 완료 (8/10): show inventory
+2025-06-26 22:12:41,535 - DEBUG - [192.168.0.151] 명령어 실행 중 (9/10): show clock
+2025-06-26 22:12:42,044 - DEBUG - [192.168.0.151] 명령어 완료 (9/10): show clock
+2025-06-26 22:12:42,044 - DEBUG - [192.168.0.151] 명령어 실행 중 (10/10): show logging | last 50
+2025-06-26 22:12:42,555 - DEBUG - [192.168.0.151] 명령어 완료 (10/10): show logging | last 50
+2025-06-26 22:12:42,555 - DEBUG - [192.168.0.151] 모든 명령어 실행 완료
+2025-06-26 22:12:42,556 - DEBUG - [chan 0] EOF sent (0)
+2025-06-26 22:12:42,556 - DEBUG - EOF in transport thread
+2025-06-26 22:26:08,364 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 22:26:09,250 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-26 22:26:09,425 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-26 22:26:09,425 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-26 22:26:23,640 - DEBUG - [192.168.0.151] SSH 연결 시도 중...
+2025-06-26 22:26:23,648 - DEBUG - starting thread (client mode): 0x486f160
+2025-06-26 22:26:23,648 - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.2.0
+2025-06-26 22:26:23,656 - DEBUG - Remote version/idstring: SSH-1.99-Cisco-1.25
+2025-06-26 22:26:23,656 - INFO - Connected (version 1.99, client Cisco-1.25)
+2025-06-26 22:26:23,662 - DEBUG - === Key exchange possibilities ===
+2025-06-26 22:26:23,662 - DEBUG - kex algos: diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, diffie-hellman-group1-sha1
+2025-06-26 22:26:23,663 - DEBUG - server key: ssh-rsa
+2025-06-26 22:26:23,663 - DEBUG - client encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:26:23,663 - DEBUG - server encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:26:23,663 - DEBUG - client mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:26:23,663 - DEBUG - server mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:26:23,663 - DEBUG - client compress: none
+2025-06-26 22:26:23,664 - DEBUG - server compress: none
+2025-06-26 22:26:23,664 - DEBUG - client lang: <none>
+2025-06-26 22:26:23,664 - DEBUG - server lang: <none>
+2025-06-26 22:26:23,664 - DEBUG - kex follows: False
+2025-06-26 22:26:23,664 - DEBUG - === Key exchange agreements ===
+2025-06-26 22:26:23,664 - DEBUG - Kex: diffie-hellman-group-exchange-sha1
+2025-06-26 22:26:23,665 - DEBUG - HostKey: ssh-rsa
+2025-06-26 22:26:23,665 - DEBUG - Cipher: aes128-ctr
+2025-06-26 22:26:23,665 - DEBUG - MAC: hmac-sha1
+2025-06-26 22:26:23,665 - DEBUG - Compression: none
+2025-06-26 22:26:23,665 - DEBUG - === End of kex handshake ===
+2025-06-26 22:26:23,670 - DEBUG - Got server p (2048 bits)
+2025-06-26 22:26:23,724 - DEBUG - kex engine KexGex specified hash_algo <built-in function openssl_sha1>
+2025-06-26 22:26:23,724 - DEBUG - Switch to new keys ...
+2025-06-26 22:26:23,725 - DEBUG - Adding ssh-rsa host key for 192.168.0.151: b'02bc37c1139b93fe12ec3800780a1d68'
+2025-06-26 22:26:23,930 - DEBUG - userauth is OK
+2025-06-26 22:26:23,936 - INFO - Auth banner: b'\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n'
+2025-06-26 22:26:23,941 - INFO - Authentication (password) successful!
+2025-06-26 22:26:23,942 - DEBUG - [192.168.0.151] SSH 기본 인증 성공
+2025-06-26 22:26:23,942 - DEBUG - [192.168.0.151] 셸 세션 생성 중...
+2025-06-26 22:26:23,942 - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-06-26 22:26:23,947 - DEBUG - [chan 0] Max packet out: 4096 bytes
+2025-06-26 22:26:23,947 - DEBUG - Secsh channel 0 opened.
+2025-06-26 22:26:23,951 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:26:23,955 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:26:25,964 - DEBUG - [192.168.0.151] [SSH] 초기 프롬프트: '\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:26:25,964 - DEBUG - [192.168.0.151] Enable 모드 진입 중...
+2025-06-26 22:26:26,474 - DEBUG - [192.168.0.151] 이미 Enable 모드
+2025-06-26 22:26:26,474 - DEBUG - [192.168.0.151] 터미널 설정 중...
+2025-06-26 22:26:27,494 - DEBUG - [192.168.0.151] Hostname 추출 중...
+2025-06-26 22:26:27,494 - DEBUG - [192.168.0.151] [HOSTNAME] show running-config 시도
+2025-06-26 22:26:29,505 - DEBUG - [192.168.0.151] [HOSTNAME] running-config 출력: 'show running-config | include hostname\r\nhostname SP-OA-W6-4F-A-R2-L2\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:26:29,505 - DEBUG - [192.168.0.151] [HOSTNAME] running-config에서 추출 성공: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:26:29,505 - DEBUG - [192.168.0.151] [SSH] 추출된 hostname: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:26:29,506 - DEBUG - [192.168.0.151] 명령어 실행 중 (1/10): terminal length 0
+2025-06-26 22:26:30,015 - DEBUG - [192.168.0.151] 명령어 완료 (1/10): terminal length 0
+2025-06-26 22:26:30,015 - DEBUG - [192.168.0.151] 명령어 실행 중 (2/10): show version
+2025-06-26 22:26:30,535 - DEBUG - [192.168.0.151] 명령어 완료 (2/10): show version
+2025-06-26 22:26:30,535 - DEBUG - [192.168.0.151] 명령어 실행 중 (3/10): show running-config | include hostname
+2025-06-26 22:26:31,575 - DEBUG - [192.168.0.151] 명령어 완료 (3/10): show running-config | include hostname
+2025-06-26 22:26:31,575 - DEBUG - [192.168.0.151] 명령어 실행 중 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:26:32,085 - DEBUG - [192.168.0.151] 명령어 완료 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:26:32,085 - DEBUG - [192.168.0.151] 명령어 실행 중 (5/10): show memory statistics
+2025-06-26 22:26:32,595 - DEBUG - [192.168.0.151] 명령어 완료 (5/10): show memory statistics
+2025-06-26 22:26:32,595 - DEBUG - [192.168.0.151] 명령어 실행 중 (6/10): show ip interface brief
+2025-06-26 22:26:33,105 - DEBUG - [192.168.0.151] 명령어 완료 (6/10): show ip interface brief
+2025-06-26 22:26:33,105 - DEBUG - [192.168.0.151] 명령어 실행 중 (7/10): show environment all
+2025-06-26 22:26:33,615 - DEBUG - [192.168.0.151] 명령어 완료 (7/10): show environment all
+2025-06-26 22:26:33,615 - DEBUG - [192.168.0.151] 명령어 실행 중 (8/10): show inventory
+2025-06-26 22:26:34,125 - DEBUG - [192.168.0.151] 명령어 완료 (8/10): show inventory
+2025-06-26 22:26:34,125 - DEBUG - [192.168.0.151] 명령어 실행 중 (9/10): show clock
+2025-06-26 22:26:34,635 - DEBUG - [192.168.0.151] 명령어 완료 (9/10): show clock
+2025-06-26 22:26:34,635 - DEBUG - [192.168.0.151] 명령어 실행 중 (10/10): show logging | last 20
+2025-06-26 22:26:35,155 - DEBUG - [192.168.0.151] 명령어 완료 (10/10): show logging | last 20
+2025-06-26 22:26:35,155 - DEBUG - [192.168.0.151] 모든 명령어 실행 완료
+2025-06-26 22:26:35,155 - DEBUG - [chan 0] EOF sent (0)
+2025-06-26 22:26:35,156 - DEBUG - EOF in transport thread
+2025-06-26 22:37:44,577 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 22:37:45,447 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-26 22:37:45,602 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-26 22:37:45,602 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-26 22:38:07,601 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 22:38:08,411 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-26 22:38:08,568 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-26 22:38:08,569 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-26 22:38:17,958 - DEBUG - [192.168.0.151] SSH 연결 시도 중...
+2025-06-26 22:38:17,965 - DEBUG - starting thread (client mode): 0xdc60f190
+2025-06-26 22:38:17,965 - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.2.0
+2025-06-26 22:38:17,974 - DEBUG - Remote version/idstring: SSH-1.99-Cisco-1.25
+2025-06-26 22:38:17,974 - INFO - Connected (version 1.99, client Cisco-1.25)
+2025-06-26 22:38:17,978 - DEBUG - === Key exchange possibilities ===
+2025-06-26 22:38:17,978 - DEBUG - kex algos: diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, diffie-hellman-group1-sha1
+2025-06-26 22:38:17,979 - DEBUG - server key: ssh-rsa
+2025-06-26 22:38:17,979 - DEBUG - client encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:38:17,979 - DEBUG - server encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:38:17,979 - DEBUG - client mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:38:17,979 - DEBUG - server mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:38:17,979 - DEBUG - client compress: none
+2025-06-26 22:38:17,980 - DEBUG - server compress: none
+2025-06-26 22:38:17,980 - DEBUG - client lang: <none>
+2025-06-26 22:38:17,980 - DEBUG - server lang: <none>
+2025-06-26 22:38:17,980 - DEBUG - kex follows: False
+2025-06-26 22:38:17,980 - DEBUG - === Key exchange agreements ===
+2025-06-26 22:38:17,980 - DEBUG - Kex: diffie-hellman-group-exchange-sha1
+2025-06-26 22:38:17,980 - DEBUG - HostKey: ssh-rsa
+2025-06-26 22:38:17,980 - DEBUG - Cipher: aes128-ctr
+2025-06-26 22:38:17,981 - DEBUG - MAC: hmac-sha1
+2025-06-26 22:38:17,981 - DEBUG - Compression: none
+2025-06-26 22:38:17,981 - DEBUG - === End of kex handshake ===
+2025-06-26 22:38:17,984 - DEBUG - Got server p (2048 bits)
+2025-06-26 22:38:18,038 - DEBUG - kex engine KexGex specified hash_algo <built-in function openssl_sha1>
+2025-06-26 22:38:18,039 - DEBUG - Switch to new keys ...
+2025-06-26 22:38:18,039 - DEBUG - Adding ssh-rsa host key for 192.168.0.151: b'02bc37c1139b93fe12ec3800780a1d68'
+2025-06-26 22:38:18,244 - DEBUG - userauth is OK
+2025-06-26 22:38:18,248 - INFO - Auth banner: b'\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n'
+2025-06-26 22:38:18,253 - INFO - Authentication (password) successful!
+2025-06-26 22:38:18,253 - DEBUG - [192.168.0.151] SSH 기본 인증 성공
+2025-06-26 22:38:18,253 - DEBUG - [192.168.0.151] 셸 세션 생성 중...
+2025-06-26 22:38:18,254 - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-06-26 22:38:18,258 - DEBUG - [chan 0] Max packet out: 4096 bytes
+2025-06-26 22:38:18,258 - DEBUG - Secsh channel 0 opened.
+2025-06-26 22:38:18,263 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:38:18,266 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:38:20,271 - DEBUG - [192.168.0.151] [SSH] 초기 프롬프트: '\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:38:20,271 - DEBUG - [192.168.0.151] Enable 모드 진입 중...
+2025-06-26 22:38:20,781 - DEBUG - [192.168.0.151] 이미 Enable 모드
+2025-06-26 22:38:20,781 - DEBUG - [192.168.0.151] 터미널 설정 중...
+2025-06-26 22:38:21,801 - DEBUG - [192.168.0.151] Hostname 추출 중...
+2025-06-26 22:38:21,801 - DEBUG - [192.168.0.151] [HOSTNAME] show running-config 시도
+2025-06-26 22:38:23,811 - DEBUG - [192.168.0.151] [HOSTNAME] running-config 출력: 'show running-config | include hostname\r\nhostname SP-OA-W6-4F-A-R2-L2\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:38:23,811 - DEBUG - [192.168.0.151] [HOSTNAME] running-config에서 추출 성공: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:38:23,811 - DEBUG - [192.168.0.151] [SSH] 추출된 hostname: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:38:23,812 - DEBUG - [192.168.0.151] 명령어 실행 중 (1/10): terminal length 0
+2025-06-26 22:38:24,321 - DEBUG - [192.168.0.151] 명령어 완료 (1/10): terminal length 0
+2025-06-26 22:38:24,322 - DEBUG - [192.168.0.151] 명령어 실행 중 (2/10): show version
+2025-06-26 22:38:24,831 - DEBUG - [192.168.0.151] 명령어 완료 (2/10): show version
+2025-06-26 22:38:24,831 - DEBUG - [192.168.0.151] 명령어 실행 중 (3/10): show running-config | include hostname
+2025-06-26 22:38:25,866 - DEBUG - [192.168.0.151] 명령어 완료 (3/10): show running-config | include hostname
+2025-06-26 22:38:25,866 - DEBUG - [192.168.0.151] 명령어 실행 중 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:38:26,376 - DEBUG - [192.168.0.151] 명령어 완료 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:38:26,376 - DEBUG - [192.168.0.151] 명령어 실행 중 (5/10): show memory statistics
+2025-06-26 22:38:26,886 - DEBUG - [192.168.0.151] 명령어 완료 (5/10): show memory statistics
+2025-06-26 22:38:26,886 - DEBUG - [192.168.0.151] 명령어 실행 중 (6/10): show ip interface brief
+2025-06-26 22:38:27,396 - DEBUG - [192.168.0.151] 명령어 완료 (6/10): show ip interface brief
+2025-06-26 22:38:27,396 - DEBUG - [192.168.0.151] 명령어 실행 중 (7/10): show environment all
+2025-06-26 22:38:27,906 - DEBUG - [192.168.0.151] 명령어 완료 (7/10): show environment all
+2025-06-26 22:38:27,906 - DEBUG - [192.168.0.151] 명령어 실행 중 (8/10): show inventory
+2025-06-26 22:38:28,417 - DEBUG - [192.168.0.151] 명령어 완료 (8/10): show inventory
+2025-06-26 22:38:28,417 - DEBUG - [192.168.0.151] 명령어 실행 중 (9/10): show clock
+2025-06-26 22:38:28,926 - DEBUG - [192.168.0.151] 명령어 완료 (9/10): show clock
+2025-06-26 22:38:28,926 - DEBUG - [192.168.0.151] 명령어 실행 중 (10/10): show logging | last 20
+2025-06-26 22:38:29,436 - DEBUG - [192.168.0.151] 명령어 완료 (10/10): show logging | last 20
+2025-06-26 22:38:29,436 - DEBUG - [192.168.0.151] 모든 명령어 실행 완료
+2025-06-26 22:38:29,437 - DEBUG - [chan 0] EOF sent (0)
+2025-06-26 22:38:29,437 - DEBUG - EOF in transport thread
+2025-06-26 22:41:43,789 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 22:41:44,641 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-26 22:41:44,800 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-26 22:41:44,801 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-26 22:41:52,584 - DEBUG - [192.168.0.151] SSH 연결 시도 중...
+2025-06-26 22:41:52,591 - DEBUG - starting thread (client mode): 0x820c0190
+2025-06-26 22:41:52,591 - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.2.0
+2025-06-26 22:41:52,599 - DEBUG - Remote version/idstring: SSH-1.99-Cisco-1.25
+2025-06-26 22:41:52,599 - INFO - Connected (version 1.99, client Cisco-1.25)
+2025-06-26 22:41:52,604 - DEBUG - === Key exchange possibilities ===
+2025-06-26 22:41:52,604 - DEBUG - kex algos: diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, diffie-hellman-group1-sha1
+2025-06-26 22:41:52,604 - DEBUG - server key: ssh-rsa
+2025-06-26 22:41:52,604 - DEBUG - client encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:41:52,604 - DEBUG - server encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:41:52,604 - DEBUG - client mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:41:52,605 - DEBUG - server mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:41:52,605 - DEBUG - client compress: none
+2025-06-26 22:41:52,605 - DEBUG - server compress: none
+2025-06-26 22:41:52,605 - DEBUG - client lang: <none>
+2025-06-26 22:41:52,605 - DEBUG - server lang: <none>
+2025-06-26 22:41:52,605 - DEBUG - kex follows: False
+2025-06-26 22:41:52,605 - DEBUG - === Key exchange agreements ===
+2025-06-26 22:41:52,606 - DEBUG - Kex: diffie-hellman-group-exchange-sha1
+2025-06-26 22:41:52,606 - DEBUG - HostKey: ssh-rsa
+2025-06-26 22:41:52,606 - DEBUG - Cipher: aes128-ctr
+2025-06-26 22:41:52,606 - DEBUG - MAC: hmac-sha1
+2025-06-26 22:41:52,606 - DEBUG - Compression: none
+2025-06-26 22:41:52,606 - DEBUG - === End of kex handshake ===
+2025-06-26 22:41:52,609 - DEBUG - Got server p (2048 bits)
+2025-06-26 22:41:52,663 - DEBUG - kex engine KexGex specified hash_algo <built-in function openssl_sha1>
+2025-06-26 22:41:52,663 - DEBUG - Switch to new keys ...
+2025-06-26 22:41:52,664 - DEBUG - Adding ssh-rsa host key for 192.168.0.151: b'02bc37c1139b93fe12ec3800780a1d68'
+2025-06-26 22:41:52,868 - DEBUG - userauth is OK
+2025-06-26 22:41:52,874 - INFO - Auth banner: b'\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n'
+2025-06-26 22:41:52,880 - INFO - Authentication (password) successful!
+2025-06-26 22:41:52,880 - DEBUG - [192.168.0.151] SSH 기본 인증 성공
+2025-06-26 22:41:52,881 - DEBUG - [192.168.0.151] 셸 세션 생성 중...
+2025-06-26 22:41:52,881 - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-06-26 22:41:52,886 - DEBUG - [chan 0] Max packet out: 4096 bytes
+2025-06-26 22:41:52,887 - DEBUG - Secsh channel 0 opened.
+2025-06-26 22:41:52,891 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:41:52,897 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:41:54,904 - DEBUG - [192.168.0.151] [SSH] 초기 프롬프트: '\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:41:54,904 - DEBUG - [192.168.0.151] Enable 모드 진입 중...
+2025-06-26 22:41:55,414 - DEBUG - [192.168.0.151] 이미 Enable 모드
+2025-06-26 22:41:55,414 - DEBUG - [192.168.0.151] 터미널 설정 중...
+2025-06-26 22:41:56,434 - DEBUG - [192.168.0.151] Hostname 추출 중...
+2025-06-26 22:41:56,434 - DEBUG - [192.168.0.151] [HOSTNAME] show running-config 시도
+2025-06-26 22:41:58,445 - DEBUG - [192.168.0.151] [HOSTNAME] running-config 출력: 'show running-config | include hostname\r\nhostname SP-OA-W6-4F-A-R2-L2\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:41:58,445 - DEBUG - [192.168.0.151] [HOSTNAME] running-config에서 추출 성공: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:41:58,445 - DEBUG - [192.168.0.151] [SSH] 추출된 hostname: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:41:58,446 - DEBUG - [192.168.0.151] 명령어 실행 중 (1/10): terminal length 0
+2025-06-26 22:41:58,955 - DEBUG - [192.168.0.151] 명령어 완료 (1/10): terminal length 0
+2025-06-26 22:41:58,955 - DEBUG - [192.168.0.151] 명령어 실행 중 (2/10): show version
+2025-06-26 22:41:59,474 - DEBUG - [192.168.0.151] 명령어 완료 (2/10): show version
+2025-06-26 22:41:59,474 - DEBUG - [192.168.0.151] 명령어 실행 중 (3/10): show running-config | include hostname
+2025-06-26 22:42:00,500 - DEBUG - [192.168.0.151] 명령어 완료 (3/10): show running-config | include hostname
+2025-06-26 22:42:00,500 - DEBUG - [192.168.0.151] 명령어 실행 중 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:42:01,010 - DEBUG - [192.168.0.151] 명령어 완료 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:42:01,010 - DEBUG - [192.168.0.151] 명령어 실행 중 (5/10): show memory statistics
+2025-06-26 22:42:01,520 - DEBUG - [192.168.0.151] 명령어 완료 (5/10): show memory statistics
+2025-06-26 22:42:01,520 - DEBUG - [192.168.0.151] 명령어 실행 중 (6/10): show ip interface brief
+2025-06-26 22:42:02,030 - DEBUG - [192.168.0.151] 명령어 완료 (6/10): show ip interface brief
+2025-06-26 22:42:02,031 - DEBUG - [192.168.0.151] 명령어 실행 중 (7/10): show environment all
+2025-06-26 22:42:02,540 - DEBUG - [192.168.0.151] 명령어 완료 (7/10): show environment all
+2025-06-26 22:42:02,540 - DEBUG - [192.168.0.151] 명령어 실행 중 (8/10): show inventory
+2025-06-26 22:42:03,050 - DEBUG - [192.168.0.151] 명령어 완료 (8/10): show inventory
+2025-06-26 22:42:03,050 - DEBUG - [192.168.0.151] 명령어 실행 중 (9/10): show clock
+2025-06-26 22:42:03,560 - DEBUG - [192.168.0.151] 명령어 완료 (9/10): show clock
+2025-06-26 22:42:03,560 - DEBUG - [192.168.0.151] 명령어 실행 중 (10/10): show logging | last 20
+2025-06-26 22:42:04,070 - DEBUG - [192.168.0.151] 명령어 완료 (10/10): show logging | last 20
+2025-06-26 22:42:04,070 - DEBUG - [192.168.0.151] 모든 명령어 실행 완료
+2025-06-26 22:42:04,071 - DEBUG - [chan 0] EOF sent (0)
+2025-06-26 22:42:04,071 - DEBUG - EOF in transport thread
+2025-06-26 22:45:37,139 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-26 22:45:38,007 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-26 22:45:38,166 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-26 22:45:38,166 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-26 22:45:46,123 - DEBUG - [192.168.0.151] SSH 연결 시도 중...
+2025-06-26 22:45:46,130 - DEBUG - starting thread (client mode): 0xe8fc0220
+2025-06-26 22:45:46,130 - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.2.0
+2025-06-26 22:45:46,135 - DEBUG - Remote version/idstring: SSH-1.99-Cisco-1.25
+2025-06-26 22:45:46,135 - INFO - Connected (version 1.99, client Cisco-1.25)
+2025-06-26 22:45:46,140 - DEBUG - === Key exchange possibilities ===
+2025-06-26 22:45:46,140 - DEBUG - kex algos: diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, diffie-hellman-group1-sha1
+2025-06-26 22:45:46,140 - DEBUG - server key: ssh-rsa
+2025-06-26 22:45:46,140 - DEBUG - client encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:45:46,140 - DEBUG - server encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-26 22:45:46,141 - DEBUG - client mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:45:46,141 - DEBUG - server mac: hmac-sha1, hmac-sha1-96
+2025-06-26 22:45:46,141 - DEBUG - client compress: none
+2025-06-26 22:45:46,141 - DEBUG - server compress: none
+2025-06-26 22:45:46,141 - DEBUG - client lang: <none>
+2025-06-26 22:45:46,141 - DEBUG - server lang: <none>
+2025-06-26 22:45:46,141 - DEBUG - kex follows: False
+2025-06-26 22:45:46,142 - DEBUG - === Key exchange agreements ===
+2025-06-26 22:45:46,142 - DEBUG - Kex: diffie-hellman-group-exchange-sha1
+2025-06-26 22:45:46,142 - DEBUG - HostKey: ssh-rsa
+2025-06-26 22:45:46,142 - DEBUG - Cipher: aes128-ctr
+2025-06-26 22:45:46,142 - DEBUG - MAC: hmac-sha1
+2025-06-26 22:45:46,142 - DEBUG - Compression: none
+2025-06-26 22:45:46,142 - DEBUG - === End of kex handshake ===
+2025-06-26 22:45:46,146 - DEBUG - Got server p (2048 bits)
+2025-06-26 22:45:46,200 - DEBUG - kex engine KexGex specified hash_algo <built-in function openssl_sha1>
+2025-06-26 22:45:46,200 - DEBUG - Switch to new keys ...
+2025-06-26 22:45:46,201 - DEBUG - Adding ssh-rsa host key for 192.168.0.151: b'02bc37c1139b93fe12ec3800780a1d68'
+2025-06-26 22:45:46,406 - DEBUG - userauth is OK
+2025-06-26 22:45:46,411 - INFO - Auth banner: b'\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n'
+2025-06-26 22:45:46,416 - INFO - Authentication (password) successful!
+2025-06-26 22:45:46,417 - DEBUG - [192.168.0.151] SSH 기본 인증 성공
+2025-06-26 22:45:46,417 - DEBUG - [192.168.0.151] 셸 세션 생성 중...
+2025-06-26 22:45:46,417 - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-06-26 22:45:46,422 - DEBUG - [chan 0] Max packet out: 4096 bytes
+2025-06-26 22:45:46,422 - DEBUG - Secsh channel 0 opened.
+2025-06-26 22:45:46,425 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:45:46,429 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-26 22:45:48,442 - DEBUG - [192.168.0.151] [SSH] 초기 프롬프트: '\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:45:48,442 - DEBUG - [192.168.0.151] Enable 모드 진입 중...
+2025-06-26 22:45:48,952 - DEBUG - [192.168.0.151] 이미 Enable 모드
+2025-06-26 22:45:48,952 - DEBUG - [192.168.0.151] 터미널 설정 중...
+2025-06-26 22:45:49,972 - DEBUG - [192.168.0.151] Hostname 추출 중...
+2025-06-26 22:45:49,972 - DEBUG - [192.168.0.151] [HOSTNAME] show running-config 시도
+2025-06-26 22:45:51,983 - DEBUG - [192.168.0.151] [HOSTNAME] running-config 출력: 'show running-config | include hostname\r\nhostname SP-OA-W6-4F-A-R2-L2\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-26 22:45:51,983 - DEBUG - [192.168.0.151] [HOSTNAME] running-config에서 추출 성공: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:45:51,983 - DEBUG - [192.168.0.151] [SSH] 추출된 hostname: SP-OA-W6-4F-A-R2-L2
+2025-06-26 22:45:51,984 - DEBUG - [192.168.0.151] 명령어 실행 중 (1/10): terminal length 0
+2025-06-26 22:45:52,493 - DEBUG - [192.168.0.151] 명령어 완료 (1/10): terminal length 0
+2025-06-26 22:45:52,493 - DEBUG - [192.168.0.151] 명령어 실행 중 (2/10): show version
+2025-06-26 22:45:53,003 - DEBUG - [192.168.0.151] 명령어 완료 (2/10): show version
+2025-06-26 22:45:53,004 - DEBUG - [192.168.0.151] 명령어 실행 중 (3/10): show running-config | include hostname
+2025-06-26 22:45:53,933 - DEBUG - [192.168.0.151] 명령어 완료 (3/10): show running-config | include hostname
+2025-06-26 22:45:53,933 - DEBUG - [192.168.0.151] 명령어 실행 중 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:45:54,444 - DEBUG - [192.168.0.151] 명령어 완료 (4/10): show processes cpu sorted | head 10
+2025-06-26 22:45:54,444 - DEBUG - [192.168.0.151] 명령어 실행 중 (5/10): show memory statistics
+2025-06-26 22:45:54,954 - DEBUG - [192.168.0.151] 명령어 완료 (5/10): show memory statistics
+2025-06-26 22:45:54,954 - DEBUG - [192.168.0.151] 명령어 실행 중 (6/10): show ip interface brief
+2025-06-26 22:45:55,464 - DEBUG - [192.168.0.151] 명령어 완료 (6/10): show ip interface brief
+2025-06-26 22:45:55,464 - DEBUG - [192.168.0.151] 명령어 실행 중 (7/10): show environment all
+2025-06-26 22:45:55,974 - DEBUG - [192.168.0.151] 명령어 완료 (7/10): show environment all
+2025-06-26 22:45:55,974 - DEBUG - [192.168.0.151] 명령어 실행 중 (8/10): show inventory
+2025-06-26 22:45:56,484 - DEBUG - [192.168.0.151] 명령어 완료 (8/10): show inventory
+2025-06-26 22:45:56,484 - DEBUG - [192.168.0.151] 명령어 실행 중 (9/10): show clock
+2025-06-26 22:45:56,994 - DEBUG - [192.168.0.151] 명령어 완료 (9/10): show clock
+2025-06-26 22:45:56,994 - DEBUG - [192.168.0.151] 명령어 실행 중 (10/10): show logging | last 20
+2025-06-26 22:45:57,504 - DEBUG - [192.168.0.151] 명령어 완료 (10/10): show logging | last 20
+2025-06-26 22:45:57,504 - DEBUG - [192.168.0.151] 모든 명령어 실행 완료
+2025-06-26 22:45:57,505 - DEBUG - [chan 0] EOF sent (0)
+2025-06-26 22:45:57,505 - DEBUG - EOF in transport thread
+2025-06-26 22:48:17,042 - INFO - [INFO] 로그 파일 열기: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-30 09:37:06,352 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-06-30 09:37:07,392 - INFO - [INFO] 설정 불러오기 성공.
+2025-06-30 09:37:07,589 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-06-30 09:37:07,589 - INFO - 애플리케이션 이벤트 루프 시작
+2025-06-30 09:37:29,427 - DEBUG - [192.168.0.151] SSH 연결 시도 중...
+2025-06-30 09:37:29,438 - DEBUG - starting thread (client mode): 0xfced1310
+2025-06-30 09:37:29,438 - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.2.0
+2025-06-30 09:37:29,444 - DEBUG - Remote version/idstring: SSH-1.99-Cisco-1.25
+2025-06-30 09:37:29,444 - INFO - Connected (version 1.99, client Cisco-1.25)
+2025-06-30 09:37:29,449 - DEBUG - === Key exchange possibilities ===
+2025-06-30 09:37:29,449 - DEBUG - kex algos: diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, diffie-hellman-group1-sha1
+2025-06-30 09:37:29,449 - DEBUG - server key: ssh-rsa
+2025-06-30 09:37:29,449 - DEBUG - client encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-30 09:37:29,449 - DEBUG - server encrypt: aes128-ctr, aes192-ctr, aes256-ctr
+2025-06-30 09:37:29,450 - DEBUG - client mac: hmac-sha1, hmac-sha1-96
+2025-06-30 09:37:29,450 - DEBUG - server mac: hmac-sha1, hmac-sha1-96
+2025-06-30 09:37:29,450 - DEBUG - client compress: none
+2025-06-30 09:37:29,450 - DEBUG - server compress: none
+2025-06-30 09:37:29,450 - DEBUG - client lang: <none>
+2025-06-30 09:37:29,450 - DEBUG - server lang: <none>
+2025-06-30 09:37:29,450 - DEBUG - kex follows: False
+2025-06-30 09:37:29,451 - DEBUG - === Key exchange agreements ===
+2025-06-30 09:37:29,451 - DEBUG - Kex: diffie-hellman-group-exchange-sha1
+2025-06-30 09:37:29,451 - DEBUG - HostKey: ssh-rsa
+2025-06-30 09:37:29,451 - DEBUG - Cipher: aes128-ctr
+2025-06-30 09:37:29,451 - DEBUG - MAC: hmac-sha1
+2025-06-30 09:37:29,451 - DEBUG - Compression: none
+2025-06-30 09:37:29,451 - DEBUG - === End of kex handshake ===
+2025-06-30 09:37:29,456 - DEBUG - Got server p (2048 bits)
+2025-06-30 09:37:29,512 - DEBUG - kex engine KexGex specified hash_algo <built-in function openssl_sha1>
+2025-06-30 09:37:29,513 - DEBUG - Switch to new keys ...
+2025-06-30 09:37:29,514 - DEBUG - Adding ssh-rsa host key for 192.168.0.151: b'02bc37c1139b93fe12ec3800780a1d68'
+2025-06-30 09:37:29,718 - DEBUG - userauth is OK
+2025-06-30 09:37:29,723 - INFO - Auth banner: b'\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n'
+2025-06-30 09:37:29,730 - INFO - Authentication (password) successful!
+2025-06-30 09:37:29,730 - DEBUG - [192.168.0.151] SSH 기본 인증 성공
+2025-06-30 09:37:29,730 - DEBUG - [192.168.0.151] 셸 세션 생성 중...
+2025-06-30 09:37:29,730 - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-06-30 09:37:29,733 - DEBUG - [chan 0] Max packet out: 4096 bytes
+2025-06-30 09:37:29,734 - DEBUG - Secsh channel 0 opened.
+2025-06-30 09:37:29,738 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-30 09:37:29,742 - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-06-30 09:37:31,755 - DEBUG - [192.168.0.151] [SSH] 초기 프롬프트: '\r\nIOSv - Cisco Systems Confidential -\r\n\r\nSupplemental End User License Restrictions\r\n\r\nThis IOSv software is provided AS-IS without warranty of any kind. Under no circumstances may this software be used separate from the Cisco Modeling Labs Software that this software was provided with, or deployed or used as part of a production environment.\r\n\r\nBy using the software, you agree to abide by the terms and conditions of the Cisco End User License Agreement at http://www.cisco.com/go/eula. Unauthorized use or distribution of this software is expressly prohibited.\r\n\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-30 09:37:31,755 - DEBUG - [192.168.0.151] Enable 모드 진입 중...
+2025-06-30 09:37:32,270 - DEBUG - [192.168.0.151] 이미 Enable 모드
+2025-06-30 09:37:32,270 - DEBUG - [192.168.0.151] 터미널 설정 중...
+2025-06-30 09:37:33,275 - DEBUG - [192.168.0.151] Hostname 추출 중...
+2025-06-30 09:37:33,275 - DEBUG - [192.168.0.151] [HOSTNAME] show running-config 시도
+2025-06-30 09:37:35,279 - DEBUG - [192.168.0.151] [HOSTNAME] running-config 출력: 'show running-config | include hostname\r\nhostname SP-OA-W6-4F-A-R2-L2\r\nSP-OA-W6-4F-A-R2-L2#'
+2025-06-30 09:37:35,279 - DEBUG - [192.168.0.151] [HOSTNAME] running-config에서 추출 성공: SP-OA-W6-4F-A-R2-L2
+2025-06-30 09:37:35,280 - DEBUG - [192.168.0.151] [SSH] 추출된 hostname: SP-OA-W6-4F-A-R2-L2
+2025-06-30 09:37:35,290 - DEBUG - [192.168.0.151] 명령어 실행 중 (1/10): terminal length 0
+2025-06-30 09:37:35,796 - DEBUG - [192.168.0.151] 명령어 완료 (1/10): terminal length 0
+2025-06-30 09:37:35,797 - DEBUG - [192.168.0.151] 명령어 실행 중 (2/10): show version
+2025-06-30 09:37:36,322 - DEBUG - [192.168.0.151] 명령어 완료 (2/10): show version
+2025-06-30 09:37:36,322 - DEBUG - [192.168.0.151] 명령어 실행 중 (3/10): show running-config | include hostname
+2025-06-30 09:37:37,365 - DEBUG - [192.168.0.151] 명령어 완료 (3/10): show running-config | include hostname
+2025-06-30 09:37:37,365 - DEBUG - [192.168.0.151] 명령어 실행 중 (4/10): show processes cpu sorted | head 10
+2025-06-30 09:37:37,867 - DEBUG - [192.168.0.151] 명령어 완료 (4/10): show processes cpu sorted | head 10
+2025-06-30 09:37:37,868 - DEBUG - [192.168.0.151] 명령어 실행 중 (5/10): show memory statistics
+2025-06-30 09:37:38,370 - DEBUG - [192.168.0.151] 명령어 완료 (5/10): show memory statistics
+2025-06-30 09:37:38,371 - DEBUG - [192.168.0.151] 명령어 실행 중 (6/10): show ip interface brief
+2025-06-30 09:37:38,875 - DEBUG - [192.168.0.151] 명령어 완료 (6/10): show ip interface brief
+2025-06-30 09:37:38,875 - DEBUG - [192.168.0.151] 명령어 실행 중 (7/10): show environment all
+2025-06-30 09:37:39,390 - DEBUG - [192.168.0.151] 명령어 완료 (7/10): show environment all
+2025-06-30 09:37:39,390 - DEBUG - [192.168.0.151] 명령어 실행 중 (8/10): show inventory
+2025-06-30 09:37:39,905 - DEBUG - [192.168.0.151] 명령어 완료 (8/10): show inventory
+2025-06-30 09:37:39,905 - DEBUG - [192.168.0.151] 명령어 실행 중 (9/10): show clock
+2025-06-30 09:37:40,419 - DEBUG - [192.168.0.151] 명령어 완료 (9/10): show clock
+2025-06-30 09:37:40,419 - DEBUG - [192.168.0.151] 명령어 실행 중 (10/10): show logging | last 20
+2025-06-30 09:37:40,920 - DEBUG - [192.168.0.151] 명령어 완료 (10/10): show logging | last 20
+2025-06-30 09:37:40,920 - DEBUG - [192.168.0.151] 모든 명령어 실행 완료
+2025-06-30 09:37:40,921 - DEBUG - [chan 0] EOF sent (0)
+2025-06-30 09:37:40,921 - DEBUG - EOF in transport thread
+2025-07-18 21:42:54,182 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-07-18 21:42:55,289 - INFO - [INFO] 설정 불러오기 성공.
+2025-07-18 21:42:55,605 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-07-18 21:42:55,605 - INFO - 애플리케이션 이벤트 루프 시작
+2025-07-18 21:55:46,703 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-07-18 21:55:47,471 - INFO - [INFO] 설정 불러오기 성공.
+2025-07-18 21:55:47,669 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-07-18 21:55:47,669 - INFO - 애플리케이션 이벤트 루프 시작
+2025-07-18 22:03:00,139 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-07-18 22:03:00,879 - INFO - [INFO] 설정 불러오기 성공.
+2025-07-18 22:03:01,069 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-07-18 22:03:01,069 - INFO - 애플리케이션 이벤트 루프 시작
+2025-07-21 10:25:02,190 - INFO - [INFO] 로그 파일 경로: C:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-07-21 10:25:03,470 - INFO - [INFO] 설정 불러오기 성공.
+2025-07-21 10:25:03,711 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-07-21 10:25:03,711 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-24 19:16:52,640 - INFO - [INFO] 로그 파일 경로: d:\5. 개발\program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-24 19:16:53,142 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-24 19:16:53,329 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-24 19:16:53,329 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 17:16:31,925 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 17:16:32,415 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 17:16:32,532 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 17:16:32,532 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 17:20:55,446 - INFO - 사용자에 의해 프로그램이 중단됨
+2025-10-30 17:20:59,848 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 17:21:00,267 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 17:21:00,471 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 17:21:00,471 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 17:27:31,716 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 17:27:32,139 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 17:27:32,342 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 17:27:32,343 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 17:30:54,971 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 17:30:55,449 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 17:30:55,677 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 17:30:55,677 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 17:54:43,362 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 17:54:43,815 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 17:54:44,034 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 17:54:44,034 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 17:56:04,713 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 17:56:05,169 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 17:56:05,384 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 17:56:05,384 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 18:00:01,893 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 18:00:02,368 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 18:00:02,573 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 18:00:02,573 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 18:07:33,856 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 18:07:34,437 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 18:07:34,636 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 18:07:34,636 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 18:09:30,874 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 18:09:31,165 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 18:09:31,269 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 18:09:31,270 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 18:09:52,857 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 18:09:53,143 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 18:09:53,321 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 18:09:53,321 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 18:10:38,948 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 18:10:39,395 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 18:10:39,606 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 18:10:39,606 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 18:14:34,043 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 18:14:34,313 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 18:14:34,404 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 18:14:34,404 - INFO - 애플리케이션 이벤트 루프 시작
+2025-10-30 18:14:55,224 - INFO - [INFO] 로그 파일 경로: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation.log
+2025-10-30 18:14:55,487 - INFO - [INFO] 설정 불러오기 성공.
+2025-10-30 18:14:55,648 - INFO - 메인 윈도우 생성 및 표시 완료
+2025-10-30 18:14:55,649 - INFO - 애플리케이션 이벤트 루프 시작

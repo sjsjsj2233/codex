@@ -1,0 +1,13 @@
+2025-07-21 10:24:59,568 - INFO - [main.py:63] - 로그 파일 생성: c:\program network auto 2025.06.25 (파일명 형식)\logs\network_automation_20250721_102459.log
+2025-07-21 10:24:59,772 - INFO - [workers.py:29] - [INIT] paramiko 초기화 완료
+2025-07-21 10:25:00,283 - INFO - [main.py:97] - 네트워크 라이브러리 초기화 완료
+2025-07-21 10:25:00,283 - INFO - [main.py:103] - 네트워크 자동화 애플리케이션 시작
+2025-07-21 10:25:00,283 - INFO - [main.py:104] - Python 버전: 3.8.6 (tags/v3.8.6:db45529, Sep 23 2020, 15:52:53) [MSC v.1927 64 bit (AMD64)]
+2025-07-21 10:25:00,284 - INFO - [main.py:105] - PyInstaller 환경: False
+2025-07-21 10:25:00,284 - INFO - [main.py:106] - 작업 디렉토리: C:\program network auto 2025.06.25 (파일명 형식)
+2025-07-21 10:25:00,284 - INFO - [main.py:107] - 실행 파일 디렉토리: c:\program network auto 2025.06.25 (파일명 형식)
+2025-07-21 10:25:00,284 - INFO - [main.py:108] - 기본 디렉토리: c:\program network auto 2025.06.25 (파일명 형식)
+2025-07-21 10:25:00,361 - INFO - [main.py:125] - 아이콘 로드 성공: c:\program network auto 2025.06.25 (파일명 형식)\icons\app_icon.ico
+2025-07-21 10:25:00,362 - INFO - [main.py:135] - main_window 모듈 import 시도 중...
+2025-07-21 10:25:02,185 - INFO - [main.py:140] - ui.main_window에서 import 성공
+2025-07-21 10:25:02,185 - INFO - [main.py:166] - 메인 윈도우 생성 중...

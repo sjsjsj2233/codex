@@ -1,0 +1,9 @@
+{
+    "ip_list": "192.168.0.146\n",
+    "username": "",
+    "save_path": "C:/Users/kim/Desktop/cdp nei",
+    "commands": "sh run\nsh ver\nsh ip int b",
+    "use_ssh": false,
+    "concurrent_execution": true,
+    "ssh_port": "22"
+}

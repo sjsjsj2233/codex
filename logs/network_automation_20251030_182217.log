@@ -1,0 +1,24 @@
+2025-10-30 18:22:17,161 - INFO - [main.py:63] - 로그 파일 생성: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation_20251030_182217.log
+2025-10-30 18:22:17,437 - INFO - [workers.py:57] - [INIT] paramiko 초기화 완료
+2025-10-30 18:22:17,939 - INFO - [main.py:97] - 네트워크 라이브러리 초기화 완료
+2025-10-30 18:22:17,939 - INFO - [main.py:103] - 네트워크 자동화 애플리케이션 시작
+2025-10-30 18:22:17,939 - INFO - [main.py:104] - Python 버전: 3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]
+2025-10-30 18:22:17,939 - INFO - [main.py:105] - PyInstaller 환경: False
+2025-10-30 18:22:17,940 - INFO - [main.py:106] - 작업 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 18:22:17,940 - INFO - [main.py:107] - 실행 파일 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 18:22:17,940 - INFO - [main.py:108] - 기본 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 18:22:17,969 - INFO - [main.py:125] - 아이콘 로드 성공: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\icons\app_icon.ico
+2025-10-30 18:22:17,969 - INFO - [main.py:135] - main_window 모듈 import 시도 중...
+2025-10-30 18:22:18,587 - WARNING - [main.py:142] - ui.main_window import 실패: No module named 'dogu_tab'
+2025-10-30 18:22:18,589 - WARNING - [main.py:148] - main_window 직접 import 실패: No module named 'dogu_tab'
+2025-10-30 18:22:18,589 - INFO - [main.py:153] - UI 경로 확인: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\ui
+2025-10-30 18:22:18,589 - INFO - [main.py:154] - main_window.py 파일 확인: True
+2025-10-30 18:22:18,590 - CRITICAL - [main.py:173] - main_window 모듈 import 실패:
+No module named 'dogu_tab'
+
+현재 Python 경로:
+D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\core\log_analyzer
+D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\core
+D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\ui
+D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)

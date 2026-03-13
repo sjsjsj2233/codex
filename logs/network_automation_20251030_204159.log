@@ -1,0 +1,21 @@
+2025-10-30 20:41:59,239 - INFO - [main.py:63] - 로그 파일 생성: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation_20251030_204159.log
+2025-10-30 20:41:59,509 - INFO - [workers.py:57] - [INIT] paramiko 초기화 완료
+2025-10-30 20:42:00,011 - INFO - [main.py:97] - 네트워크 라이브러리 초기화 완료
+2025-10-30 20:42:00,011 - INFO - [main.py:103] - 네트워크 자동화 애플리케이션 시작
+2025-10-30 20:42:00,011 - INFO - [main.py:104] - Python 버전: 3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]
+2025-10-30 20:42:00,011 - INFO - [main.py:105] - PyInstaller 환경: False
+2025-10-30 20:42:00,011 - INFO - [main.py:106] - 작업 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 20:42:00,012 - INFO - [main.py:107] - 실행 파일 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 20:42:00,012 - INFO - [main.py:108] - 기본 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 20:42:00,041 - INFO - [main.py:125] - 아이콘 로드 성공: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\icons\app_icon.ico
+2025-10-30 20:42:00,041 - INFO - [main.py:135] - main_window 모듈 import 시도 중...
+2025-10-30 20:42:00,994 - INFO - [main.py:140] - ui.main_window에서 import 성공
+2025-10-30 20:42:00,994 - INFO - [main.py:166] - 메인 윈도우 생성 중...
+2025-10-30 20:42:01,570 - INFO - [main_window.py:600] - [INFO] 설정 불러오기 성공.
+2025-10-30 20:42:01,688 - INFO - [main.py:169] - 메인 윈도우 생성 및 표시 완료
+2025-10-30 20:42:01,688 - INFO - [main.py:184] - 애플리케이션 이벤트 루프 시작
+2025-10-30 20:42:29,022 - INFO - [main_window.py:434] - [INFO] 작업 시작: 192.168.0.146
+2025-10-30 20:42:46,481 - INFO - [main_window.py:492] - [INFO] [SUCCESS] 작업 완료: 192.168.0.146
+2025-10-30 20:42:47,692 - INFO - [main_window.py:524] - [INFO] 모든 작업 완료됨.
+2025-10-30 20:42:47,692 - INFO - [main_window.py:569] - [INFO] 설정 저장됨.
+2025-10-30 20:42:48,981 - INFO - [main_window.py:333] - [INFO] 폴더 열기: C:/Users/kim/Desktop/cdp nei

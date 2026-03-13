@@ -1,0 +1,23 @@
+2025-10-24 19:04:14,510 - INFO - [main.py:63] - 로그 파일 생성: d:\5. 개발\program network auto 2025.06.25 (파일명 형식)\logs\network_automation_20251024_190414.log
+2025-10-24 19:04:15,619 - WARNING - [main.py:99] - 네트워크 라이브러리 초기화 실패: No module named 'telnetlib'
+2025-10-24 19:04:15,619 - INFO - [main.py:103] - 네트워크 자동화 애플리케이션 시작
+2025-10-24 19:04:15,619 - INFO - [main.py:104] - Python 버전: 3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]
+2025-10-24 19:04:15,619 - INFO - [main.py:105] - PyInstaller 환경: False
+2025-10-24 19:04:15,619 - INFO - [main.py:106] - 작업 디렉토리: D:\5. 개발\program network auto 2025.06.25 (파일명 형식)
+2025-10-24 19:04:15,620 - INFO - [main.py:107] - 실행 파일 디렉토리: d:\5. 개발\program network auto 2025.06.25 (파일명 형식)
+2025-10-24 19:04:15,620 - INFO - [main.py:108] - 기본 디렉토리: d:\5. 개발\program network auto 2025.06.25 (파일명 형식)
+2025-10-24 19:04:15,636 - INFO - [main.py:125] - 아이콘 로드 성공: d:\5. 개발\program network auto 2025.06.25 (파일명 형식)\icons\app_icon.ico
+2025-10-24 19:04:15,637 - INFO - [main.py:135] - main_window 모듈 import 시도 중...
+2025-10-24 19:04:15,641 - WARNING - [main.py:142] - ui.main_window import 실패: No module named 'telnetlib'
+2025-10-24 19:04:15,642 - WARNING - [main.py:148] - main_window 직접 import 실패: No module named 'telnetlib'
+2025-10-24 19:04:15,642 - INFO - [main.py:153] - UI 경로 확인: d:\5. 개발\program network auto 2025.06.25 (파일명 형식)\ui
+2025-10-24 19:04:15,643 - INFO - [main.py:154] - main_window.py 파일 확인: True
+2025-10-24 19:04:15,644 - CRITICAL - [main.py:173] - main_window 모듈 import 실패:
+No module named 'telnetlib'
+
+현재 Python 경로:
+d:\5. 개발\program network auto 2025.06.25 (파일명 형식)\core\log_analyzer
+d:\5. 개발\program network auto 2025.06.25 (파일명 형식)\core
+d:\5. 개발\program network auto 2025.06.25 (파일명 형식)\ui
+d:\5. 개발\program network auto 2025.06.25 (파일명 형식)
+d:\5. 개발\program network auto 2025.06.25 (파일명 형식)

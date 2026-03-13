@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>네트워크 설정 비교 결과</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .summary {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-item {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 10px;
+        }
+        .added { background-color: #d4edda; color: #155724; }
+        .removed { background-color: #f8d7da; color: #721c24; }
+        .modified { background-color: #fff3cd; color: #856404; }
+        .important { border-left: 4px solid #ff6b6b; padding-left: 8px; font-weight: bold; }
+        .diff-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .diff-line {
+            padding: 4px 8px;
+            margin: 2px 0;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .line-number {
+            display: inline-block;
+            width: 60px;
+            text-align: right;
+            margin-right: 10px;
+            color: #666;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>네트워크 설정 비교 결과</h1>
+        <p>생성 시간: 2025-10-30 17:56:57</p>
+    </div>
+
+    <div class="summary">
+        <h2>📊 비교 요약</h2>
+        <div class="summary-item added">
+            ➕ 추가: 439줄
+        </div>
+        <div class="summary-item removed">
+            ➖ 삭제: 437줄
+        </div>
+        <div class="summary-item">
+            📝 총 변경: 876줄
+        </div>
+        <div style="margin-top: 15px;">
+            <strong>이전 설정:</strong> 468줄 |
+            <strong>현재 설정:</strong> 469줄
+        </div>
+
+        <div style="margin-top: 15px;">
+            <h3>⚠️ 주요 변경사항</h3>
+            <ul>
+                <li>삭제: 장비 hostname: cns_sabb_2f_c9500_2</li>
+                <li>추가: 장비 hostname: cns_sa_1f_isc_c9300_1</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="diff-container">
+        <h2>🔍 상세 차이점</h2>
+        <div class="diff-line removed important"><span class='line-number'>-1</span>- 장비 hostname: cns_sabb_2f_c9500_2</div>
+        <div class="diff-line removed"><span class='line-number'>-2</span>- 실행 시간: 2025-10-29 13:32:15</div>
+        <div class="diff-line added"><span class='line-number'>+1</span>+ --- telnet 연결 결과: 10.62.248.1 ---</div>
+        <div class="diff-line added important"><span class='line-number'>+2</span>+ 장비 hostname: cns_sa_1f_isc_c9300_1</div>
+        <div class="diff-line added"><span class='line-number'>+3</span>+ 실행 시간: 2025-10-29 13:32:18</div>
+        <div class="diff-line removed"><span class='line-number'>-6</span>- load for five secs: 0%/0%; one minute: 1%; five minutes: 1%</div>
+        <div class="diff-line removed"><span class='line-number'>-7</span>- time source is ntp, 13:32:15.620 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+6</span>+ load for five secs: 0%/0%; one minute: 0%; five minutes: 0%</div>
+        <div class="diff-line added"><span class='line-number'>+7</span>+ time source is ntp, 13:32:19.182 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-11</span>- console logging: disabled</div>
+        <div class="diff-line removed"><span class='line-number'>-12</span>- monitor logging: level debugging, 139 messages logged, xml disabled,</div>
+        <div class="diff-line added"><span class='line-number'>+11</span>+ console logging: level debugging, 6969 messages logged, xml disabled,</div>
+        <div class="diff-line removed"><span class='line-number'>-14</span>- buffer logging: level debugging, 8634 messages logged, xml disabled,</div>
+        <div class="diff-line added"><span class='line-number'>+13</span>+ monitor logging: level debugging, 39 messages logged, xml disabled,</div>
+        <div class="diff-line added"><span class='line-number'>+14</span>+ filtering disabled</div>
+        <div class="diff-line added"><span class='line-number'>+15</span>+ buffer logging: level debugging, 6972 messages logged, xml disabled,</div>
+        <div class="diff-line removed"><span class='line-number'>-21</span>- trap logging: level debugging, 8640 message lines logged</div>
+        <div class="diff-line added"><span class='line-number'>+22</span>+ trap logging: level debugging, 6977 message lines logged</div>
+        <div class="diff-line removed"><span class='line-number'>-24</span>- 6356 message lines logged,</div>
+        <div class="diff-line added"><span class='line-number'>+25</span>+ 6060 message lines logged,</div>
+        <div class="diff-line removed"><span class='line-number'>-31</span>- 6354 message lines logged,</div>
+        <div class="diff-line added"><span class='line-number'>+32</span>+ 6058 message lines logged,</div>
+        <div class="diff-line removed"><span class='line-number'>-37</span>- twentyfivegige1/0/19</div>
+        <div class="diff-line added"><span class='line-number'>+38</span>+ gigabitethernet1/1/1</div>
+        <div class="diff-line removed"><span class='line-number'>-40</span>- 2 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-41</span>- oct 25 11:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-42</span>- oct 25 12:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-43</span>- oct 25 12:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-44</span>- oct 25 12:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-45</span>- oct 25 12:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-46</span>- oct 25 13:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-47</span>- oct 25 13:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-48</span>- oct 25 13:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-49</span>- oct 25 13:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-50</span>- oct 25 14:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-51</span>- oct 25 14:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-52</span>- oct 25 14:30:47 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:30:47 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-53</span>- oct 25 14:32:48 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-54</span>- oct 25 14:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-55</span>- oct 25 14:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-56</span>- oct 25 15:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-57</span>- oct 25 15:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-58</span>- oct 25 15:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-59</span>- oct 25 15:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-60</span>- oct 25 16:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-61</span>- oct 25 16:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-62</span>- oct 25 16:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-63</span>- oct 25 16:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-64</span>- oct 25 17:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-65</span>- oct 25 17:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-66</span>- oct 25 17:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-67</span>- oct 25 17:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-68</span>- oct 25 18:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-69</span>- oct 25 18:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-70</span>- oct 25 18:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-71</span>- oct 25 18:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-72</span>- oct 25 19:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-73</span>- oct 25 19:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-74</span>- oct 25 19:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-75</span>- oct 25 19:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-76</span>- oct 25 20:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-77</span>- oct 25 20:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-78</span>- oct 25 20:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-79</span>- oct 25 20:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-80</span>- oct 25 21:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-81</span>- oct 25 21:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-82</span>- oct 25 21:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-83</span>- oct 25 21:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-84</span>- oct 25 22:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-85</span>- oct 25 22:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-86</span>- oct 25 22:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-87</span>- oct 25 22:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-88</span>- oct 25 23:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:11:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-89</span>- oct 25 23:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-90</span>- oct 25 23:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:41:02 kst sat oct 25 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-91</span>- oct 25 23:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-92</span>- oct 26 00:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-93</span>- oct 26 00:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-94</span>- oct 26 00:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-95</span>- oct 26 00:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-96</span>- oct 26 01:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-97</span>- oct 26 01:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-98</span>- oct 26 01:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-99</span>- oct 26 01:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-100</span>- oct 26 02:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-101</span>- oct 26 02:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-102</span>- oct 26 02:30:06 kst: %sec_login-5-login_success: login success [user: unms] [source: 165.243.17.242] [localport: 23] at 02:30:06 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-103</span>- oct 26 02:30:11 kst: %sys-6-logout: user unms has exited tty session 2(165.243.17.242)</div>
+        <div class="diff-line removed"><span class='line-number'>-104</span>- oct 26 02:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-105</span>- oct 26 02:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-106</span>- oct 26 03:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-107</span>- oct 26 03:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-108</span>- oct 26 03:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-109</span>- oct 26 03:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-110</span>- oct 26 04:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-111</span>- oct 26 04:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-112</span>- oct 26 04:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-113</span>- oct 26 04:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-114</span>- oct 26 05:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-115</span>- oct 26 05:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-116</span>- oct 26 05:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-117</span>- oct 26 05:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-118</span>- oct 26 06:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-119</span>- oct 26 06:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-120</span>- oct 26 06:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-121</span>- oct 26 06:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-122</span>- oct 26 07:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-123</span>- oct 26 07:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-124</span>- oct 26 07:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-125</span>- oct 26 07:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-126</span>- oct 26 08:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-127</span>- oct 26 08:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-128</span>- oct 26 08:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-129</span>- oct 26 08:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-130</span>- oct 26 09:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-131</span>- oct 26 09:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-132</span>- oct 26 09:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-133</span>- oct 26 09:43:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-134</span>- oct 26 10:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-135</span>- oct 26 10:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-136</span>- oct 26 10:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-137</span>- oct 26 10:43:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-138</span>- oct 26 10:46:34 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:46:34 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-139</span>- oct 26 10:46:36 kst: %dmi-5-auth_passed: r0/0: dmiauthd: user &#39;unms&#39; authenticated successfully from 10.81.214.40:36503 and was authorized for netconf over ssh. external groups: priv15</div>
+        <div class="diff-line removed"><span class='line-number'>-140</span>- oct 26 10:49:23 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-141</span>- oct 26 11:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-142</span>- oct 26 11:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-143</span>- oct 26 11:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-144</span>- oct 26 11:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-145</span>- oct 26 12:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-146</span>- oct 26 12:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-147</span>- oct 26 12:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-148</span>- oct 26 12:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-149</span>- oct 26 13:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-150</span>- oct 26 13:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-151</span>- oct 26 13:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-152</span>- oct 26 13:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-153</span>- oct 26 14:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-154</span>- oct 26 14:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-155</span>- oct 26 14:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-156</span>- oct 26 14:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-157</span>- oct 26 15:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-158</span>- oct 26 15:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-159</span>- oct 26 15:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-160</span>- oct 26 15:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-161</span>- oct 26 16:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-162</span>- oct 26 16:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-163</span>- oct 26 16:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-164</span>- oct 26 16:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-165</span>- oct 26 17:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-166</span>- oct 26 17:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-167</span>- oct 26 17:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-168</span>- oct 26 17:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-169</span>- oct 26 18:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-170</span>- oct 26 18:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-171</span>- oct 26 18:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-172</span>- oct 26 18:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-173</span>- oct 26 19:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-174</span>- oct 26 19:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-175</span>- oct 26 19:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-176</span>- oct 26 19:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-177</span>- oct 26 20:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-178</span>- oct 26 20:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-179</span>- oct 26 20:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-180</span>- oct 26 20:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-181</span>- oct 26 21:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-182</span>- oct 26 21:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-183</span>- oct 26 21:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-184</span>- oct 26 21:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-185</span>- oct 26 22:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-186</span>- oct 26 22:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-187</span>- oct 26 22:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-188</span>- oct 26 22:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-189</span>- oct 26 23:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:11:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-190</span>- oct 26 23:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-191</span>- oct 26 23:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:41:02 kst sun oct 26 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-192</span>- oct 26 23:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-193</span>- oct 27 00:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-194</span>- oct 27 00:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-195</span>- oct 27 00:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-196</span>- oct 27 00:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-197</span>- oct 27 01:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-198</span>- oct 27 01:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-199</span>- oct 27 01:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-200</span>- oct 27 01:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-201</span>- oct 27 02:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-202</span>- oct 27 02:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-203</span>- oct 27 02:30:00 kst: %sec_login-5-login_success: login success [user: unms] [source: 165.243.17.242] [localport: 23] at 02:30:00 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-204</span>- oct 27 02:30:06 kst: %sys-6-logout: user unms has exited tty session 2(165.243.17.242)</div>
+        <div class="diff-line removed"><span class='line-number'>-205</span>- oct 27 02:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-206</span>- oct 27 02:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-207</span>- oct 27 03:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-208</span>- oct 27 03:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-209</span>- oct 27 03:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-210</span>- oct 27 03:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-211</span>- oct 27 04:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-212</span>- oct 27 04:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-213</span>- oct 27 04:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-214</span>- oct 27 04:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-215</span>- oct 27 05:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-216</span>- oct 27 05:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-217</span>- oct 27 05:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-218</span>- oct 27 05:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-219</span>- oct 27 06:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-220</span>- oct 27 06:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-221</span>- oct 27 06:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-222</span>- oct 27 06:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-223</span>- oct 27 07:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-224</span>- oct 27 07:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-225</span>- oct 27 07:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-226</span>- oct 27 07:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-227</span>- oct 27 08:00:11 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:00:11 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-228</span>- oct 27 08:02:51 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-229</span>- oct 27 08:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-230</span>- oct 27 08:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-231</span>- oct 27 08:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-232</span>- oct 27 08:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-233</span>- oct 27 09:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-234</span>- oct 27 09:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-235</span>- oct 27 09:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-236</span>- oct 27 09:43:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-237</span>- oct 27 10:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-238</span>- oct 27 10:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-239</span>- oct 27 10:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-240</span>- oct 27 10:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-241</span>- oct 27 10:47:57 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:47:57 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-242</span>- oct 27 10:47:59 kst: %dmi-5-auth_passed: r0/0: dmiauthd: user &#39;unms&#39; authenticated successfully from 10.81.214.40:23543 and was authorized for netconf over ssh. external groups: priv15</div>
+        <div class="diff-line removed"><span class='line-number'>-243</span>- oct 27 10:50:50 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-244</span>- oct 27 11:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-245</span>- oct 27 11:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-246</span>- oct 27 11:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-247</span>- oct 27 11:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-248</span>- oct 27 12:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-249</span>- oct 27 12:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-250</span>- oct 27 12:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-251</span>- oct 27 12:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-252</span>- oct 27 13:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-253</span>- oct 27 13:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-254</span>- oct 27 13:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-255</span>- oct 27 13:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-256</span>- oct 27 14:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-257</span>- oct 27 14:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-258</span>- oct 27 14:30:48 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:30:48 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-259</span>- oct 27 14:32:53 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-260</span>- oct 27 14:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-261</span>- oct 27 14:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-262</span>- oct 27 15:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-263</span>- oct 27 15:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-264</span>- oct 27 15:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-265</span>- oct 27 15:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-266</span>- oct 27 16:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-267</span>- oct 27 16:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-268</span>- oct 27 16:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-269</span>- oct 27 16:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-270</span>- oct 27 17:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-271</span>- oct 27 17:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-272</span>- oct 27 17:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-273</span>- oct 27 17:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-274</span>- oct 27 18:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-275</span>- oct 27 18:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-276</span>- oct 27 18:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-277</span>- oct 27 18:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-278</span>- oct 27 19:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-279</span>- oct 27 19:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-280</span>- oct 27 19:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-281</span>- oct 27 19:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-282</span>- oct 27 20:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-283</span>- oct 27 20:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-284</span>- oct 27 20:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-285</span>- oct 27 20:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-286</span>- oct 27 21:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-287</span>- oct 27 21:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-288</span>- oct 27 21:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-289</span>- oct 27 21:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-290</span>- oct 27 22:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-291</span>- oct 27 22:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-292</span>- oct 27 22:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-293</span>- oct 27 22:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-294</span>- oct 27 23:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:11:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-295</span>- oct 27 23:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-296</span>- oct 27 23:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:41:02 kst mon oct 27 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-297</span>- oct 27 23:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-298</span>- oct 28 00:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-299</span>- oct 28 00:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-300</span>- oct 28 00:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-301</span>- oct 28 00:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-302</span>- oct 28 01:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-303</span>- oct 28 01:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-304</span>- oct 28 01:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-305</span>- oct 28 01:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-306</span>- oct 28 02:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-307</span>- oct 28 02:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-308</span>- oct 28 02:30:16 kst: %sec_login-5-login_success: login success [user: unms] [source: 165.243.17.242] [localport: 23] at 02:30:16 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-309</span>- oct 28 02:30:27 kst: %sys-6-logout: user unms has exited tty session 2(165.243.17.242)</div>
+        <div class="diff-line removed"><span class='line-number'>-310</span>- oct 28 02:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-311</span>- oct 28 02:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-312</span>- oct 28 03:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-313</span>- oct 28 03:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-314</span>- oct 28 03:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-315</span>- oct 28 03:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-316</span>- oct 28 04:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-317</span>- oct 28 04:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-318</span>- oct 28 04:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-319</span>- oct 28 04:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-320</span>- oct 28 05:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-321</span>- oct 28 05:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-322</span>- oct 28 05:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-323</span>- oct 28 05:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-324</span>- oct 28 06:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-325</span>- oct 28 06:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-326</span>- oct 28 06:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-327</span>- oct 28 06:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-328</span>- oct 28 07:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-329</span>- oct 28 07:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-330</span>- oct 28 07:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-331</span>- oct 28 07:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-332</span>- oct 28 08:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-333</span>- oct 28 08:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-334</span>- oct 28 08:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-335</span>- oct 28 08:43:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-336</span>- oct 28 09:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-337</span>- oct 28 09:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-338</span>- oct 28 09:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-339</span>- oct 28 09:43:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-340</span>- oct 28 10:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-341</span>- oct 28 10:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-342</span>- oct 28 10:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-343</span>- oct 28 10:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-344</span>- oct 28 10:48:58 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:48:58 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-345</span>- oct 28 10:49:00 kst: %dmi-5-auth_passed: r0/0: dmiauthd: user &#39;unms&#39; authenticated successfully from 10.81.214.40:4164 and was authorized for netconf over ssh. external groups: priv15</div>
+        <div class="diff-line removed"><span class='line-number'>-346</span>- oct 28 10:51:51 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-347</span>- oct 28 11:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-348</span>- oct 28 11:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-349</span>- oct 28 11:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-350</span>- oct 28 11:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-351</span>- oct 28 12:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-352</span>- oct 28 12:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-353</span>- oct 28 12:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-354</span>- oct 28 12:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-355</span>- oct 28 13:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-356</span>- oct 28 13:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-357</span>- oct 28 13:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-358</span>- oct 28 13:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-359</span>- oct 28 14:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-360</span>- oct 28 14:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-361</span>- oct 28 14:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-362</span>- oct 28 14:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-363</span>- oct 28 15:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-364</span>- oct 28 15:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-365</span>- oct 28 15:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-366</span>- oct 28 15:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-367</span>- oct 28 16:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-368</span>- oct 28 16:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-369</span>- oct 28 16:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-370</span>- oct 28 16:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-371</span>- oct 28 17:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-372</span>- oct 28 17:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-373</span>- oct 28 17:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-374</span>- oct 28 17:43:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-375</span>- oct 28 18:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-376</span>- oct 28 18:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-377</span>- oct 28 18:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-378</span>- oct 28 18:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-379</span>- oct 28 19:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-380</span>- oct 28 19:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-381</span>- oct 28 19:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-382</span>- oct 28 19:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-383</span>- oct 28 20:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-384</span>- oct 28 20:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-385</span>- oct 28 20:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-386</span>- oct 28 20:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-387</span>- oct 28 20:45:32 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:45:32 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-388</span>- oct 28 20:47:35 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-389</span>- oct 28 21:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-390</span>- oct 28 21:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-391</span>- oct 28 21:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-392</span>- oct 28 21:43:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-393</span>- oct 28 22:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-394</span>- oct 28 22:13:05 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-395</span>- oct 28 22:25:23 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:25:23 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-396</span>- oct 28 22:27:26 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-397</span>- oct 28 22:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-398</span>- oct 28 22:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-399</span>- oct 28 23:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:11:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-400</span>- oct 28 23:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-401</span>- oct 28 23:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:41:02 kst tue oct 28 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-402</span>- oct 28 23:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-403</span>- oct 29 00:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-404</span>- oct 29 00:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-405</span>- oct 29 00:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-406</span>- oct 29 00:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-407</span>- oct 29 01:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-408</span>- oct 29 01:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-409</span>- oct 29 01:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-410</span>- oct 29 01:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-411</span>- oct 29 02:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-412</span>- oct 29 02:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-413</span>- oct 29 02:30:00 kst: %sec_login-5-login_success: login success [user: unms] [source: 165.243.17.242] [localport: 23] at 02:30:00 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-414</span>- oct 29 02:30:11 kst: %sys-6-logout: user unms has exited tty session 2(165.243.17.242)</div>
+        <div class="diff-line removed"><span class='line-number'>-415</span>- oct 29 02:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-416</span>- oct 29 02:43:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-417</span>- oct 29 03:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-418</span>- oct 29 03:13:06 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-419</span>- oct 29 03:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-420</span>- oct 29 03:43:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-421</span>- oct 29 04:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-422</span>- oct 29 04:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-423</span>- oct 29 04:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-424</span>- oct 29 04:43:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-425</span>- oct 29 05:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-426</span>- oct 29 05:13:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-427</span>- oct 29 05:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-428</span>- oct 29 05:43:07 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-429</span>- oct 29 06:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-430</span>- oct 29 06:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-431</span>- oct 29 06:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-432</span>- oct 29 06:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-433</span>- oct 29 07:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-434</span>- oct 29 07:13:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-435</span>- oct 29 07:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-436</span>- oct 29 07:43:02 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-437</span>- oct 29 08:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-438</span>- oct 29 08:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-439</span>- oct 29 08:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-440</span>- oct 29 08:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-441</span>- oct 29 09:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-442</span>- oct 29 09:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-443</span>- oct 29 09:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-444</span>- oct 29 09:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-445</span>- oct 29 10:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-446</span>- oct 29 10:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-447</span>- oct 29 10:36:58 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:36:58 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-448</span>- oct 29 10:39:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-449</span>- oct 29 10:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-450</span>- oct 29 10:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-451</span>- oct 29 10:47:18 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:47:18 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-452</span>- oct 29 10:47:21 kst: %dmi-5-auth_passed: r0/0: dmiauthd: user &#39;unms&#39; authenticated successfully from 10.81.214.40:50204 and was authorized for netconf over ssh. external groups: priv15</div>
+        <div class="diff-line removed"><span class='line-number'>-453</span>- oct 29 10:50:08 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-454</span>- oct 29 10:53:31 kst: %sec_login-5-login_success: login success [user: kanghwalee] [source: 10.64.154.88] [localport: 23] at 10:53:31 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-455</span>- oct 29 10:56:46 kst: %sys-6-logout: user kanghwalee has exited tty session 2(10.64.154.88)</div>
+        <div class="diff-line removed"><span class='line-number'>-456</span>- oct 29 11:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-457</span>- oct 29 11:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-458</span>- oct 29 11:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-459</span>- oct 29 11:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-460</span>- oct 29 12:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-461</span>- oct 29 12:13:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-462</span>- oct 29 12:41:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-463</span>- oct 29 12:43:03 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line removed"><span class='line-number'>-464</span>- oct 29 13:11:02 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:02 kst wed oct 29 2025</div>
+        <div class="diff-line removed"><span class='line-number'>-465</span>- oct 29 13:13:04 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+41</span>+ ss: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+42</span>+ oct 25 11:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+43</span>+ oct 25 12:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+44</span>+ oct 25 12:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+45</span>+ oct 25 12:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+46</span>+ oct 25 12:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+47</span>+ oct 25 13:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+48</span>+ oct 25 13:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+49</span>+ oct 25 13:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+50</span>+ oct 25 13:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+51</span>+ oct 25 14:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+52</span>+ oct 25 14:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+53</span>+ oct 25 14:30:46 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:30:46 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+54</span>+ oct 25 14:32:49 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+55</span>+ oct 25 14:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+56</span>+ oct 25 14:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+57</span>+ oct 25 15:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+58</span>+ oct 25 15:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+59</span>+ oct 25 15:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+60</span>+ oct 25 15:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+61</span>+ oct 25 16:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+62</span>+ oct 25 16:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+63</span>+ oct 25 16:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+64</span>+ oct 25 16:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+65</span>+ oct 25 17:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+66</span>+ oct 25 17:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+67</span>+ oct 25 17:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+68</span>+ oct 25 17:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+69</span>+ oct 25 18:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+70</span>+ oct 25 18:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+71</span>+ oct 25 18:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+72</span>+ oct 25 18:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+73</span>+ oct 25 19:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+74</span>+ oct 25 19:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+75</span>+ oct 25 19:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+76</span>+ oct 25 19:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+77</span>+ oct 25 20:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+78</span>+ oct 25 20:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+79</span>+ oct 25 20:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+80</span>+ oct 25 20:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+81</span>+ oct 25 21:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+82</span>+ oct 25 21:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+83</span>+ oct 25 21:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+84</span>+ oct 25 21:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+85</span>+ oct 25 22:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+86</span>+ oct 25 22:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+87</span>+ oct 25 22:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+88</span>+ oct 25 22:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+89</span>+ oct 25 23:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:11:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+90</span>+ oct 25 23:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+91</span>+ oct 25 23:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:41:10 kst sat oct 25 2025</div>
+        <div class="diff-line added"><span class='line-number'>+92</span>+ oct 25 23:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+93</span>+ oct 26 00:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+94</span>+ oct 26 00:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+95</span>+ oct 26 00:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+96</span>+ oct 26 00:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+97</span>+ oct 26 01:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+98</span>+ oct 26 01:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+99</span>+ oct 26 01:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+100</span>+ oct 26 01:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+101</span>+ oct 26 02:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+102</span>+ oct 26 02:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+103</span>+ oct 26 02:30:06 kst: %sec_login-5-login_success: login success [user: unms] [source: 165.243.17.244] [localport: 23] at 02:30:06 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+104</span>+ oct 26 02:30:16 kst: %sys-6-logout: user unms has exited tty session 1(165.243.17.244)</div>
+        <div class="diff-line added"><span class='line-number'>+105</span>+ oct 26 02:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+106</span>+ oct 26 02:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+107</span>+ oct 26 03:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+108</span>+ oct 26 03:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+109</span>+ oct 26 03:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+110</span>+ oct 26 03:43:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+111</span>+ oct 26 04:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+112</span>+ oct 26 04:13:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+113</span>+ oct 26 04:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+114</span>+ oct 26 04:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+115</span>+ oct 26 05:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+116</span>+ oct 26 05:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+117</span>+ oct 26 05:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+118</span>+ oct 26 05:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+119</span>+ oct 26 06:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+120</span>+ oct 26 06:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+121</span>+ oct 26 06:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+122</span>+ oct 26 06:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+123</span>+ oct 26 07:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+124</span>+ oct 26 07:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+125</span>+ oct 26 07:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+126</span>+ oct 26 07:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+127</span>+ oct 26 08:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+128</span>+ oct 26 08:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+129</span>+ oct 26 08:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+130</span>+ oct 26 08:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+131</span>+ oct 26 09:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+132</span>+ oct 26 09:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+133</span>+ oct 26 09:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+134</span>+ oct 26 09:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+135</span>+ oct 26 10:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+136</span>+ oct 26 10:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+137</span>+ oct 26 10:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+138</span>+ oct 26 10:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+139</span>+ oct 26 10:46:31 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:46:31 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+140</span>+ oct 26 10:46:34 kst: %dmi-5-auth_passed: switch 1 r0/0: dmiauthd: user &#39;unms&#39; authenticated successfully from 10.81.214.40:19529 and was authorized for netconf over ssh. external groups: priv15</div>
+        <div class="diff-line added"><span class='line-number'>+141</span>+ oct 26 10:49:34 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+142</span>+ oct 26 11:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+143</span>+ oct 26 11:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+144</span>+ oct 26 11:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+145</span>+ oct 26 11:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+146</span>+ oct 26 12:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+147</span>+ oct 26 12:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+148</span>+ oct 26 12:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+149</span>+ oct 26 12:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+150</span>+ oct 26 13:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+151</span>+ oct 26 13:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+152</span>+ oct 26 13:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+153</span>+ oct 26 13:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+154</span>+ oct 26 14:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+155</span>+ oct 26 14:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+156</span>+ oct 26 14:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+157</span>+ oct 26 14:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+158</span>+ oct 26 15:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+159</span>+ oct 26 15:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+160</span>+ oct 26 15:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+161</span>+ oct 26 15:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+162</span>+ oct 26 16:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+163</span>+ oct 26 16:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+164</span>+ oct 26 16:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+165</span>+ oct 26 16:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+166</span>+ oct 26 17:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+167</span>+ oct 26 17:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+168</span>+ oct 26 17:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+169</span>+ oct 26 17:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+170</span>+ oct 26 18:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+171</span>+ oct 26 18:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+172</span>+ oct 26 18:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+173</span>+ oct 26 18:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+174</span>+ oct 26 19:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+175</span>+ oct 26 19:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+176</span>+ oct 26 19:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+177</span>+ oct 26 19:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+178</span>+ oct 26 20:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+179</span>+ oct 26 20:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+180</span>+ oct 26 20:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+181</span>+ oct 26 20:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+182</span>+ oct 26 21:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+183</span>+ oct 26 21:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+184</span>+ oct 26 21:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+185</span>+ oct 26 21:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+186</span>+ oct 26 22:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+187</span>+ oct 26 22:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+188</span>+ oct 26 22:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+189</span>+ oct 26 22:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+190</span>+ oct 26 23:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:11:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+191</span>+ oct 26 23:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+192</span>+ oct 26 23:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:41:10 kst sun oct 26 2025</div>
+        <div class="diff-line added"><span class='line-number'>+193</span>+ oct 26 23:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+194</span>+ oct 27 00:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+195</span>+ oct 27 00:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+196</span>+ oct 27 00:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+197</span>+ oct 27 00:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+198</span>+ oct 27 01:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+199</span>+ oct 27 01:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+200</span>+ oct 27 01:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+201</span>+ oct 27 01:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+202</span>+ oct 27 02:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+203</span>+ oct 27 02:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+204</span>+ oct 27 02:30:06 kst: %sec_login-5-login_success: login success [user: unms] [source: 165.243.17.244] [localport: 23] at 02:30:06 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+205</span>+ oct 27 02:30:16 kst: %sys-6-logout: user unms has exited tty session 1(165.243.17.244)</div>
+        <div class="diff-line added"><span class='line-number'>+206</span>+ oct 27 02:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+207</span>+ oct 27 02:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+208</span>+ oct 27 03:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+209</span>+ oct 27 03:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+210</span>+ oct 27 03:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+211</span>+ oct 27 03:43:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+212</span>+ oct 27 04:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+213</span>+ oct 27 04:13:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+214</span>+ oct 27 04:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+215</span>+ oct 27 04:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+216</span>+ oct 27 05:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+217</span>+ oct 27 05:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+218</span>+ oct 27 05:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+219</span>+ oct 27 05:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+220</span>+ oct 27 06:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+221</span>+ oct 27 06:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+222</span>+ oct 27 06:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+223</span>+ oct 27 06:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+224</span>+ oct 27 07:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+225</span>+ oct 27 07:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+226</span>+ oct 27 07:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+227</span>+ oct 27 07:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+228</span>+ oct 27 08:00:34 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:00:34 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+229</span>+ oct 27 08:03:27 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+230</span>+ oct 27 08:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+231</span>+ oct 27 08:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+232</span>+ oct 27 08:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+233</span>+ oct 27 08:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+234</span>+ oct 27 09:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+235</span>+ oct 27 09:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+236</span>+ oct 27 09:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+237</span>+ oct 27 09:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+238</span>+ oct 27 10:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+239</span>+ oct 27 10:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+240</span>+ oct 27 10:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+241</span>+ oct 27 10:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+242</span>+ oct 27 10:47:53 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:47:53 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+243</span>+ oct 27 10:47:56 kst: %dmi-5-auth_passed: switch 1 r0/0: dmiauthd: user &#39;unms&#39; authenticated successfully from 10.81.214.40:50746 and was authorized for netconf over ssh. external groups: priv15</div>
+        <div class="diff-line added"><span class='line-number'>+244</span>+ oct 27 10:50:55 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+245</span>+ oct 27 11:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+246</span>+ oct 27 11:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+247</span>+ oct 27 11:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+248</span>+ oct 27 11:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+249</span>+ oct 27 12:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+250</span>+ oct 27 12:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+251</span>+ oct 27 12:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+252</span>+ oct 27 12:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+253</span>+ oct 27 13:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+254</span>+ oct 27 13:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+255</span>+ oct 27 13:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+256</span>+ oct 27 13:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+257</span>+ oct 27 14:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+258</span>+ oct 27 14:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+259</span>+ oct 27 14:30:47 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:30:47 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+260</span>+ oct 27 14:32:49 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+261</span>+ oct 27 14:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+262</span>+ oct 27 14:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+263</span>+ oct 27 15:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+264</span>+ oct 27 15:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+265</span>+ oct 27 15:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+266</span>+ oct 27 15:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+267</span>+ oct 27 16:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+268</span>+ oct 27 16:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+269</span>+ oct 27 16:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+270</span>+ oct 27 16:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+271</span>+ oct 27 17:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+272</span>+ oct 27 17:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+273</span>+ oct 27 17:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+274</span>+ oct 27 17:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+275</span>+ oct 27 18:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+276</span>+ oct 27 18:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+277</span>+ oct 27 18:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+278</span>+ oct 27 18:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+279</span>+ oct 27 19:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+280</span>+ oct 27 19:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+281</span>+ oct 27 19:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+282</span>+ oct 27 19:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+283</span>+ oct 27 20:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+284</span>+ oct 27 20:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+285</span>+ oct 27 20:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+286</span>+ oct 27 20:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+287</span>+ oct 27 21:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+288</span>+ oct 27 21:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+289</span>+ oct 27 21:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+290</span>+ oct 27 21:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+291</span>+ oct 27 22:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+292</span>+ oct 27 22:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+293</span>+ oct 27 22:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+294</span>+ oct 27 22:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+295</span>+ oct 27 23:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:11:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+296</span>+ oct 27 23:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+297</span>+ oct 27 23:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:41:10 kst mon oct 27 2025</div>
+        <div class="diff-line added"><span class='line-number'>+298</span>+ oct 27 23:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+299</span>+ oct 28 00:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+300</span>+ oct 28 00:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+301</span>+ oct 28 00:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+302</span>+ oct 28 00:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+303</span>+ oct 28 01:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+304</span>+ oct 28 01:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+305</span>+ oct 28 01:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+306</span>+ oct 28 01:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+307</span>+ oct 28 02:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+308</span>+ oct 28 02:13:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+309</span>+ oct 28 02:30:06 kst: %sec_login-5-login_success: login success [user: unms] [source: 165.243.17.244] [localport: 23] at 02:30:06 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+310</span>+ oct 28 02:30:16 kst: %sys-6-logout: user unms has exited tty session 1(165.243.17.244)</div>
+        <div class="diff-line added"><span class='line-number'>+311</span>+ oct 28 02:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+312</span>+ oct 28 02:43:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+313</span>+ oct 28 03:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+314</span>+ oct 28 03:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+315</span>+ oct 28 03:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+316</span>+ oct 28 03:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+317</span>+ oct 28 04:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+318</span>+ oct 28 04:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+319</span>+ oct 28 04:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+320</span>+ oct 28 04:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+321</span>+ oct 28 05:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+322</span>+ oct 28 05:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+323</span>+ oct 28 05:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+324</span>+ oct 28 05:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+325</span>+ oct 28 06:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+326</span>+ oct 28 06:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+327</span>+ oct 28 06:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+328</span>+ oct 28 06:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+329</span>+ oct 28 07:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+330</span>+ oct 28 07:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+331</span>+ oct 28 07:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+332</span>+ oct 28 07:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+333</span>+ oct 28 08:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+334</span>+ oct 28 08:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+335</span>+ oct 28 08:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+336</span>+ oct 28 08:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+337</span>+ oct 28 09:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+338</span>+ oct 28 09:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+339</span>+ oct 28 09:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+340</span>+ oct 28 09:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+341</span>+ oct 28 10:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+342</span>+ oct 28 10:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+343</span>+ oct 28 10:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+344</span>+ oct 28 10:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+345</span>+ oct 28 10:48:53 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:48:53 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+346</span>+ oct 28 10:48:57 kst: %dmi-5-auth_passed: switch 1 r0/0: dmiauthd: user &#39;unms&#39; authenticated successfully from 10.81.214.40:64613 and was authorized for netconf over ssh. external groups: priv15</div>
+        <div class="diff-line added"><span class='line-number'>+347</span>+ oct 28 10:51:57 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+348</span>+ oct 28 11:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+349</span>+ oct 28 11:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+350</span>+ oct 28 11:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+351</span>+ oct 28 11:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+352</span>+ oct 28 12:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+353</span>+ oct 28 12:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+354</span>+ oct 28 12:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+355</span>+ oct 28 12:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+356</span>+ oct 28 13:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+357</span>+ oct 28 13:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+358</span>+ oct 28 13:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+359</span>+ oct 28 13:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+360</span>+ oct 28 14:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+361</span>+ oct 28 14:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+362</span>+ oct 28 14:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 14:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+363</span>+ oct 28 14:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+364</span>+ oct 28 15:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+365</span>+ oct 28 15:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+366</span>+ oct 28 15:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 15:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+367</span>+ oct 28 15:43:13 kst: %sec_login-5-login_success: login success [user: hrdace] [source: 10.64.154.183] [localport: 23] at 15:43:13 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+368</span>+ oct 28 15:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+369</span>+ oct 28 15:57:41 kst: %sys-6-logout: user hrdace has exited tty session 2(10.64.154.183)</div>
+        <div class="diff-line added"><span class='line-number'>+370</span>+ oct 28 16:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+371</span>+ oct 28 16:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+372</span>+ oct 28 16:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 16:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+373</span>+ oct 28 16:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+374</span>+ oct 28 17:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+375</span>+ oct 28 17:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+376</span>+ oct 28 17:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 17:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+377</span>+ oct 28 17:43:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+378</span>+ oct 28 18:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+379</span>+ oct 28 18:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+380</span>+ oct 28 18:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 18:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+381</span>+ oct 28 18:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+382</span>+ oct 28 19:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+383</span>+ oct 28 19:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+384</span>+ oct 28 19:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 19:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+385</span>+ oct 28 19:43:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+386</span>+ oct 28 20:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+387</span>+ oct 28 20:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+388</span>+ oct 28 20:39:41 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:39:41 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+389</span>+ oct 28 20:41:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+390</span>+ oct 28 20:41:11 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 20:41:11 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+391</span>+ oct 28 20:43:17 kst: %sys-6-logout: user unms has exited tty session 2(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+392</span>+ oct 28 21:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+393</span>+ oct 28 21:13:16 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+394</span>+ oct 28 21:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 21:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+395</span>+ oct 28 21:43:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+396</span>+ oct 28 22:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+397</span>+ oct 28 22:13:11 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+398</span>+ oct 28 22:28:36 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:28:36 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+399</span>+ oct 28 22:30:42 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+400</span>+ oct 28 22:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 22:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+401</span>+ oct 28 22:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+402</span>+ oct 28 23:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:11:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+403</span>+ oct 28 23:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+404</span>+ oct 28 23:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 23:41:10 kst tue oct 28 2025</div>
+        <div class="diff-line added"><span class='line-number'>+405</span>+ oct 28 23:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+406</span>+ oct 29 00:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+407</span>+ oct 29 00:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+408</span>+ oct 29 00:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 00:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+409</span>+ oct 29 00:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+410</span>+ oct 29 01:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+411</span>+ oct 29 01:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+412</span>+ oct 29 01:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 01:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+413</span>+ oct 29 01:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+414</span>+ oct 29 02:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+415</span>+ oct 29 02:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+416</span>+ oct 29 02:30:17 kst: %sec_login-5-login_success: login success [user: unms] [source: 165.243.17.244] [localport: 23] at 02:30:17 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+417</span>+ oct 29 02:30:27 kst: %sys-6-logout: user unms has exited tty session 1(165.243.17.244)</div>
+        <div class="diff-line added"><span class='line-number'>+418</span>+ oct 29 02:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 02:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+419</span>+ oct 29 02:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+420</span>+ oct 29 03:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+421</span>+ oct 29 03:13:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+422</span>+ oct 29 03:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 03:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+423</span>+ oct 29 03:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+424</span>+ oct 29 04:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+425</span>+ oct 29 04:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+426</span>+ oct 29 04:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 04:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+427</span>+ oct 29 04:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+428</span>+ oct 29 05:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+429</span>+ oct 29 05:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+430</span>+ oct 29 05:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 05:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+431</span>+ oct 29 05:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+432</span>+ oct 29 06:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+433</span>+ oct 29 06:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+434</span>+ oct 29 06:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 06:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+435</span>+ oct 29 06:43:12 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+436</span>+ oct 29 07:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+437</span>+ oct 29 07:13:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+438</span>+ oct 29 07:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 07:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+439</span>+ oct 29 07:43:13 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+440</span>+ oct 29 08:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+441</span>+ oct 29 08:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+442</span>+ oct 29 08:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 08:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+443</span>+ oct 29 08:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+444</span>+ oct 29 09:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+445</span>+ oct 29 09:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+446</span>+ oct 29 09:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 09:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+447</span>+ oct 29 09:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+448</span>+ oct 29 10:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+449</span>+ oct 29 10:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+450</span>+ oct 29 10:31:41 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:31:41 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+451</span>+ oct 29 10:33:44 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+452</span>+ oct 29 10:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+453</span>+ oct 29 10:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+454</span>+ oct 29 10:47:15 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 10:47:15 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+455</span>+ oct 29 10:47:17 kst: %dmi-5-auth_passed: switch 1 r0/0: dmiauthd: user &#39;unms&#39; authenticated successfully from 10.81.214.40:25263 and was authorized for netconf over ssh. external groups: priv15</div>
+        <div class="diff-line added"><span class='line-number'>+456</span>+ oct 29 10:50:19 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+457</span>+ oct 29 11:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+458</span>+ oct 29 11:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+459</span>+ oct 29 11:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 11:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+460</span>+ oct 29 11:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+461</span>+ oct 29 12:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+462</span>+ oct 29 12:13:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+463</span>+ oct 29 12:41:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 12:41:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+464</span>+ oct 29 12:43:14 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+        <div class="diff-line added"><span class='line-number'>+465</span>+ oct 29 13:11:10 kst: %sec_login-5-login_success: login success [user: unms] [source: 10.81.214.40] [localport: 22] at 13:11:10 kst wed oct 29 2025</div>
+        <div class="diff-line added"><span class='line-number'>+466</span>+ oct 29 13:13:15 kst: %sys-6-logout: user unms has exited tty session 1(10.81.214.40)</div>
+    </div>
+</body>
+</html>

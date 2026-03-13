@@ -1,0 +1,21 @@
+2025-10-30 18:11:29,610 - INFO - [main.py:63] - 로그 파일 생성: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\logs\network_automation_20251030_181129.log
+2025-10-30 18:11:29,879 - INFO - [workers.py:57] - [INIT] paramiko 초기화 완료
+2025-10-30 18:11:30,380 - INFO - [main.py:97] - 네트워크 라이브러리 초기화 완료
+2025-10-30 18:11:30,380 - INFO - [main.py:103] - 네트워크 자동화 애플리케이션 시작
+2025-10-30 18:11:30,380 - INFO - [main.py:104] - Python 버전: 3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]
+2025-10-30 18:11:30,380 - INFO - [main.py:105] - PyInstaller 환경: False
+2025-10-30 18:11:30,381 - INFO - [main.py:106] - 작업 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 18:11:30,381 - INFO - [main.py:107] - 실행 파일 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 18:11:30,381 - INFO - [main.py:108] - 기본 디렉토리: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)
+2025-10-30 18:11:30,410 - INFO - [main.py:125] - 아이콘 로드 성공: D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\icons\app_icon.ico
+2025-10-30 18:11:30,410 - INFO - [main.py:135] - main_window 모듈 import 시도 중...
+2025-10-30 18:11:30,430 - CRITICAL - [main.py:179] - 메인 윈도우 생성 실패: unterminated triple-quoted string literal (detected at line 927) (main_window.py, line 895)
+Traceback (most recent call last):
+  File "D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\main.py", line 139, in main
+    from ui.main_window import NetworkAutomationApp
+  File "D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\ui\__init__.py", line 8, in <module>
+    from . import main_window
+  File "D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\ui\main_window.py", line 895
+    """설정 불러오기"""
+              ^
+SyntaxError: unterminated triple-quoted string literal (detected at line 927)
