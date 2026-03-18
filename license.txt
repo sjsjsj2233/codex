@@ -1,0 +1,84 @@
+NETWORK AUTOMATION — END USER LICENSE AGREEMENT (EULA)
+Last Updated: 2026-03-17
+
+PLEASE READ THIS AGREEMENT CAREFULLY BEFORE INSTALLING OR USING THIS SOFTWARE.
+BY CLICKING "I AGREE" YOU ACCEPT ALL TERMS AND CONDITIONS BELOW.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. LICENSE GRANT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The developer ("Licensor") grants you a non-exclusive, non-transferable license
+to install and use Network Automation ("Software") on a single computer for
+which a valid license key has been activated.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. LICENSE KEY & ACTIVATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Each license key may be activated on ONE device only.
+- Sharing, selling, or distributing your license key is strictly prohibited.
+- If you replace your device, contact support to request a transfer.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. RESTRICTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You may NOT:
+- Reverse engineer, decompile, or disassemble the Software.
+- Redistribute, resell, sublicense, or rent the Software.
+- Remove or alter any copyright notices or license information.
+- Use the Software for illegal purposes or unauthorized network access.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. SECURITY & DATA PRIVACY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- All network connections are made ONLY to device IPs entered by the user.
+- Passwords exist in memory only during execution and are never stored to disk.
+- No usage data, credentials, or configuration files are sent to external servers.
+- The Software communicates with https://auto-network.co.kr solely for
+  license activation and update checks.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. DISCLAIMER OF WARRANTIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+THE LICENSOR MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR
+NON-INFRINGEMENT.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. LIMITATION OF LIABILITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING FROM THE USE OR INABILITY TO USE
+THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE USER IS SOLELY RESPONSIBLE FOR ANY DAMAGE CAUSED TO NETWORK DEVICES
+OR DATA AS A RESULT OF USING THIS SOFTWARE.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. REFUND POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Refunds are handled through Gumroad's refund policy within 30 days of purchase.
+Once a license key has been activated on a device, the key cannot be transferred
+except through support request.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. TERMINATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This license is effective until terminated. It will terminate automatically
+if you fail to comply with any term of this Agreement. Upon termination,
+you must uninstall and destroy all copies of the Software.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. GOVERNING LAW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This Agreement shall be governed by the laws of the Republic of Korea.
+Any disputes shall be resolved in the courts of Seoul, Korea.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+10. CONTACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Developer : Kim Sang-jun
+Website   : https://auto-network.co.kr
+Email     : doaslove962@gmail.com
+
+Copyright (c) 2026 Kim Sang-jun. All rights reserved.

@@ -1,0 +1,32 @@
+# Build / dist
+build/
+dist/
+output/
+*.spec.bak
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+obf/
+
+# Logs
+logs/
+
+# Archives / generated files
+*.zip
+*.log
+pyarmor.bug.log
+
+# IDE / OS
+.claude/
+.lang
+*.docx
+*.pdf
+config.json
+
+# Secrets / session data
+sessions.json

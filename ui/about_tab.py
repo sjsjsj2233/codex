@@ -1,302 +1,413 @@
 """
-About Tab - 컴팩트 디자인
+정보 탭
 """
-
+import json
+import os
+import webbrowser
+from core.i18n import tr
+from core.updater import UpdateChecker, AutoUpdater, CURRENT_VERSION
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-    QPushButton, QScrollArea
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QFrame, QPushButton, QProgressBar, QApplication, QDialog, QMessageBox,
+    QCheckBox,
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-import webbrowser
+from PyQt5.QtGui import QFont, QColor, QPainter, QBrush, QLinearGradient, QPen
+import subprocess
+
+def _config_path() -> str:
+    d = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'NetworkAutomation')
+    os.makedirs(d, exist_ok=True)
+    return os.path.join(d, 'config.json')
+
+
+def _load_auto_update() -> bool:
+    """config.json 에서 auto_update 설정 읽기 (기본값 True)"""
+    try:
+        _cp = _config_path()
+        if os.path.exists(_cp):
+            with open(_cp, encoding='utf-8') as f:
+                return json.load(f).get('auto_update', True)
+    except Exception:
+        pass
+    return True
+
+
+def _save_auto_update(enabled: bool):
+    """config.json 에 auto_update 설정 저장"""
+    cfg = {}
+    try:
+        _cp = _config_path()
+        if os.path.exists(_cp):
+            with open(_cp, encoding='utf-8') as f:
+                cfg = json.load(f)
+    except Exception:
+        pass
+    cfg['auto_update'] = enabled
+    try:
+        with open(_config_path(), 'w', encoding='utf-8') as f:
+            json.dump(cfg, f, indent=4, ensure_ascii=False)
+    except Exception:
+        pass
 
 
 class AboutTab(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, license_manager=None):
         super().__init__(parent)
-        self.parent = parent
-        self.init_ui()
+        self._lm = license_manager
+        self._update_info = None   # 서버에서 받은 업데이트 정보 캐시
+        self._build_ui()
 
-    def init_ui(self):
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
-        scroll.setStyleSheet("QScrollArea { background-color: #f8fafc; border: none; }")
+    def _build_ui(self):
+        self.setStyleSheet('background:#f1f5f9')
 
-        content = QWidget()
-        content.setStyleSheet("background-color: #f8fafc;")
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(20)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
-        # 헤더
-        header = self.create_header()
-        layout.addWidget(header)
+        hdr = _MiniHeader()
+        hdr.setFixedHeight(120)
+        root.addWidget(hdr)
 
-        # 개발자 정보
-        dev_card = self.create_card(
-            "👨‍💻 개발자 정보",
-            [("김상준", "#1e293b", True), ("네트워크 엔지니어", "#64748b", False)]
+        body = QWidget()
+        body.setStyleSheet('background:transparent')
+        bv = QVBoxLayout(body)
+        bv.setContentsMargins(40, 28, 40, 28)
+        bv.setSpacing(14)
+
+        # ── 버전 정보 카드 ────────────────────────────────────────
+        ver_card = _card()
+        vc = QVBoxLayout(ver_card)
+        vc.setContentsMargins(20, 16, 20, 16)
+        vc.setSpacing(6)
+        _row(vc, tr('버전'),    f'v {CURRENT_VERSION}', bold_val=True, val_color='#2563eb')
+        _row(vc, tr('빌드'),    '2026.03.17')
+        _row(vc, tr('플랫폼'),  'Windows (PyQt5)')
+        bv.addWidget(ver_card)
+
+        # ── 업데이트 카드 ─────────────────────────────────────────
+        upd_card = _card()
+        uc = QVBoxLayout(upd_card)
+        uc.setContentsMargins(20, 14, 20, 14)
+        uc.setSpacing(8)
+
+        upd_title_row = QHBoxLayout()
+        upd_title_lbl = QLabel(tr('업데이트'))
+        upd_title_lbl.setFont(QFont('맑은 고딕', 9, QFont.Bold))
+        upd_title_lbl.setStyleSheet('color:#334155;background:transparent')
+        upd_title_row.addWidget(upd_title_lbl)
+        upd_title_row.addStretch()
+
+        self._upd_check_btn = _btn(tr('🔄 업데이트 확인'), '#6366f1')
+        self._upd_check_btn.setFixedHeight(28)
+        self._upd_check_btn.clicked.connect(self._check_update)
+        upd_title_row.addWidget(self._upd_check_btn)
+        uc.addLayout(upd_title_row)
+
+        self._upd_status_lbl = QLabel(tr('확인하려면 버튼을 누르세요.'))
+        self._upd_status_lbl.setFont(QFont('맑은 고딕', 9))
+        self._upd_status_lbl.setStyleSheet('color:#64748b;background:transparent')
+        uc.addWidget(self._upd_status_lbl)
+
+        # 자동 업데이트 체크 on/off
+        auto_row = QHBoxLayout()
+        self._auto_upd_chk = QCheckBox(tr('시작 시 자동으로 업데이트 확인'))
+        self._auto_upd_chk.setFont(QFont('맑은 고딕', 9))
+        self._auto_upd_chk.setStyleSheet('color:#475569;background:transparent')
+        self._auto_upd_chk.setChecked(_load_auto_update())
+        self._auto_upd_chk.toggled.connect(self._on_auto_update_toggled)
+        auto_row.addWidget(self._auto_upd_chk)
+        auto_row.addStretch()
+        uc.addLayout(auto_row)
+
+        # 업데이트 있을 때만 표시되는 설치 버튼
+        self._upd_install_btn = _btn(tr('⬇ 지금 업데이트'), '#d97706')
+        self._upd_install_btn.setFixedHeight(28)
+        self._upd_install_btn.clicked.connect(self._start_auto_update)
+        self._upd_install_btn.hide()
+        uc.addWidget(self._upd_install_btn, 0, Qt.AlignLeft)
+
+        bv.addWidget(upd_card)
+
+        # ── 라이센스 카드 ─────────────────────────────────────────
+        lic_card = _card()
+        lc = QVBoxLayout(lic_card)
+        lc.setContentsMargins(20, 16, 20, 16)
+        lc.setSpacing(6)
+
+        if self._lm:
+            info = self._lm.get_info()
+            if info:
+                # 정식 라이센스 활성화
+                _row(lc, tr('상태'),   tr('활성화됨'),
+                     bold_val=True, val_color='#16a34a')
+                _row(lc, tr('만료일'), info.get('expires_at', '-'))
+                mid = self._lm.get_machine_id()
+                _row(lc, tr('기기 ID'), f'{mid[:10]}···')
+            else:
+                # 미활성화
+                _row(lc, tr('상태'), tr('미활성화'),
+                     bold_val=True, val_color='#dc2626')
+                mid = self._lm.get_machine_id()
+                _row(lc, tr('기기 ID'), mid)
+                _row(lc, tr('안내'),
+                     tr('라이센스 발급은 이메일로 문의해주세요.'),
+                     val_color='#64748b')
+                _email_row(lc, tr('문의'), 'doaslove962@gmail.com')
+        else:
+            _row(lc, tr('상태'), '-', val_color='#64748b')
+
+        bv.addWidget(lic_card)
+
+        # ── 버튼 행 ───────────────────────────────────────────────
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(10)
+
+        if self._lm and not self._lm.is_licensed():
+            b_lic = _btn(tr('🔑 라이센스 활성화'), '#2563eb')
+            b_lic.clicked.connect(self._open_license_dialog)
+            btn_row.addWidget(b_lic)
+
+        b_terms = _btn(tr('📋 이용약관'), '#475569')
+        b_terms.clicked.connect(self._show_terms)
+        btn_row.addWidget(b_terms)
+
+        b_web = _btn(tr('🌐 웹사이트'), '#10b981')
+        b_web.clicked.connect(lambda: webbrowser.open('https://auto-network.co.kr'))
+        btn_row.addWidget(b_web)
+        btn_row.addStretch()
+        bv.addLayout(btn_row)
+
+        bv.addStretch()
+        root.addWidget(body, 1)
+
+    def _show_terms(self):
+        from ui.disclaimer_dialog import DisclaimerDialog
+        DisclaimerDialog(self, view_only=True).exec_()
+
+    def _open_license_dialog(self):
+        from ui.license_dialog import LicenseDialog
+        dlg = LicenseDialog(self._lm, self)
+        if dlg.exec_():
+            # 라이센스 성공 → 카드 갱신
+            self._refresh()
+
+    def showEvent(self, event):
+        """탭이 표시될 때마다 라이센스 상태 갱신"""
+        super().showEvent(event)
+        self._refresh()
+
+    def _refresh(self):
+        """라이센스 상태 갱신 — 레이아웃 전체 재구성"""
+        # 기존 레이아웃과 위젯 완전히 제거
+        old_layout = self.layout()
+        if old_layout:
+            while old_layout.count():
+                item = old_layout.takeAt(0)
+                w = item.widget()
+                if w:
+                    w.hide()
+                    w.deleteLater()
+            QWidget().setLayout(old_layout)
+        self._build_ui()
+
+    def _on_auto_update_toggled(self, checked: bool):
+        _save_auto_update(checked)
+        if checked:
+            self._upd_status_lbl.setStyleSheet('color:#64748b;background:transparent')
+            self._upd_status_lbl.setText(tr('확인하려면 버튼을 누르세요.'))
+        else:
+            self._upd_status_lbl.setStyleSheet('color:#94a3b8;background:transparent')
+            self._upd_status_lbl.setText(tr('자동 업데이트 확인이 비활성화되어 있습니다.'))
+        self._upd_install_btn.hide()
+
+    # ── 업데이트 확인 ────────────────────────────────────────────
+    def _check_update(self):
+        self._upd_check_btn.setEnabled(False)
+        self._upd_install_btn.hide()
+        self._upd_status_lbl.setStyleSheet('color:#64748b;background:transparent')
+        self._upd_status_lbl.setText(tr('확인 중...'))
+
+        self._check_update_found = False
+        self._checker = UpdateChecker()
+        self._checker.update_available.connect(self._on_update_found)
+        self._checker.check_failed.connect(self._on_check_failed)
+        self._checker.finished.connect(self._on_check_finished)
+        self._checker.start()
+
+    def _on_check_finished(self):
+        self._upd_check_btn.setEnabled(True)
+        if not self._check_update_found and not self._upd_status_lbl.text().startswith(tr('서버')):
+            self._upd_status_lbl.setStyleSheet('color:#16a34a;background:transparent;font-weight:bold')
+            self._upd_status_lbl.setText(tr('✔  최신 버전입니다.'))
+
+    def _on_update_found(self, info: dict):
+        self._check_update_found = True
+        self._update_info = info
+        ver  = info.get('version', '?')
+        date = info.get('release_date', '')
+        self._upd_status_lbl.setStyleSheet('color:#d97706;background:transparent;font-weight:bold')
+        self._upd_status_lbl.setText(
+            f'v{ver}  {tr("업데이트 가능")}  ({date})'
         )
-        layout.addWidget(dev_card)
+        self._upd_install_btn.show()
 
-        # 안내
-        notice = self.create_notice()
-        layout.addWidget(notice)
+    def _on_check_failed(self, err: str):
+        self._upd_status_lbl.setStyleSheet('color:#dc2626;background:transparent')
+        self._upd_status_lbl.setText(tr('서버에 연결할 수 없습니다.'))
 
-        # 최근 업데이트
-        updates = self.create_updates()
-        layout.addWidget(updates)
+    def _start_auto_update(self):
+        if not self._update_info:
+            return
+        url = self._update_info.get('download_url', '')
+        if not url:
+            return
 
-        # 기능
-        features = self.create_features()
-        layout.addWidget(features)
+        dlg = QDialog(self)
+        dlg.setWindowTitle(tr('업데이트 중...'))
+        dlg.setFixedSize(400, 130)
+        dlg.setWindowFlags(dlg.windowFlags() & ~Qt.WindowContextHelpButtonHint)
 
-        # 연락처
-        contact = self.create_contact()
-        layout.addWidget(contact)
+        from PyQt5.QtWidgets import QVBoxLayout as VL
+        v = VL(dlg)
+        v.setContentsMargins(20, 16, 20, 16)
+        v.setSpacing(10)
 
-        layout.addStretch()
-        scroll.setWidget(content)
+        status_lbl = QLabel(tr('다운로드 준비 중...'))
+        status_lbl.setFont(QFont('맑은 고딕', 9))
+        v.addWidget(status_lbl)
 
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(scroll)
+        bar = QProgressBar()
+        bar.setRange(0, 100)
+        bar.setValue(0)
+        bar.setFixedHeight(18)
+        v.addWidget(bar)
 
-    def create_header(self):
-        widget = QWidget()
-        widget.setStyleSheet("background-color: transparent;")
-        layout = QVBoxLayout(widget)
-        layout.setSpacing(10)
-        layout.setAlignment(Qt.AlignCenter)
+        cancel_btn = QPushButton(tr('취소'))
+        cancel_btn.setFixedHeight(28)
+        cancel_btn.setFont(QFont('맑은 고딕', 9))
+        v.addWidget(cancel_btn, 0, Qt.AlignRight)
 
-        title = QLabel("네트워크 자동화 프로그램")
-        title.setFont(QFont("맑은 고딕", 18, QFont.Bold))
-        title.setStyleSheet("color: #1e293b;")
-        title.setAlignment(Qt.AlignCenter)
+        self._auto_updater = AutoUpdater(url)
 
-        subtitle = QLabel("차세대 네트워크 관리 솔루션")
-        subtitle.setFont(QFont("맑은 고딕", 10))
-        subtitle.setStyleSheet("color: #64748b;")
-        subtitle.setAlignment(Qt.AlignCenter)
+        def _on_progress(pct, msg):
+            bar.setValue(pct)
+            status_lbl.setText(msg)
 
-        version = QLabel("Version 7.0 • Build 2025.10.30")
-        version.setFont(QFont("맑은 고딕", 10, QFont.Bold))
-        version.setStyleSheet("""
-            background-color: #3b82f6;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 12px;
-        """)
-        version.setAlignment(Qt.AlignCenter)
-        version.setMaximumWidth(280)
+        def _on_finished(success, result):
+            dlg.accept()
+            if success:
+                QMessageBox.information(
+                    self, tr('업데이트'),
+                    tr('다운로드 완료. 프로그램을 재시작하여 업데이트를 적용합니다.')
+                )
+                try:
+                    subprocess.Popen(['cmd', '/c', result],
+                                     creationflags=subprocess.CREATE_NEW_CONSOLE)
+                except Exception:
+                    pass
+                QApplication.quit()
+            else:
+                QMessageBox.warning(self, tr('업데이트 실패'),
+                                    f'{tr("다운로드 오류")}:\n{result}')
 
-        layout.addWidget(title)
-        layout.addWidget(subtitle)
-        layout.addWidget(version, 0, Qt.AlignCenter)
+        cancel_btn.clicked.connect(lambda: (
+            self._auto_updater.terminate(), dlg.reject()
+        ))
+        self._auto_updater.progress.connect(_on_progress)
+        self._auto_updater.finished.connect(_on_finished)
+        self._auto_updater.start()
+        dlg.exec_()
 
-        return widget
 
-    def create_card(self, title, items):
-        card = QFrame()
-        card.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 16px;
-            }
-        """)
+# ── 헬퍼 ──────────────────────────────────────────────────────────────────────
+def _card() -> QFrame:
+    f = QFrame()
+    f.setStyleSheet(
+        'QFrame{background:#ffffff;border-radius:10px;border:1px solid #e2e8f0}'
+    )
+    return f
 
-        layout = QVBoxLayout(card)
-        layout.setSpacing(6)
 
-        title_label = QLabel(title)
-        title_label.setFont(QFont("맑은 고딕", 11, QFont.Bold))
-        title_label.setStyleSheet("color: #1e293b; border: none; padding: 0;")
-        layout.addWidget(title_label)
+def _email_row(layout, label: str, email: str):
+    """클릭 시 Gmail 작성 창을 여는 이메일 행"""
+    row = QHBoxLayout()
+    row.setSpacing(0)
 
-        for text, color, bold in items:
-            label = QLabel(text)
-            font = QFont("맑은 고딕", 10, QFont.Bold if bold else QFont.Normal)
-            label.setFont(font)
-            label.setStyleSheet(f"color: {color}; border: none; padding: 0;")
-            layout.addWidget(label)
+    lbl_k = QLabel(label)
+    lbl_k.setFont(QFont('맑은 고딕', 9))
+    lbl_k.setStyleSheet('color:#94a3b8;background:transparent')
+    lbl_k.setFixedWidth(72)
 
-        return card
+    lbl_v = QLabel(f'<a href="mailto:{email}" style="color:#2563eb;text-decoration:none">{email}</a>')
+    lbl_v.setFont(QFont('맑은 고딕', 9))
+    lbl_v.setOpenExternalLinks(True)
+    lbl_v.setCursor(Qt.PointingHandCursor)
+    lbl_v.setStyleSheet('background:transparent')
+    lbl_v.setToolTip('클릭하여 이메일 작성')
 
-    def create_notice(self):
-        card = QFrame()
-        card.setStyleSheet("""
-            QFrame {
-                background-color: #eff6ff;
-                border: 1px solid #bfdbfe;
-                border-radius: 8px;
-                padding: 12px;
-            }
-        """)
+    row.addWidget(lbl_k)
+    row.addWidget(lbl_v)
+    row.addStretch()
+    layout.addLayout(row)
 
-        layout = QVBoxLayout(card)
-        layout.setSpacing(4)
 
-        notice1 = QLabel(
-            "ℹ️ 현재 Catalyst 계열의 로그 분석 기능을 제공합니다.\n"
-            "Nexus 계열은 추후 업데이트를 통해 지원할 예정입니다."
-        )
-        notice1.setFont(QFont("맑은 고딕", 9))
-        notice1.setStyleSheet("color: #1e40af; border: none; padding: 0;")
-        notice1.setWordWrap(True)
-        layout.addWidget(notice1)
+def _row(layout, label: str, value: str,
+         bold_val=False, val_color='#334155'):
+    row = QHBoxLayout()
+    row.setSpacing(0)
 
-        notice2 = QLabel(
-            "💬 프로그램 이용 중 불편한 점이나 개선할 부분이 있다면\n"
-            "언제든지 편하게 의견을 남겨주세요. 적극 반영하겠습니다."
-        )
-        notice2.setFont(QFont("맑은 고딕", 9))
-        notice2.setStyleSheet("color: #1e40af; border: none; padding: 0;")
-        notice2.setWordWrap(True)
-        layout.addWidget(notice2)
+    lbl_k = QLabel(label)
+    lbl_k.setFont(QFont('맑은 고딕', 9))
+    lbl_k.setStyleSheet('color:#94a3b8;background:transparent')
+    lbl_k.setFixedWidth(72)
 
-        return card
+    lbl_v = QLabel(value)
+    lbl_v.setFont(QFont('맑은 고딕', 9, QFont.Bold if bold_val else QFont.Normal))
+    lbl_v.setStyleSheet(f'color:{val_color};background:transparent')
 
-    def create_updates(self):
-        card = QFrame()
-        card.setStyleSheet("""
-            QFrame {
-                background-color: #f0fdf4;
-                border: 2px solid #86efac;
-                border-radius: 8px;
-                padding: 16px;
-            }
-        """)
+    row.addWidget(lbl_k)
+    row.addWidget(lbl_v)
+    row.addStretch()
+    layout.addLayout(row)
 
-        layout = QVBoxLayout(card)
-        layout.setSpacing(8)
 
-        title = QLabel("🎉 Version 7.0 업데이트 (2025.10.30)")
-        title.setFont(QFont("맑은 고딕", 11, QFont.Bold))
-        title.setStyleSheet("color: #15803d; border: none; padding: 0;")
-        layout.addWidget(title)
+def _btn(text: str, color: str) -> QPushButton:
+    b = QPushButton(text)
+    b.setFont(QFont('맑은 고딕', 9, QFont.Bold))
+    b.setFixedHeight(32)
+    b.setCursor(Qt.PointingHandCursor)
+    b.setStyleSheet(
+        f'QPushButton{{background:{color};color:#fff;border:none;'
+        f'border-radius:7px;padding:0 18px}}'
+        f'QPushButton:hover{{opacity:0.9}}'
+    )
+    return b
 
-        updates = [
-            "✨ 보고서 탭 UI 전면 개선 - 3단계 섹션 구조",
-            "✨ QMessageBox 스타일 개선 - 가운데 정렬 및 크기 최적화",
-            "✨ 패스워드 입력 공백 인식 기능 추가",
-            "✨ 빠른 체크 기능 추가 - IP 연결 사전 확인",
-            "✨ 실행 상태 실시간 표시 패널 추가",
-            "✨ 탭 위치 개선 - 서브탭 상단 배치"
-        ]
 
-        for update in updates:
-            label = QLabel(update)
-            label.setFont(QFont("맑은 고딕", 9))
-            label.setStyleSheet("color: #166534; border: none; padding: 2px 0;")
-            layout.addWidget(label)
+# ── 미니 헤더 ──────────────────────────────────────────────────────────────────
+class _MiniHeader(QWidget):
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
 
-        return card
+        grad = QLinearGradient(0, 0, self.width(), self.height())
+        grad.setColorAt(0.0, QColor('#0f172a'))
+        grad.setColorAt(1.0, QColor('#1e40af'))
+        p.fillRect(self.rect(), QBrush(grad))
 
-    def create_features(self):
-        card = QFrame()
-        card.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 16px;
-            }
-        """)
+        p.setOpacity(0.06)
+        p.setBrush(QBrush(QColor('#ffffff')))
+        p.setPen(Qt.NoPen)
+        p.drawEllipse(self.width() - 100, -30, 180, 180)
+        p.setOpacity(1.0)
 
-        layout = QVBoxLayout(card)
-        layout.setSpacing(8)
+        p.setPen(QPen(QColor('#f8fafc')))
+        p.setFont(QFont('맑은 고딕', 17, QFont.Bold))
+        p.drawText(32, 52, 'Network Automation  v8.0')
 
-        title = QLabel("💡 주요 기능")
-        title.setFont(QFont("맑은 고딕", 11, QFont.Bold))
-        title.setStyleSheet("color: #1e293b; border: none; padding: 0;")
-        layout.addWidget(title)
+        p.setPen(QPen(QColor('#94a3b8')))
+        p.setFont(QFont('맑은 고딕', 9))
+        p.drawText(34, 74, tr('버전 정보 · 라이센스'))
 
-        features = [
-            "📁 구성 백업 및 버전 관리",
-            "💻 CPU, 메모리, 업타임 수집 및 분석",
-            "📊 Excel 네트워크 상태 리포트 생성",
-            "🔗 SSH/Telnet 일괄 작업 및 명령어 실행"
-        ]
-
-        for feature in features:
-            label = QLabel(feature)
-            label.setFont(QFont("맑은 고딕", 10))
-            label.setStyleSheet("color: #475569; border: none; padding: 2px 0;")
-            layout.addWidget(label)
-
-        return card
-
-    def create_contact(self):
-        card = QFrame()
-        card.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 16px;
-            }
-        """)
-
-        layout = QVBoxLayout(card)
-        layout.setSpacing(12)
-
-        title = QLabel("📞 연락처 010-2884-8765")
-        title.setFont(QFont("맑은 고딕", 11, QFont.Bold))
-        title.setStyleSheet("color: #1e293b; border: none; padding: 0;")
-        layout.addWidget(title)
-
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(8)
-
-        email_btn = QPushButton("📧 이메일 문의")
-        email_btn.setFont(QFont("맑은 고딕", 10, QFont.Bold))
-        email_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #3b82f6;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
-            }
-            QPushButton:hover {
-                background-color: #2563eb;
-            }
-        """)
-        email_btn.setCursor(Qt.PointingHandCursor)
-        email_btn.clicked.connect(lambda: webbrowser.open("mailto:doaslove962@gmail.com"))
-
-        web_btn = QPushButton("🌐 웹사이트")
-        web_btn.setFont(QFont("맑은 고딕", 10, QFont.Bold))
-        web_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #10b981;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
-            }
-            QPushButton:hover {
-                background-color: #059669;
-            }
-        """)
-        web_btn.setCursor(Qt.PointingHandCursor)
-        web_btn.clicked.connect(lambda: webbrowser.open("https://auto-network.co.kr"))
-
-        button_layout.addWidget(email_btn)
-        button_layout.addWidget(web_btn)
-        layout.addLayout(button_layout)
-
-        license_text = QLabel(
-            "이 프로그램은 MIT 라이선스 하에 배포됩니다.\n"
-            "문제 발생 시 언제든지 연락주세요! 🚀"
-        )
-        license_text.setFont(QFont("맑은 고딕", 9))
-        license_text.setStyleSheet("color: #64748b; border: none; padding: 0;")
-        license_text.setAlignment(Qt.AlignCenter)
-        license_text.setWordWrap(True)
-        layout.addWidget(license_text)
-
-        return card
+        p.end()

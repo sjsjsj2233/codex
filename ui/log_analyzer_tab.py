@@ -1,1245 +1,1173 @@
-import sys
+"""
+로그 분석 탭 — Cisco IOS / IOS-XE / NX-OS / ASA / Router
+"""
 import os
 import re
-from datetime import datetime, timedelta
-import pandas as pd
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QMainWindow,  # QMainWindow 추가
-                            QPushButton, QLabel, QLineEdit, QComboBox, QFileDialog, 
-                            QTextEdit, QTableWidget, QTableWidgetItem, QTabWidget, 
-                            QCheckBox, QGroupBox, QFormLayout, QMessageBox, QSplitter,
-                            QProgressBar, QHeaderView, QDateTimeEdit,
-                            QRadioButton, QButtonGroup, QMenu, QAction,QToolBar,QStatusBar)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QDateTime
-from PyQt5.QtGui import QFont, QIcon, QColor, QTextCharFormat
+from datetime import datetime
 
-# 내부 분석 모듈들
-from core.log_analyzer.constants import (SYSLOG_LEVELS, LOG_PATTERNS, SERIES_TO_OS,
-                                         SEVERITY_COLORS, NETWORK_EVENTS, SECURITY_EVENTS)
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
+    QPushButton, QLabel, QLineEdit, QComboBox,
+    QFileDialog, QTableWidget, QTableWidgetItem,
+    QHeaderView, QProgressBar, QTextEdit, QMessageBox,
+    QCheckBox, QGroupBox, QTabWidget,
+)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor, QFont
+
 from core.log_analyzer.parser import LogParserThread
+from core.log_analyzer.constants import SEVERITY_COLORS, NETWORK_EVENTS, SECURITY_EVENTS
 
-class LogAnalyzerTab(QWidget):
+# 심각도 배경색 (연한 버전)
+_BG = {
+    'EMERGENCY': QColor(255, 220, 220),
+    'ALERT':     QColor(255, 220, 220),
+    'CRITICAL':  QColor(255, 220, 220),
+    'ERROR':     QColor(255, 235, 235),
+    'WARNING':   QColor(255, 243, 220),
+    'NOTICE':    QColor(255, 251, 220),
+    'INFO':      QColor(255, 255, 255),
+    'DEBUG':     QColor(245, 245, 245),
+}
+
+_SEV_ORDER = ['EMERGENCY', 'ALERT', 'CRITICAL', 'ERROR', 'WARNING', 'NOTICE', 'INFO', 'DEBUG']
+
+
+class LogAnalyzerTab:
+    """main_window 에서 as_widget() 으로 사용"""
+
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.init_variables()
-        self.init_ui()
-        self.update_ui_state(False)
-
-    def init_variables(self):
-        self.log_data = []
-        self.filtered_data = []
-        self.parser_thread = None
-        self.current_files = []
-        self.device_type = None
-        self.current_file = None
-
-    def init_ui(self):
-        self.setWindowTitle("Cisco 네트워크 장비 로그 분석기")
-        self.main_layout = QVBoxLayout(self)
-
-        self.create_toolbar()
-        self.create_file_section()
-        self.create_filter_section()
-        self.create_tabs()
-        self.create_status_area()
-
-    def create_toolbar(self):
-        toolbar = QToolBar("기본 도구")
-        toolbar.setMovable(False)
-
-        open_action = QAction("로그 파일 열기", self)
-        open_action.triggered.connect(self.open_log_file)
-        toolbar.addAction(open_action)
-
-        save_action = QAction("분석 결과 저장", self)
-        save_action.triggered.connect(self.save_analysis)
-        toolbar.addAction(save_action)
-
-        refresh_action = QAction("새로고침", self)
-        refresh_action.triggered.connect(self.refresh_view)
-        toolbar.addAction(refresh_action)
-
-        clear_filter_action = QAction("필터 초기화", self)
-        clear_filter_action.triggered.connect(self.clear_filters)
-        toolbar.addAction(clear_filter_action)
-
-        info_action = QAction("프로그램 정보", self)
-        info_action.triggered.connect(self.show_about)
-        toolbar.addAction(info_action)
-
-        self.main_layout.addWidget(toolbar)
-
-    def create_status_area(self):
-        self.status_label = QLabel("준비됨")
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 100)
-        self.progress_bar.setVisible(False)
-        self.progress_bar.setMaximumWidth(200)
-
-        status_layout = QHBoxLayout()
-        status_layout.addWidget(self.status_label)
-        status_layout.addStretch()
-        status_layout.addWidget(self.progress_bar)
-
-        wrapper = QWidget()
-        wrapper.setLayout(status_layout)
-        self.main_layout.addWidget(wrapper)
-
-    def create_file_section(self):
-        file_group = QGroupBox("로그 파일")
-        layout = QHBoxLayout()
-
-        self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText("로그 파일을 선택하세요...")
-        layout.addWidget(self.file_path_edit, 7)
-
-        browse_button = QPushButton("찾기...")
-        browse_button.clicked.connect(self.open_log_file)
-        layout.addWidget(browse_button, 1)
-
-        self.device_type_combo = QComboBox()
-        self.device_type_combo.addItem("자동 감지", None)
-        
-        # 모든 장비 유형 추가
-        for series, os_type in sorted(SERIES_TO_OS.items()):
-            self.device_type_combo.addItem(f"{series} ({os_type})", os_type)
-        
-        # 리스트 직접 추가 (중복 제거)
-        for os_type in sorted(set(LOG_PATTERNS.keys())):
-            # 기존 항목이 없는 경우에만 추가
-            if self.device_type_combo.findData(os_type) == -1:
-                self.device_type_combo.addItem(f"{os_type} (일반)", os_type)
-        
-        layout.addWidget(QLabel("장비 유형:"), 0)
-        layout.addWidget(self.device_type_combo, 2)
-
-        self.parse_button = QPushButton("로그 분석")
-        self.parse_button.clicked.connect(self.start_parsing)
-        layout.addWidget(self.parse_button, 1)
-
-        file_group.setLayout(layout)
-        self.main_layout.addWidget(file_group)
-        
-    def create_filter_section(self):
-        """필터링 섹션 생성"""
-        filter_group = QGroupBox("로그 필터")
-        filter_layout = QHBoxLayout()
-        
-        # 시간 범위 필터
-        time_filter_layout = QFormLayout()
-        self.time_filter_enabled = QCheckBox("시간 범위")
-        self.time_filter_enabled.stateChanged.connect(self.apply_filters)
-        
-        self.start_time = QDateTimeEdit()
-        self.start_time.setCalendarPopup(True)
-        self.start_time.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
-        self.start_time.setDateTime(QDateTime.currentDateTime().addDays(-1))
-        
-        self.end_time = QDateTimeEdit()
-        self.end_time.setCalendarPopup(True)
-        self.end_time.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
-        self.end_time.setDateTime(QDateTime.currentDateTime())
-        
-        time_filter_layout.addRow(self.time_filter_enabled)
-        time_filter_layout.addRow("시작:", self.start_time)
-        time_filter_layout.addRow("종료:", self.end_time)
-        
-        time_widget = QWidget()
-        time_widget.setLayout(time_filter_layout)
-        filter_layout.addWidget(time_widget, 1)
-        
-        # 키워드 필터
-        keyword_filter_layout = QFormLayout()
-        self.keyword_filter_enabled = QCheckBox("키워드")
-        self.keyword_filter_enabled.stateChanged.connect(self.apply_filters)
-        
-        self.keyword_edit = QLineEdit()
-        self.keyword_edit.setPlaceholderText("검색할 키워드 입력...")
-        self.keyword_edit.returnPressed.connect(self.apply_filters)
-        
-        self.regex_checkbox = QCheckBox("정규식 사용")
-        
-        keyword_filter_layout.addRow(self.keyword_filter_enabled)
-        keyword_filter_layout.addRow("검색어:", self.keyword_edit)
-        keyword_filter_layout.addRow(self.regex_checkbox)
-        
-        keyword_widget = QWidget()
-        keyword_widget.setLayout(keyword_filter_layout)
-        filter_layout.addWidget(keyword_widget, 1)
-        
-        # 심각도 필터
-        severity_filter_layout = QFormLayout()
-        self.severity_filter_enabled = QCheckBox("심각도 수준")
-        self.severity_filter_enabled.stateChanged.connect(self.apply_filters)
-        
-        self.severity_group = QButtonGroup()
-        severity_options = QHBoxLayout()
-        
-
-        # 파일 필터 추가
-        file_filter_layout = QFormLayout()
-        self.file_filter_enabled = QCheckBox("파일 필터")
-        self.file_filter_enabled.stateChanged.connect(self.apply_filters)
-        
-        self.file_combo = QComboBox()
-        self.file_combo.addItem("모든 파일", "all")
-        self.file_combo.currentIndexChanged.connect(self.apply_filters)
-        
-        file_filter_layout.addRow(self.file_filter_enabled)
-        file_filter_layout.addRow("파일:", self.file_combo)
-        
-        file_widget = QWidget()
-        file_widget.setLayout(file_filter_layout)
-        filter_layout.addWidget(file_widget, 1)
-
-
-
-
-        # 심각도 라디오 버튼
-        self.severity_critical = QRadioButton("중요")
-        self.severity_warning = QRadioButton("경고")
-        self.severity_info = QRadioButton("정보")
-        self.severity_all = QRadioButton("모두")
-        
-        self.severity_group.addButton(self.severity_critical, 1)
-        self.severity_group.addButton(self.severity_warning, 2)
-        self.severity_group.addButton(self.severity_info, 3)
-        self.severity_group.addButton(self.severity_all, 4)
-        
-        self.severity_all.setChecked(True)
-        
-        severity_options.addWidget(self.severity_critical)
-        severity_options.addWidget(self.severity_warning)
-        severity_options.addWidget(self.severity_info)
-        severity_options.addWidget(self.severity_all)
-        
-        severity_filter_layout.addRow(self.severity_filter_enabled)
-        severity_filter_layout.addRow(severity_options)
-        
-        severity_widget = QWidget()
-        severity_widget.setLayout(severity_filter_layout)
-        filter_layout.addWidget(severity_widget, 1)
-        
-        # 이벤트 유형 필터
-        event_filter_layout = QFormLayout()
-        self.event_filter_enabled = QCheckBox("이벤트 유형")
-        self.event_filter_enabled.stateChanged.connect(self.apply_filters)
-        
-        self.event_combo = QComboBox()
-        self.event_combo.addItem("모든 이벤트", "all")
-        
-        # 네트워크 이벤트 추가
-        self.event_combo.addItem("--- 네트워크 이벤트 ---", None)
-        for event_type in sorted(NETWORK_EVENTS.keys()):
-            self.event_combo.addItem(f"네트워크: {event_type}", f"network_{event_type}")
-        
-        # 보안 이벤트 추가
-        self.event_combo.addItem("--- 보안 이벤트 ---", None)
-        for event_type in sorted(SECURITY_EVENTS.keys()):
-            self.event_combo.addItem(f"보안: {event_type}", f"security_{event_type}")
-        
-        self.event_combo.currentIndexChanged.connect(self.apply_filters)
-        
-        event_filter_layout.addRow(self.event_filter_enabled)
-        event_filter_layout.addRow("이벤트:", self.event_combo)
-        
-        # 필터 적용 버튼
-        self.apply_filter_button = QPushButton("필터 적용")
-        self.apply_filter_button.clicked.connect(self.apply_filters)
-        event_filter_layout.addRow(self.apply_filter_button)
-        
-        event_widget = QWidget()
-        event_widget.setLayout(event_filter_layout)
-        filter_layout.addWidget(event_widget, 1)
-        
-        filter_group.setLayout(filter_layout)
-        self.main_layout.addWidget(filter_group)
-
-
-    def update_file_filters(self):
-        """파일 필터 콤보박스 업데이트"""
-        # 기존 항목 저장
-        current_selection = self.file_combo.currentData()
-        
-        # 콤보박스 초기화
-        self.file_combo.clear()
-        self.file_combo.addItem("모든 파일", "all")
-        
-        # 고유한 파일 이름 추출
-        files = set()
-        for log in self.log_data:
-            if 'source_file' in log and log['source_file']:
-                files.add(log['source_file'])
-        
-        # 파일 이름으로 정렬하여 추가
-        for filename in sorted(files):
-            self.file_combo.addItem(filename, filename)
-        
-        # 이전 선택 항목 복원 시도
-        index = self.file_combo.findData(current_selection)
-        if index >= 0:
-            self.file_combo.setCurrentIndex(index)
-
-
-        
-    def create_tabs(self):
-        """탭 섹션 생성"""
-        self.tab_widget = QTabWidget()
-        
-        # 1. 로그 테이블 탭
-        self.log_table = QTableWidget()
-        self.log_table.setColumnCount(6)  # 컬럼 수 6으로 변경 (파일 정보 추가)
-        self.log_table.setHorizontalHeaderLabels(["시간", "파일", "심각도", "시설", "메시지", "이벤트 유형"])
-        self.log_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)  # 메시지 컬럼 확장
-        self.log_table.setSelectionBehavior(QTableWidget.SelectRows)
-        self.log_table.setSelectionMode(QTableWidget.SingleSelection)
-        self.log_table.itemSelectionChanged.connect(self.show_selected_log_detail)
-        self.tab_widget.addTab(self.log_table, "로그 테이블")
-        
-        # 2. 요약 통계 탭
-        self.stats_widget = QWidget()
-        stats_layout = QVBoxLayout(self.stats_widget)
-        
-        # 요약 통계 테이블
-        self.stats_table = QTableWidget()
-        self.stats_table.setColumnCount(2)
-        self.stats_table.setHorizontalHeaderLabels(["항목", "값"])
-        self.stats_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.stats_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        
-        stats_layout.addWidget(self.stats_table)
-        self.tab_widget.addTab(self.stats_widget, "요약 통계")
-        
-        # 3. 이벤트 분석 탭
-        self.events_widget = QWidget()
-        events_layout = QVBoxLayout(self.events_widget)
-        
-        self.events_table = QTableWidget()
-        self.events_table.setColumnCount(4)
-        self.events_table.setHorizontalHeaderLabels(["이벤트 유형", "카테고리", "발생 횟수", "최근 발생 시간"])
-        self.events_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.events_table.setSelectionBehavior(QTableWidget.SelectRows)
-        self.events_table.setSelectionMode(QTableWidget.SingleSelection)
-        self.events_table.itemSelectionChanged.connect(self.show_event_details)
-        
-        events_layout.addWidget(self.events_table)
-        self.tab_widget.addTab(self.events_widget, "이벤트 분석")
-        
-        # 4. 상세 로그 보기 탭
-        self.detail_widget = QWidget()
-        detail_layout = QVBoxLayout(self.detail_widget)
-        
-        self.detail_text = QTextEdit()
-        self.detail_text.setReadOnly(True)
-        
-        detail_layout.addWidget(self.detail_text)
-        self.tab_widget.addTab(self.detail_widget, "상세 로그")
-        
-        # 메인 레이아웃에 탭 추가
-        self.main_layout.addWidget(self.tab_widget, 10)  # 탭이 대부분의 공간 차지
-        
-    def create_status_bar(self):
-        """상태 표시줄 생성"""
-        self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
-        
-        # 진행 표시기
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 100)
-        self.progress_bar.setTextVisible(True)
-        self.progress_bar.setMaximumWidth(200)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setVisible(False)
-        
-        self.status_bar.addPermanentWidget(self.progress_bar)
-        self.status_bar.showMessage("준비됨")
-
+        self._widget = _LogAnalyzerWidget(parent)
 
     def as_widget(self):
-        """도구 탭에 삽입할 QWidget 반환"""
-        return self
+        return self._widget
 
 
+class _LogAnalyzerWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.log_data      = []   # 전체 파싱 결과
+        self.filtered_data = []   # 필터 적용 결과
+        self.parser_thread = None
+        self.file_queue    = []
+        self.current_files = []
 
-    def update_ui_state(self, file_loaded=False):
-        """UI 상태 업데이트 (파일 로드 여부에 따라)"""
-        is_parsing = self.parser_thread is not None and self.parser_thread.isRunning()
-        
-        # 파일 로드 관련 컨트롤
-        self.parse_button.setEnabled(file_loaded and not is_parsing)
-        
-        # 필터 관련 컨트롤
-        filter_widgets = [
-            self.time_filter_enabled, self.start_time, self.end_time,
-            self.keyword_filter_enabled, self.keyword_edit, self.regex_checkbox,
-            self.severity_filter_enabled, self.severity_critical, self.severity_warning,
-            self.severity_info, self.severity_all, self.event_filter_enabled,
-            self.event_combo, self.apply_filter_button
-        ]
-        
-        for widget in filter_widgets:
-            widget.setEnabled(file_loaded and not is_parsing)
-        
-        # 파싱 진행 상태 표시
-        self.progress_bar.setVisible(is_parsing)
-        
-        # 상태 메시지 업데이트
-        if is_parsing:
-            self.status_label.setText("로그 파싱 중...")
-        elif file_loaded:
-            if self.log_data:
-                self.status_label.setText(f"로그 {len(self.log_data)}개 항목 로드됨")
-            else:
-                self.status_label.setText("파일 로드됨, 분석 준비 완료")
-        else:
-            self.status_label.setText("준비됨")
-        
-    # 1. CiscoLogAnalyzerGUI 클래스의 open_log_file 메서드 수정
-    def open_log_file(self):
-        """로그 파일 열기 대화상자 - 다중 파일 선택 지원"""
-        file_paths, _ = QFileDialog.getOpenFileNames(
-            self, "로그 파일 열기", "", "모든 파일 (*);;텍스트 파일 (*.txt);;로그 파일 (*.log)"
+        self._build_ui()
+
+    # ── UI 구성 ──────────────────────────────────────────────────
+    def _build_ui(self):
+        from ui.report_tab import _Header
+        self.setObjectName('logAnalyzerWidget')
+        self.setStyleSheet('#logAnalyzerWidget { background: #f1f5f9; }')
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+
+        root.addWidget(_Header(
+            '로그 분석',
+            'Cisco IOS / IOS-XE / NX-OS / ASA 로그 파일 파싱 · 분석 · 보고서',
+            '#0f172a', '#dc2626',
+        ))
+
+        body = QWidget()
+        body.setObjectName('logAnalyzerBody')
+        body.setStyleSheet('#logAnalyzerBody { background: transparent; }')
+        bv = QVBoxLayout(body)
+        bv.setContentsMargins(8, 8, 8, 8)
+        bv.setSpacing(6)
+        root.addWidget(body, 1)
+
+        # ── 상단 컨트롤 바 ──────────────────────────────────────
+        top = QHBoxLayout()
+        top.setSpacing(6)
+
+        self.btn_open = QPushButton("📂 로그 파일 열기")
+        self.btn_open.setFixedHeight(32)
+        self.btn_open.clicked.connect(self._open_files)
+        top.addWidget(self.btn_open)
+
+        self.device_combo = QComboBox()
+        self.device_combo.setFixedHeight(32)
+        self.device_combo.addItems([
+            "자동 감지", "IOS-XE (Switch)", "IOS (Switch)",
+            "NX-OS (Nexus)", "ASA/FTD", "Router (ISR/ASR)", "WLC (9800)",
+        ])
+        self.device_combo.setFixedWidth(160)
+        top.addWidget(QLabel("장비:"))
+        top.addWidget(self.device_combo)
+
+        self.btn_parse = QPushButton("▶ 분석")
+        self.btn_parse.setFixedHeight(32)
+        self.btn_parse.setEnabled(False)
+        self.btn_parse.clicked.connect(self._start_parse)
+        top.addWidget(self.btn_parse)
+
+        self.btn_clear = QPushButton("🗑 초기화")
+        self.btn_clear.setFixedHeight(32)
+        self.btn_clear.clicked.connect(self._clear)
+        top.addWidget(self.btn_clear)
+
+        self.btn_save = QPushButton("💾 내보내기")
+        self.btn_save.setFixedHeight(32)
+        self.btn_save.setEnabled(False)
+        self.btn_save.clicked.connect(self._export)
+        top.addWidget(self.btn_save)
+
+        self.btn_html = QPushButton("🌐 HTML 보고서")
+        self.btn_html.setFixedHeight(32)
+        self.btn_html.setEnabled(False)
+        self.btn_html.clicked.connect(self._export_html)
+        top.addWidget(self.btn_html)
+
+        top.addStretch()
+        self.lbl_file = QLabel("파일을 선택하세요")
+        self.lbl_file.setStyleSheet("color:#64748b;font-size:11px")
+        top.addWidget(self.lbl_file)
+        bv.addLayout(top)
+
+        # ── 진행 바 ──────────────────────────────────────────────
+        self.progress = QProgressBar()
+        self.progress.setFixedHeight(6)
+        self.progress.setTextVisible(False)
+        self.progress.hide()
+        bv.addWidget(self.progress)
+
+        # ── 필터 바 ──────────────────────────────────────────────
+        fbox = QHBoxLayout()
+        fbox.setSpacing(6)
+
+        fbox.addWidget(QLabel("🔍 검색:"))
+        self.kw_input = QLineEdit()
+        self.kw_input.setPlaceholderText("키워드 또는 IP")
+        self.kw_input.setFixedHeight(28)
+        self.kw_input.textChanged.connect(self._apply_filters)
+        fbox.addWidget(self.kw_input, 2)
+
+        fbox.addWidget(QLabel("심각도:"))
+        self.sev_combo = QComboBox()
+        self.sev_combo.setFixedHeight(28)
+        self.sev_combo.addItems(["전체", "ERROR 이상", "WARNING 이상", "NOTICE 이상"])
+        self.sev_combo.currentIndexChanged.connect(self._apply_filters)
+        fbox.addWidget(self.sev_combo)
+
+        fbox.addWidget(QLabel("이벤트:"))
+        self.evt_combo = QComboBox()
+        self.evt_combo.setFixedHeight(28)
+        self.evt_combo.addItem("전체", None)
+        for k in NETWORK_EVENTS:
+            self.evt_combo.addItem(f"[네트워크] {k}", k)
+        for k in SECURITY_EVENTS:
+            self.evt_combo.addItem(f"[보안] {k}", k)
+        self.evt_combo.currentIndexChanged.connect(self._apply_filters)
+        fbox.addWidget(self.evt_combo, 1)
+
+        fbox.addWidget(QLabel("파일:"))
+        self.file_combo = QComboBox()
+        self.file_combo.setFixedHeight(28)
+        self.file_combo.addItem("전체", None)
+        self.file_combo.currentIndexChanged.connect(self._apply_filters)
+        fbox.addWidget(self.file_combo, 1)
+
+        self.lbl_count = QLabel("0 건")
+        self.lbl_count.setStyleSheet("color:#3b82f6;font-weight:bold;font-size:12px")
+        fbox.addWidget(self.lbl_count)
+
+        bv.addLayout(fbox)
+
+        # ── 메인 스플리터 ────────────────────────────────────────
+        splitter = QSplitter(Qt.Vertical)
+
+        # 로그 테이블
+        self.table = QTableWidget()
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(
+            ["시간", "심각도", "Facility", "호스트", "메시지", "이벤트"])
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
+        self.table.setColumnWidth(0, 150)
+        self.table.setColumnWidth(1, 70)
+        self.table.setColumnWidth(2, 140)
+        self.table.setColumnWidth(3, 90)
+        self.table.setColumnWidth(5, 120)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setAlternatingRowColors(False)
+        self.table.verticalHeader().setDefaultSectionSize(22)
+        self.table.verticalHeader().hide()
+        self.table.setFont(QFont("Consolas", 9))
+        self.table.itemSelectionChanged.connect(self._on_row_select)
+        splitter.addWidget(self.table)
+
+        # 탭 (요약 / 상세)
+        self.detail_tabs = QTabWidget()
+        self.detail_tabs.setMaximumHeight(220)
+
+        # 요약 탭
+        self.summary_text = QTextEdit()
+        self.summary_text.setReadOnly(True)
+        self.summary_text.setFont(QFont("Consolas", 9))
+        self.detail_tabs.addTab(self.summary_text, "📊 요약")
+
+        # 상세 탭
+        self.detail_text = QTextEdit()
+        self.detail_text.setReadOnly(True)
+        self.detail_text.setFont(QFont("Consolas", 9))
+        self.detail_tabs.addTab(self.detail_text, "🔍 상세")
+
+        splitter.addWidget(self.detail_tabs)
+        splitter.setSizes([500, 200])
+        bv.addWidget(splitter)
+
+        # ── 상태바 ───────────────────────────────────────────────
+        self.lbl_status = QLabel("준비")
+        self.lbl_status.setStyleSheet("color:#64748b;font-size:11px;padding:2px 0")
+        bv.addWidget(self.lbl_status)
+
+    # ── 파일 열기 ────────────────────────────────────────────────
+    def _open_files(self):
+        paths, _ = QFileDialog.getOpenFileNames(
+            self, "로그 파일 선택", "",
+            "로그 파일 (*.log *.txt *.syslog *.gz);;모든 파일 (*)"
         )
-        
-        if file_paths:
-            # 파일 경로 텍스트 상자 업데이트
-            if len(file_paths) == 1:
-                self.file_path_edit.setText(file_paths[0])
-            else:
-                self.file_path_edit.setText(f"{file_paths[0]} 외 {len(file_paths)-1}개 파일")
-            
-            # 파일 유효성 검사
-            valid_files = []
-            invalid_files = []
-            
-            for file_path in file_paths:
-                try:
-                    # 파일 읽기 시도
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        # 간단한 파일 내용 확인
-                        f.read(100)
-                    valid_files.append(file_path)
-                except Exception as e:
-                    invalid_files.append((file_path, str(e)))
-            
-            # 유효하지 않은 파일 처리
-            if invalid_files:
-                error_message = "다음 파일들을 열 수 없습니다:\n"
-                for file, error in invalid_files:
-                    error_message += f"{file}: {error}\n"
-                
-                QMessageBox.warning(self, "파일 열기 오류", error_message)
-            
-            # 유효한 파일만 사용
-            self.current_files = valid_files
-            self.log_data = []  # 기존 데이터 초기화
-            
-            if valid_files:
-                self.update_ui_state(True)
-                # 자동으로 파싱 시작
-                self.start_parsing()
-            else:
-                QMessageBox.warning(self, "오류", "유효한 로그 파일이 없습니다.")
-            
-    # 2. CiscoLogAnalyzerGUI 클래스의 start_parsing 메서드 수정
-    def start_parsing(self):
-        """로그 파싱 시작 - 다중 파일 지원"""
-        if not hasattr(self, 'current_files') or not self.current_files:
-            QMessageBox.warning(self, "경고", "파일을 먼저 선택하세요.")
+        if not paths:
             return
-            
-        # 진행 상태 초기화
-        self.progress_bar.setValue(0)
-        self.progress_bar.setVisible(True)
-        
-        # 장비 유형 가져오기
-        device_index = self.device_type_combo.currentIndex()
-        self.device_type = self.device_type_combo.itemData(device_index)
-        
-        # 전체 파싱된 로그를 저장할 리스트
-        self.all_parsed_logs = []
-        self.files_completed = 0
-        self.total_files = len(self.current_files)
-        
-        # 첫 번째 파일 파싱 시작
-        self.parse_next_file()
+        self.current_files = paths
+        names = [os.path.basename(p) for p in paths]
+        self.lbl_file.setText(", ".join(names[:3]) + (f" 외 {len(names)-3}개" if len(names) > 3 else ""))
+        self.btn_parse.setEnabled(True)
+        self.lbl_status.setText(f"{len(paths)}개 파일 선택됨")
 
+    # ── 분석 시작 ────────────────────────────────────────────────
+    _DEVICE_MAP = {
+        0: None, 1: 'ios_xe', 2: 'ios',
+        3: 'nxos', 4: 'asa', 5: 'router', 6: 'wlc',
+    }
 
-    def parse_next_file(self):
-        """다음 파일 파싱 - 순차적으로 모든 파일 처리"""
-        if self.files_completed >= len(self.current_files):
-            # 모든 파일 파싱 완료
-            self.all_files_completed()
+    def _start_parse(self):
+        if not self.current_files:
             return
-        
-        current_file = self.current_files[self.files_completed]
-        # status_bar 대신 status_label 사용
-        self.status_label.setText(f"파일 파싱 중: {os.path.basename(current_file)} ({self.files_completed+1}/{self.total_files})")
-        
-        # 파싱 쓰레드 시작
-        self.parser_thread = LogParserThread(current_file, self.device_type)
-        
-        # 시그널 연결
-        self.parser_thread.progress_update.connect(self.update_file_progress)
-        self.parser_thread.parsing_complete.connect(self.file_parsing_completed)
-        self.parser_thread.error_occurred.connect(self.parsing_error)
-        
-        # 쓰레드 시작
+        # 이전 데이터 명시 해제
+        self.log_data      = []
+        self.filtered_data = []
+        self.table.setRowCount(0)
+        self.file_queue = list(self.current_files)
+        self.file_combo.clear()
+        self.file_combo.addItem("전체", None)
+        for p in self.current_files:
+            self.file_combo.addItem(os.path.basename(p), p)
+
+        self.btn_parse.setEnabled(False)
+        self.btn_save.setEnabled(False)
+        self.progress.show()
+        self._parse_next()
+
+    def _parse_next(self):
+        if not self.file_queue:
+            self._on_all_done()
+            return
+        path = self.file_queue.pop(0)
+        device = self._DEVICE_MAP.get(self.device_combo.currentIndex())
+        self.lbl_status.setText(f"분석 중: {os.path.basename(path)}")
+
+        self.parser_thread = LogParserThread(path, device)
+        self.parser_thread.progress_update.connect(self.progress.setValue)
+        self.parser_thread.parsing_complete.connect(
+            lambda logs, p=path: self._on_file_done(logs, p))
+        self.parser_thread.error_occurred.connect(self._on_error)
         self.parser_thread.start()
 
-    # 4. CiscoLogAnalyzerGUI 클래스에 새로운 메서드 추가
-    def update_file_progress(self, value):
-        """개별 파일 파싱 진행 상태 업데이트"""
-        # 전체 진행률 = (완료된 파일 수 / 전체 파일 수) * 100 + (현재 파일 진행률 / 전체 파일 수)
-        overall_progress = int((self.files_completed / self.total_files) * 100 + (value / self.total_files))
-        self.progress_bar.setValue(min(100, overall_progress))
+    # 파일당 최대 보관 건수 (ERROR/WARNING은 무조건, INFO 이하는 이 한도까지)
+    _MAX_PER_FILE   = 20_000
+    _MAX_INFO_TOTAL = 30_000   # INFO/DEBUG/NOTICE 전체 합산 상한
 
-    # 5. CiscoLogAnalyzerGUI 클래스에 새로운 메서드 추가
-    def file_parsing_completed(self, log_data):
-        """개별 파일 파싱 완료 처리"""
-        # 파일 경로 정보 추가
-        current_file = self.current_files[self.files_completed]
-        filename = os.path.basename(current_file)
-        
-        # 각 로그 항목에 파일 출처 정보 추가
-        for log in log_data:
-            log['source_file'] = filename
-        
-        # 전체 로그 데이터에 추가
-        self.all_parsed_logs.extend(log_data)
-        
-        # 다음 파일로 진행
-        self.files_completed += 1
-        if self.files_completed < len(self.current_files):
-            self.parse_next_file()
+    def _on_file_done(self, logs, path):
+        from PyQt5.QtWidgets import QApplication
+        fname = os.path.basename(path)
+
+        # 우선순위 분리
+        important = [e for e in logs if e.get('severity','INFO')
+                     in ('EMERGENCY','ALERT','CRITICAL','ERROR','WARNING')]
+        others    = [e for e in logs if e.get('severity','INFO')
+                     not in ('EMERGENCY','ALERT','CRITICAL','ERROR','WARNING')]
+
+        # INFO 이하는 전체 합산 상한 체크
+        info_used = sum(1 for e in self.log_data
+                        if e.get('severity','INFO')
+                        not in ('EMERGENCY','ALERT','CRITICAL','ERROR','WARNING'))
+        info_room = max(0, self._MAX_INFO_TOTAL - info_used)
+        others    = others[:info_room]
+
+        # 파일당 상한 (important 포함)
+        combined = important + others
+        combined = combined[:self._MAX_PER_FILE]
+
+        for entry in combined:
+            entry['source_file'] = fname
+        self.log_data.extend(combined)
+
+        skipped = len(logs) - len(combined)
+        skip_note = f" (INFO {skipped:,}건 생략)" if skipped > 0 else ""
+        self.lbl_status.setText(f"{fname}: {len(combined):,}건 파싱 완료{skip_note}")
+        QApplication.processEvents()   # UI 갱신 기회
+        self._parse_next()
+
+    def _on_all_done(self):
+        from PyQt5.QtWidgets import QApplication
+        self.progress.hide()
+        self.btn_parse.setEnabled(True)
+        self.btn_save.setEnabled(bool(self.log_data))
+        self.btn_html.setEnabled(bool(self.log_data))
+        self.lbl_status.setText("필터 적용 중…")
+        QApplication.processEvents()
+        self._apply_filters()
+        QApplication.processEvents()
+        self._update_summary()
+        total_orig = sum(1 for _ in self.log_data)   # 이미 제한된 수
+        self.lbl_status.setText(
+            f"분석 완료: 총 {len(self.log_data):,}건 ({len(self.current_files)}개 파일)")
+
+    def _on_error(self, msg):
+        self.lbl_status.setText(f"오류: {msg}")
+        self._parse_next()
+
+    # ── 필터 적용 ────────────────────────────────────────────────
+    _SEV_THRESHOLD = {
+        0: set(),                                                    # 전체
+        1: {'EMERGENCY','ALERT','CRITICAL','ERROR'},
+        2: {'EMERGENCY','ALERT','CRITICAL','ERROR','WARNING'},
+        3: {'EMERGENCY','ALERT','CRITICAL','ERROR','WARNING','NOTICE'},
+    }
+
+    def _apply_filters(self):
+        kw       = self.kw_input.text().strip().lower()
+        sev_idx  = self.sev_combo.currentIndex()
+        sev_set  = self._SEV_THRESHOLD.get(sev_idx, set())
+        evt_type = self.evt_combo.currentData()
+        src_file = self.file_combo.currentData()
+
+        result = []
+        for entry in self.log_data:
+            if sev_set and entry.get('severity', 'INFO') not in sev_set:
+                continue
+            if evt_type and entry.get('event_type') != evt_type:
+                continue
+            if src_file and entry.get('source_file') != os.path.basename(src_file):
+                continue
+            if kw and kw not in entry.get('raw', '').lower():
+                continue
+            result.append(entry)
+
+        self.filtered_data = result
+        self._render_table()
+
+    # ── 테이블 렌더링 ────────────────────────────────────────────
+    def _render_table(self):
+        MAX_ROWS = 2000
+        data = self.filtered_data[:MAX_ROWS]
+
+        self.table.setUpdatesEnabled(False)
+        self.table.setSortingEnabled(False)
+        self.table.setRowCount(0)           # 기존 행 제거 먼저 (메모리 즉시 해제)
+        self.table.setRowCount(len(data))
+
+        bold = QFont("Consolas", 9, QFont.Bold)
+        for row, entry in enumerate(data):
+            sev = entry.get('severity', 'INFO')
+            bg  = _BG.get(sev, QColor(255, 255, 255))
+            fg  = SEVERITY_COLORS.get(sev, QColor(0, 0, 0))
+
+            values = [
+                entry.get('timestamp', ''),
+                sev,
+                entry.get('facility_name', entry.get('facility', '')),
+                entry.get('hostname', ''),
+                entry.get('message', entry.get('raw', '')[:200]),
+                entry.get('event_type', ''),
+            ]
+            for col, val in enumerate(values):
+                item = QTableWidgetItem(str(val))
+                item.setBackground(bg)
+                if col == 1:
+                    item.setForeground(fg)
+                    item.setFont(bold)
+                self.table.setItem(row, col, item)
+
+        self.table.setUpdatesEnabled(True)
+
+        total = len(self.filtered_data)
+        suffix = f" (상위 {MAX_ROWS}건 표시)" if total > MAX_ROWS else ""
+        self.lbl_count.setText(f"{total:,}건{suffix}")
+
+    # ── 행 선택 → 상세 표시 ──────────────────────────────────────
+    def _on_row_select(self):
+        rows = self.table.selectedItems()
+        if not rows:
+            return
+        row = self.table.currentRow()
+        if row >= len(self.filtered_data):
+            return
+        entry = self.filtered_data[row]
+        lines = [
+            f"시간     : {entry.get('timestamp','-')}",
+            f"심각도   : {entry.get('severity','-')}",
+            f"Facility : {entry.get('facility','-')}",
+            f"호스트   : {entry.get('hostname','-')}",
+            f"이벤트   : {entry.get('event_type','-')} [{entry.get('event_category','-')}]",
+            f"파일     : {entry.get('source_file','-')}",
+            "",
+            "── 메시지 ──────────────────────────────────────────",
+            entry.get('message', entry.get('raw', '')),
+            "",
+            "── 원본 라인 ────────────────────────────────────────",
+            entry.get('raw', ''),
+        ]
+        self.detail_text.setPlainText("\n".join(lines))
+        self.detail_tabs.setCurrentIndex(1)
+
+    # ── 요약 통계 ────────────────────────────────────────────────
+    def _update_summary(self):
+        data = self.log_data
+        if not data:
+            self.summary_text.setPlainText("데이터 없음")
+            return
+
+        # 심각도별 집계
+        sev_count = {}
+        for e in data:
+            s = e.get('severity', 'INFO')
+            sev_count[s] = sev_count.get(s, 0) + 1
+
+        # 이벤트 타입별 집계
+        evt_count = {}
+        for e in data:
+            t = e.get('event_type')
+            if t:
+                evt_count[t] = evt_count.get(t, 0) + 1
+
+        # 호스트별 집계
+        host_count = {}
+        for e in data:
+            h = e.get('hostname', '')
+            if h:
+                host_count[h] = host_count.get(h, 0) + 1
+
+        # Facility별 집계
+        fac_count = {}
+        for e in data:
+            f = e.get('facility_name', '')
+            if f:
+                fac_count[f] = fac_count.get(f, 0) + 1
+
+        lines = [
+            f"{'='*50}",
+            f"  로그 분석 요약",
+            f"{'='*50}",
+            f"  총 로그 수   : {len(data):,}건",
+            f"  파일 수      : {len(self.current_files)}개",
+            "",
+            "── 심각도별 ─────────────────────────────────────────",
+        ]
+        for sev in _SEV_ORDER:
+            cnt = sev_count.get(sev, 0)
+            if cnt:
+                bar = '█' * min(30, cnt * 30 // max(sev_count.values()))
+                lines.append(f"  {sev:<10}: {cnt:>6,}건  {bar}")
+
+        lines += ["", "── 이벤트 유형 TOP 15 ───────────────────────────────"]
+        for k, v in sorted(evt_count.items(), key=lambda x: -x[1])[:15]:
+            lines.append(f"  {k:<25}: {v:>6,}건")
+
+        lines += ["", "── Facility TOP 15 ──────────────────────────────────"]
+        for k, v in sorted(fac_count.items(), key=lambda x: -x[1])[:15]:
+            lines.append(f"  {k:<25}: {v:>6,}건")
+
+        if host_count:
+            lines += ["", "── 호스트별 TOP 10 ──────────────────────────────────"]
+            for k, v in sorted(host_count.items(), key=lambda x: -x[1])[:10]:
+                lines.append(f"  {k:<25}: {v:>6,}건")
+
+        self.summary_text.setPlainText("\n".join(lines))
+        self.detail_tabs.setCurrentIndex(0)
+
+    # ── 초기화 ───────────────────────────────────────────────────
+    def _clear(self):
+        self.log_data      = []
+        self.filtered_data = []
+        self.current_files = []
+        self.file_queue    = []
+        self.table.setRowCount(0)
+        self.summary_text.clear()
+        self.detail_text.clear()
+        self.file_combo.clear()
+        self.file_combo.addItem("전체", None)
+        self.lbl_file.setText("파일을 선택하세요")
+        self.lbl_count.setText("0 건")
+        self.lbl_status.setText("초기화 완료")
+        self.btn_parse.setEnabled(False)
+        self.btn_save.setEnabled(False)
+
+    # ── HTML 보고서 ──────────────────────────────────────────────
+    def _export_html(self):
+        import json, webbrowser, html as _html
+        data = self.log_data
+        if not data:
+            return
+
+        gen_time  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        _fnames   = [os.path.basename(f) for f in self.current_files]
+        if len(_fnames) <= 5:
+            file_list = ", ".join(_fnames)
         else:
-            self.all_files_completed()
+            file_list = ", ".join(_fnames[:5]) + f" 외 {len(_fnames)-5}개"
 
-    # 6. CiscoLogAnalyzerGUI 클래스에 새로운 메서드 추가
-    def all_files_completed(self):
-        """모든 파일 파싱 완료 처리"""
-        # 시간순으로 정렬
-        self.all_parsed_logs.sort(
-            key=lambda x: x.get('timestamp_obj', datetime.min) 
-            if x.get('timestamp_obj') is not None else datetime.min
-        )
-        
-        # 파일 필터 콤보박스 업데이트
-        self.update_file_filters()
+        # ── 집계 ────────────────────────────────────────────────
+        sev_count  = {}
+        evt_count  = {}
+        fac_count  = {}
+        host_count = {}
+        mnemonic_count = {}
 
-        # 최종 로그 데이터 설정
-        self.log_data = self.all_parsed_logs
-        self.filtered_data = self.log_data.copy()
-        
-        # 필터 적용
-        self.apply_filters()
-        
-        # 통계 업데이트
-        self.update_statistics()
-        
-        # 이벤트 분석 업데이트
-        self.update_event_analysis()
-        
-        # UI 상태 업데이트
-        self.progress_bar.setVisible(False)
-        self.update_ui_state(True)
-        
-        # status_bar 대신 status_label 사용
-        self.status_label.setText(f"총 {len(self.current_files)}개 파일 파싱 완료: {len(self.log_data)}개 로그 항목 발견")
+        for e in data:
+            s = e.get('severity', 'INFO')
+            sev_count[s] = sev_count.get(s, 0) + 1
+            t = e.get('event_type')
+            if t:
+                evt_count[t] = evt_count.get(t, 0) + 1
+            f = e.get('facility_name', '')
+            if f:
+                fac_count[f] = fac_count.get(f, 0) + 1
+            h = e.get('hostname', '')
+            if h:
+                host_count[h] = host_count.get(h, 0) + 1
+            mn = e.get('mnemonic', '')
+            if mn and s in ('EMERGENCY','ALERT','CRITICAL','ERROR','WARNING'):
+                mnemonic_count[mn] = mnemonic_count.get(mn, 0) + 1
 
+        total     = len(data)
+        error_cnt = sum(sev_count.get(s,0) for s in ('EMERGENCY','ALERT','CRITICAL','ERROR'))
+        warn_cnt  = sev_count.get('WARNING', 0)
+        info_cnt  = sev_count.get('INFO', 0)
 
-        
-    def update_progress(self, value):
-        """파싱 진행 상태 업데이트"""
-        self.progress_bar.setValue(value)
-        
-    def parsing_completed(self, log_data):
-        """파싱 완료 처리"""
-        self.log_data = log_data
-        self.filtered_data = log_data.copy()  # 초기 필터링 결과 = 전체
-        
-        # 필터 적용
-        self.apply_filters()
-        
-        # 통계 업데이트
-        self.update_statistics()
-        
-        # 이벤트 분석 업데이트
-        self.update_event_analysis()
-        
-        # UI 상태 업데이트
-        self.progress_bar.setVisible(False)
-        self.update_ui_state(True)
-        
-        # status_bar 대신 status_label 사용
-        self.status_label.setText(f"로그 파싱 완료: {len(log_data)}개 항목 발견")
-        
-    def parsing_error(self, error_message):
-        """파싱 오류 처리"""
-        self.progress_bar.setVisible(False)
-        self.update_ui_state(True)
-        
-        QMessageBox.critical(self, "파싱 오류", error_message)
-        # status_bar 대신 status_label 사용
-        self.status_label.setText("파싱 오류 발생")
-        
-    def apply_filters(self):
-        """필터 조건에 따라 로그 필터링 - 파일 필터 추가"""
-        if not self.log_data:
-            return
-                
-        # 원본 데이터로 시작
-        filtered_data = self.log_data.copy()
-        
+        # ── 전체 로그 JSON 직렬화 (최대 30,000건) ───────────────
+        SEV_MAP = {
+            'EMERGENCY':'#dc2626','ALERT':'#dc2626','CRITICAL':'#b91c1c',
+            'ERROR':'#ef4444','WARNING':'#f97316','NOTICE':'#eab308',
+            'INFO':'#22c55e','DEBUG':'#94a3b8',
+        }
+        HTML_LOG_LIMIT = 30_000
+        # ERROR/WARNING 우선 포함, 나머지는 최신순으로 채움
+        priority = [e for e in data if e.get('severity','') in ('EMERGENCY','ALERT','CRITICAL','ERROR','WARNING')]
+        others   = [e for e in data if e.get('severity','') not in ('EMERGENCY','ALERT','CRITICAL','ERROR','WARNING')]
+        embed_data = priority[:HTML_LOG_LIMIT]
+        remaining  = HTML_LOG_LIMIT - len(embed_data)
+        if remaining > 0:
+            embed_data += others[:remaining]
+        embed_data.sort(key=lambda e: e.get('timestamp',''))
+        truncated = total > HTML_LOG_LIMIT
+        truncated_note = (f"※ 전체 {total:,}건 중 ERROR/WARNING 우선 {len(embed_data):,}건만 표시됩니다."
+                          if truncated else "")
 
-        # 파일 필터 적용
-        if self.file_filter_enabled.isChecked():
-            file_filter = self.file_combo.currentData()
-            
-            if file_filter and file_filter != 'all':
-                filtered_data = [
-                    log for log in filtered_data
-                    if log.get('source_file') == file_filter
-            ]
+        rows_json = json.dumps([
+            {
+                'ts':   e.get('timestamp','')[:19],
+                'sev':  e.get('severity','INFO'),
+                'fac':  e.get('facility_name', e.get('facility','')),
+                'host': e.get('hostname',''),
+                'msg':  e.get('message', e.get('raw',''))[:300],
+                'evt':  e.get('event_type',''),
+                'src':  e.get('source_file',''),
+                'raw':  e.get('raw','')[:500],
+            }
+            for e in embed_data
+        ], ensure_ascii=False)
 
+        # ── 대시보드용 Python 헬퍼 ──────────────────────────────
+        def bar_rows(items, max_n=15, color="#3b82f6"):
+            if not items:
+                return "<p class='empty'>데이터 없음</p>"
+            top = sorted(items.items(), key=lambda x: -x[1])[:max_n]
+            mx  = top[0][1] or 1
+            out = ""
+            for k, v in top:
+                pct = int(v / mx * 100)
+                out += (f'<div class="brow"><span class="blabel">{_html.escape(str(k))}</span>'
+                        f'<div class="btrack"><div class="bfill" style="width:{pct}%;background:{color}"></div></div>'
+                        f'<span class="bval">{v:,}</span></div>')
+            return out
 
+        def sev_bars_html():
+            out = ""
+            for s in _SEV_ORDER:
+                cnt = sev_count.get(s, 0)
+                if not cnt:
+                    continue
+                pct = int(cnt / total * 100)
+                c   = SEV_MAP.get(s, '#94a3b8')
+                out += (f'<div class="brow"><span class="blabel" style="color:{c};font-weight:700">{s}</span>'
+                        f'<div class="btrack"><div class="bfill" style="width:{pct}%;background:{c}">'
+                        f'<span style="font-size:10px;color:#fff;padding-left:4px">{cnt:,}</span>'
+                        f'</div></div><span class="bval">{pct}%</span></div>')
+            return out
 
-        # 1. 시간 범위 필터
-        if self.time_filter_enabled.isChecked():
-            start_time = self.start_time.dateTime().toPython()
-            end_time = self.end_time.dateTime().toPython()
-            
-            filtered_data = [
-                log for log in filtered_data
-                if 'timestamp_obj' in log and log['timestamp_obj'] is not None
-                and start_time <= log['timestamp_obj'] <= end_time
-            ]
-        
-        # 2. 키워드 필터
-        if self.keyword_filter_enabled.isChecked() and self.keyword_edit.text().strip():
-            keyword = self.keyword_edit.text().strip()
-            
-            if self.regex_checkbox.isChecked():
-                # 정규식 검색
-                try:
-                    pattern = re.compile(keyword, re.IGNORECASE)
-                    filtered_data = [
-                        log for log in filtered_data
-                        if pattern.search(log.get('raw', '')) or 
-                        pattern.search(log.get('message', ''))
-                    ]
-                except re.error:
-                    # 정규식 오류 시 일반 텍스트 검색으로 폴백
-                    QMessageBox.warning(self, "정규식 오류", "잘못된 정규식입니다. 일반 텍스트 검색을 수행합니다.")
-                    filtered_data = [
-                        log for log in filtered_data
-                        if keyword.lower() in log.get('raw', '').lower() or 
-                        keyword.lower() in log.get('message', '').lower()
-                    ]
-            else:
-                # 일반 텍스트 검색
-                filtered_data = [
-                    log for log in filtered_data
-                    if keyword.lower() in log.get('raw', '').lower() or 
-                    keyword.lower() in log.get('message', '').lower()
-                ]
-        
-        # 3. 심각도 필터
-        if self.severity_filter_enabled.isChecked():
-            severity_button_id = self.severity_group.checkedId()
-            
-            if severity_button_id == 1:  # 중요
-                filtered_data = [
-                    log for log in filtered_data
-                    if log.get('severity') in ['EMERGENCY', 'ALERT', 'CRITICAL', 'ERROR']
-                ]
-            elif severity_button_id == 2:  # 경고
-                filtered_data = [
-                    log for log in filtered_data
-                    if log.get('severity') in ['WARNING', 'NOTICE']
-                ]
-            elif severity_button_id == 3:  # 정보
-                filtered_data = [
-                    log for log in filtered_data
-                    if log.get('severity') in ['INFO', 'DEBUG']
-                ]
-            # 4(모두)는 필터링 하지 않음
-        
-        # 4. 이벤트 유형 필터
-        if self.event_filter_enabled.isChecked():
-            event_type = self.event_combo.currentData()
-            
-            if event_type and event_type != 'all':
-                if event_type.startswith('network_'):
-                    # 네트워크 이벤트 필터링
-                    event_name = event_type[8:]  # "network_" 제거
-                    filtered_data = [
-                        log for log in filtered_data
-                        if log.get('event_category') == 'network' and log.get('event_type') == event_name
-                    ]
-                elif event_type.startswith('security_'):
-                    # 보안 이벤트 필터링
-                    event_name = event_type[9:]  # "security_" 제거
-                    filtered_data = [
-                        log for log in filtered_data
-                        if log.get('event_category') == 'security' and log.get('event_type') == event_name
-                    ]
-        
-        # 필터링된 결과 저장 및 UI 업데이트
-        self.filtered_data = filtered_data
-        self.update_log_table()
-        
-        # 상태 메시지 업데이트
-        self.status_label.setText(f"필터링됨: {len(filtered_data)}/{len(self.log_data)} 항목 표시")
-        
-    def update_log_table(self):
-        """로그 테이블 업데이트 - 파일 정보 포함"""
-        self.log_table.setRowCount(0)  # 테이블 초기화
-        
-        if not self.filtered_data:
-            return
-            
-        # 테이블에 데이터 추가
-        for row, log in enumerate(self.filtered_data):
-            self.log_table.insertRow(row)
-            
-            # 시간
-            timestamp_item = QTableWidgetItem(log.get('timestamp', ''))
-            self.log_table.setItem(row, 0, timestamp_item)
-            
-            # 파일 (인덱스 1)
-            file_item = QTableWidgetItem(log.get('source_file', ''))
-            self.log_table.setItem(row, 1, file_item)
-            
-            # 심각도 (인덱스 2)
-            severity = log.get('severity', 'INFO')
-            severity_item = QTableWidgetItem(severity)
-            
-            # 심각도별 색상 적용
-            if severity in SEVERITY_COLORS:
-                severity_item.setForeground(SEVERITY_COLORS[severity])
-                
-                # EMERGENCY, ALERT, CRITICAL, ERROR는 배경색도 설정
-                if severity in ['EMERGENCY', 'ALERT', 'CRITICAL', 'ERROR']:
-                    severity_item.setBackground(QColor(255, 220, 220))  # 연한 빨강
-            
-            self.log_table.setItem(row, 2, severity_item)
-            
-            # 시설 (인덱스 3)
-            facility_item = QTableWidgetItem(log.get('facility', ''))
-            self.log_table.setItem(row, 3, facility_item)
-            
-            # 메시지 (인덱스 4)
-            message_item = QTableWidgetItem(log.get('message', ''))
-            self.log_table.setItem(row, 4, message_item)
-            
-            # 이벤트 유형 (인덱스 5)
-            event_type = ''
-            if 'event_type' in log and 'event_category' in log:
-                event_type = f"{log['event_category']}: {log['event_type']}"
-            
-            event_item = QTableWidgetItem(event_type)
-            self.log_table.setItem(row, 5, event_item)
-        
-        # 테이블 정렬
-        self.log_table.setSortingEnabled(True)
-        
-    def update_statistics(self):
-        """요약 통계 업데이트"""
-        if not self.log_data:
-            return
-            
-        # 통계 테이블 초기화
-        self.stats_table.setRowCount(0)
-        
-        # 1. 기본 통계
-        basic_stats = [
-            ("총 로그 수", len(self.log_data)),
-            ("필터링된 로그 수", len(self.filtered_data)),
-        ]
-        
-        # 2. 시간 범위
-        timestamps = [log['timestamp_obj'] for log in self.log_data if 'timestamp_obj' in log and log['timestamp_obj']]
-        
-        if timestamps:
-            start_time = min(timestamps)
-            end_time = max(timestamps)
-            duration = end_time - start_time
-            
-            time_stats = [
-                ("로그 시작 시간", start_time.strftime("%Y-%m-%d %H:%M:%S")),
-                ("로그 종료 시간", end_time.strftime("%Y-%m-%d %H:%M:%S")),
-                ("시간 범위", f"{duration.days}일 {duration.seconds//3600}시간 {(duration.seconds//60)%60}분"),
-            ]
-        else:
-            time_stats = [
-                ("로그 시간 정보", "시간 정보 없음"),
-            ]
-        
-        # 3. 심각도 통계
-        severity_counts = {}
-        for log in self.log_data:
-            severity = log.get('severity', 'UNKNOWN')
-            severity_counts[severity] = severity_counts.get(severity, 0) + 1
-        
-        severity_stats = [
-            (f"심각도: {severity}", count)
-            for severity, count in sorted(severity_counts.items(), 
-                                        key=lambda x: list(SEVERITY_COLORS.keys()).index(x[0]) 
-                                        if x[0] in SEVERITY_COLORS else 999)
-        ]
-        
-        # 4. 이벤트 유형 통계
-        event_counts = {}
-        for log in self.log_data:
-            if 'event_type' in log and 'event_category' in log:
-                event_key = f"{log['event_category']}: {log['event_type']}"
-                event_counts[event_key] = event_counts.get(event_key, 0) + 1
-        
-        event_stats = [
-            (f"이벤트: {event_type}", count)
-            for event_type, count in sorted(event_counts.items(), key=lambda x: x[1], reverse=True)[:10]  # 상위 10개
-        ]
-        
-        # 5. 추가 모든 통계 결합
-        all_stats = basic_stats + time_stats + severity_stats + event_stats
-        
-        # 테이블에 통계 추가
-        for row, (label, value) in enumerate(all_stats):
-            self.stats_table.insertRow(row)
-            self.stats_table.setItem(row, 0, QTableWidgetItem(str(label)))
-            self.stats_table.setItem(row, 1, QTableWidgetItem(str(value)))
-    
-    def update_event_analysis(self):
-        """이벤트 분석 테이블 업데이트"""
-        if not self.log_data:
-            return
-            
-        # 이벤트 테이블 초기화
-        self.events_table.setRowCount(0)
-        
-        # 이벤트 통계 계산
-        event_stats = {}
-        
-        for log in self.log_data:
-            if 'event_type' in log and 'event_category' in log:
-                event_key = (log['event_category'], log['event_type'])
-                
-                if event_key not in event_stats:
-                    event_stats[event_key] = {
-                        'count': 0,
-                        'last_time': None,
-                        'logs': []
-                    }
-                
-                event_stats[event_key]['count'] += 1
-                event_stats[event_key]['logs'].append(log)
-                
-                # 가장 최근 발생 시간 업데이트
-                if ('timestamp_obj' in log and log['timestamp_obj'] and 
-                    (event_stats[event_key]['last_time'] is None or 
-                     log['timestamp_obj'] > event_stats[event_key]['last_time'])):
-                    event_stats[event_key]['last_time'] = log['timestamp_obj']
-        
-        # 이벤트 횟수 기준 내림차순 정렬
-        sorted_events = sorted(
-            event_stats.items(),
-            key=lambda x: x[1]['count'],
-            reverse=True
-        )
-        
-        # 테이블에 이벤트 추가
-        for row, ((category, event_type), stats) in enumerate(sorted_events):
-            self.events_table.insertRow(row)
-            
-            # 이벤트 유형
-            self.events_table.setItem(row, 0, QTableWidgetItem(event_type))
-            
-            # 카테고리
-            self.events_table.setItem(row, 1, QTableWidgetItem(category))
-            
-            # 발생 횟수
-            self.events_table.setItem(row, 2, QTableWidgetItem(str(stats['count'])))
-            
-            # 최근 발생 시간
-            last_time = stats['last_time']
-            last_time_str = last_time.strftime("%Y-%m-%d %H:%M:%S") if last_time else "알 수 없음"
-            self.events_table.setItem(row, 3, QTableWidgetItem(last_time_str))
-            
-            # 이벤트 데이터 저장 (보이지 않음)
-            for i in range(4):
-                item = self.events_table.item(row, i)
-                if item:
-                    item.setData(Qt.UserRole, {'logs': stats['logs']})
-        
-        # 테이블 정렬 활성화
-        self.events_table.setSortingEnabled(True)
-    
-    def show_selected_log_detail(self):
-        """선택된 로그 항목의 상세 정보 표시"""
-        # 선택된 행 가져오기
-        selected_rows = self.log_table.selectedIndexes()
-        if not selected_rows:
-            return
-            
-        row = selected_rows[0].row()
-        
-        # 원본 로그 데이터 검색
-        if 0 <= row < len(self.filtered_data):
-            log = self.filtered_data[row]
-            self.show_log_detail(log)
-            
-            # 상세 로그 탭으로 전환
-            self.tab_widget.setCurrentIndex(3)
-    
-    def show_event_details(self):
-        """선택된 이벤트 유형의 로그 세부 정보 표시"""
-        # 선택된 행 가져오기
-        selected_rows = self.events_table.selectedIndexes()
-        if not selected_rows:
-            return
-            
-        row = selected_rows[0].row()
-        
-        # 저장된 로그 데이터 가져오기
-        item = self.events_table.item(row, 0)
-        if item:
-            event_data = item.data(Qt.UserRole)
-            
-            if event_data and 'logs' in event_data:
-                event_logs = event_data['logs']
-                
-                # 이벤트 요약 생성
-                event_type = self.events_table.item(row, 0).text()
-                category = self.events_table.item(row, 1).text()
-                count = self.events_table.item(row, 2).text()
-                
-                summary = f"<h2>이벤트 유형: {event_type}</h2>"
-                summary += f"<p><b>카테고리:</b> {category}</p>"
-                summary += f"<p><b>발생 횟수:</b> {count}</p>"
-                summary += "<h3>관련 로그 항목:</h3>"
-                
-                # 관련 로그 항목 목록
-                summary += "<ul>"
-                for i, log in enumerate(event_logs[:20]):  # 최대 20개 표시
-                    timestamp = log.get('timestamp', '알 수 없음')
-                    message = log.get('message', '')
-                    summary += f"<li><b>{timestamp}</b>: {message}</li>"
-                    
-                if len(event_logs) > 20:
-                    summary += f"<li>... 외 {len(event_logs) - 20}개 항목</li>"
-                    
-                summary += "</ul>"
-                
-                # 상세 정보 표시
-                self.detail_text.setHtml(summary)
-                
-                # 상세 로그 탭으로 전환
-                self.tab_widget.setCurrentIndex(3)
-    
-    def show_log_detail(self, log):
-        """로그 항목의 상세 정보 표시"""
-        if not log:
-            return
-            
-        # HTML 형식으로 표시
-        detail_html = "<html><body style='font-family: Arial; font-size: 10pt;'>"
-        
-        # 제목
-        detail_html += "<h2>로그 상세 정보</h2>"
-        
-        # 기본 정보 테이블
-        detail_html += "<table border='0' cellspacing='5' style='width: 100%;'>"
-        
-        # 시간
-        if 'timestamp' in log:
-            detail_html += f"<tr><td style='font-weight: bold; width: 120px;'>시간:</td><td>{log['timestamp']}</td></tr>"
+        def donut_svg():
+            if total == 0:
+                return ""
+            r, cx, cy, sw = 52, 72, 72, 24
+            circ  = 2 * 3.14159 * r
+            e_pct = error_cnt / total
+            w_pct = warn_cnt  / total
+            o_pct = 1.0 - e_pct - w_pct
+            def arc(pct, color, off):
+                if pct <= 0:
+                    return ""
+                return (f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none"'
+                        f' stroke="{color}" stroke-width="{sw}"'
+                        f' stroke-dasharray="{pct*circ:.1f} {circ:.1f}"'
+                        f' stroke-dashoffset="-{off:.1f}"'
+                        f' transform="rotate(-90 {cx} {cy})"/>')
+            o2 = o_pct * circ
+            o3 = o2 + w_pct * circ
+            return (f'<svg width="144" height="144">'
+                    f'{arc(o_pct,"#22c55e",0)}{arc(w_pct,"#f97316",o2)}{arc(e_pct,"#ef4444",o3)}'
+                    f'<text x="{cx}" y="{cy-4}" text-anchor="middle" font-size="20"'
+                    f' font-weight="bold" fill="#1e293b">{total:,}</text>'
+                    f'<text x="{cx}" y="{cy+15}" text-anchor="middle" font-size="10"'
+                    f' fill="#64748b">총 로그</text></svg>')
 
-        # 파일 출처 추가
-        if 'source_file' in log:
-            detail_html += f"<tr><td style='font-weight: bold;'>파일:</td><td>{log['source_file']}</td></tr>"
-        
-        # 심각도 (색상 적용)
-        if 'severity' in log:
-            severity = log['severity']
-            color = SEVERITY_COLORS.get(severity, QColor(0, 0, 0)).name()
-            detail_html += f"<tr><td style='font-weight: bold;'>심각도:</td><td><span style='color: {color};'>{severity}</span></td></tr>"
-        
-        # 시설
-        if 'facility' in log:
-            detail_html += f"<tr><td style='font-weight: bold;'>시설:</td><td>{log['facility']}</td></tr>"
-        
-        # 이벤트 정보
-        if 'event_type' in log and 'event_category' in log:
-            detail_html += f"<tr><td style='font-weight: bold;'>이벤트 유형:</td><td>{log['event_type']} ({log['event_category']})</td></tr>"
-        
-        detail_html += "</table>"
-        
-        # 구분선
-        detail_html += "<hr>"
-        
-        # 메시지
-        if 'message' in log:
-            detail_html += "<h3>메시지</h3>"
-            detail_html += f"<p>{log['message']}</p>"
-        
-        # 원본 로그
-        detail_html += "<h3>원본 로그</h3>"
-        detail_html += f"<pre style='background-color: #f5f5f5; padding: 10px; border-radius: 5px;'>{log['raw']}</pre>"
-        
-        detail_html += "</body></html>"
-        
-        # 상세 정보 표시
-        self.detail_text.setHtml(detail_html)
-    
-    def save_analysis(self):
-        """분석 결과 저장"""
-        if not self.log_data:
-            QMessageBox.warning(self, "경고", "저장할 분석 결과가 없습니다.")
-            return
-            
-        # 저장 대화상자
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "분석 결과 저장", "", "HTML 파일 (*.html);;CSV 파일 (*.csv);;텍스트 파일 (*.txt)"
-        )
-        
-        if not file_path:
-            return
-        
-        # 추가된 부분: 파일 쓰기 권한 확인
-        try:
-            with open(file_path, 'w', encoding='utf-8') as test_file:
-                pass
-        except PermissionError:
-            QMessageBox.critical(self, "저장 오류", f"파일 저장 권한이 없습니다: {file_path}")
-            return
-        except IOError as e:
-            QMessageBox.critical(self, "저장 오류", f"파일을 저장할 수 없습니다: {e}")
-            return
-            
-        try:
-            # 기존 저장 로직
-            if file_path.endswith('.html'):
-                self.save_as_html(file_path)
-            elif file_path.endswith('.csv'):
-                self.save_as_csv(file_path)
-            else:  # .txt 또는 기타
-                self.save_as_text(file_path)
-                
-            self.status_label.setText(f"분석 결과가 {file_path}에 저장되었습니다.")
-        except Exception as e:
-            import traceback
-            QMessageBox.critical(self, "저장 오류", 
-                f"파일 저장 중 오류가 발생했습니다: {str(e)}\n\n{traceback.format_exc()}")
-    
-    def save_as_html(self, file_path):
-        """HTML 형식으로 결과 저장"""
-        with open(file_path, 'w', encoding='utf-8') as f:
-            # HTML 헤더
-            f.write("""<!DOCTYPE html>
-<html>
+        # ── unique 값 목록 (검색 탭 드롭다운) ───────────────────
+        all_sev   = json.dumps(sorted(sev_count.keys(),  key=lambda x: _SEV_ORDER.index(x) if x in _SEV_ORDER else 99), ensure_ascii=False)
+        all_hosts = json.dumps(sorted(host_count.keys()), ensure_ascii=False)
+        all_facs  = json.dumps(sorted(fac_count.keys()),  ensure_ascii=False)
+        all_evts  = json.dumps(sorted(evt_count.keys()),  ensure_ascii=False)
+        all_files = json.dumps(sorted({e.get('source_file','') for e in data} - {''}), ensure_ascii=False)
+
+        # ── TOP-N 이슈 메시지 패턴 ───────────────────────────────
+        top_mnemonics = sorted(mnemonic_count.items(), key=lambda x: -x[1])[:20]
+        mnem_rows = "".join(
+            f'<tr><td class="mono">{_html.escape(k)}</td>'
+            f'<td style="text-align:right;font-weight:700;color:#ef4444">{v:,}</td></tr>'
+            for k, v in top_mnemonics
+        ) or "<tr><td colspan='2' class='empty'>없음</td></tr>"
+
+        html_doc = f"""<!DOCTYPE html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>Cisco 네트워크 장비 로그 분석 결과</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1, h2 { color: #0066cc; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background-color: #f2f2f2; text-align: left; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .emergency, .alert, .critical, .error { color: #cc0000; font-weight: bold; }
-        .warning, .notice { color: #ff6600; }
-        .info { color: #000000; }
-        .debug { color: #666666; }
-        .section { margin-top: 30px; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>로그 분석 보고서 — {gen_time}</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:'Malgun Gothic',Consolas,sans-serif;background:#f1f5f9;color:#1e293b;font-size:13px}}
+/* ── 헤더 ── */
+.hdr{{background:#1e293b;color:#fff;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}}
+.hdr h1{{font-size:17px;font-weight:700;letter-spacing:.3px}}
+.hdr .meta{{font-size:11px;color:#94a3b8;text-align:right;line-height:1.6}}
+/* ── 탭 바 ── */
+.tabbar{{background:#fff;border-bottom:2px solid #e2e8f0;display:flex;gap:0;padding:0 20px;position:sticky;top:49px;z-index:90}}
+.tabn{{padding:11px 20px;cursor:pointer;font-size:13px;font-weight:600;color:#64748b;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;user-select:none}}
+.tabn:hover{{color:#3b82f6}}
+.tabn.active{{color:#3b82f6;border-bottom-color:#3b82f6}}
+/* ── 탭 콘텐츠 ── */
+.tabcontent{{display:none;padding:20px 24px}}
+.tabcontent.active{{display:block}}
+/* ── 카드 ── */
+.card{{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:16px}}
+.card h2{{font-size:13px;font-weight:700;color:#334155;padding-bottom:8px;border-bottom:2px solid #f1f5f9;margin-bottom:14px}}
+/* ── 그리드 ── */
+.g4{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}}
+.g2{{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}}
+.g3{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}}
+/* ── KPI ── */
+.kpi{{text-align:center;padding:16px}}
+.kpi-n{{font-size:34px;font-weight:800;line-height:1.1}}
+.kpi-l{{font-size:11px;color:#64748b;margin-top:5px}}
+/* ── 바 차트 ── */
+.brow{{display:flex;align-items:center;gap:8px;margin-bottom:6px}}
+.blabel{{width:150px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;color:#334155}}
+.btrack{{flex:1;background:#e2e8f0;border-radius:4px;height:16px;overflow:hidden}}
+.bfill{{height:16px;border-radius:4px;min-width:4px;transition:width .3s}}
+.bval{{width:46px;text-align:right;font-size:11px;color:#64748b;flex-shrink:0}}
+/* ── 테이블 ── */
+table{{width:100%;border-collapse:collapse}}
+th{{background:#f8fafc;padding:7px 10px;text-align:left;border-bottom:2px solid #e2e8f0;font-size:11px;font-weight:700;color:#475569;position:sticky;top:0;cursor:pointer;user-select:none;white-space:nowrap}}
+th:hover{{background:#f1f5f9}}
+th.sort-asc::after{{content:" ▲"}}
+th.sort-desc::after{{content:" ▼"}}
+td{{padding:5px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;vertical-align:top}}
+tr:hover td{{background:#f8fafc}}
+.mono{{font-family:Consolas,monospace;font-size:11px}}
+.empty{{color:#94a3b8;font-size:12px;padding:8px 0}}
+/* ── 심각도 배지 ── */
+.badge{{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;white-space:nowrap}}
+/* ── 검색 바 ── */
+.sbar{{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;background:#f8fafc;border-radius:8px;padding:12px 14px}}
+.sbar input,.sbar select{{height:30px;border:1px solid #e2e8f0;border-radius:6px;padding:0 10px;font-size:12px;background:#fff;color:#1e293b;outline:none}}
+.sbar input{{flex:1;min-width:160px}}
+.sbar select{{min-width:130px}}
+.sbar button{{height:30px;padding:0 16px;border:none;border-radius:6px;background:#3b82f6;color:#fff;font-size:12px;font-weight:700;cursor:pointer}}
+.sbar button:hover{{background:#2563eb}}
+.sbar .cnt{{font-size:12px;color:#3b82f6;font-weight:700;white-space:nowrap}}
+/* ── 페이지네이션 ── */
+.pager{{display:flex;gap:6px;align-items:center;justify-content:center;padding:10px 0}}
+.pager button{{height:28px;min-width:32px;padding:0 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;font-size:12px}}
+.pager button:hover{{background:#f1f5f9}}
+.pager button.cur{{background:#3b82f6;color:#fff;border-color:#3b82f6;font-weight:700}}
+.pager .pginfo{{font-size:12px;color:#64748b}}
+/* ── 상세 패널 ── */
+#detail-panel{{background:#1e293b;color:#e2e8f0;font-family:Consolas,monospace;font-size:11px;border-radius:8px;padding:14px;margin-top:10px;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow:auto;display:none}}
+/* ── 색상 ── */
+.red{{color:#ef4444}} .orange{{color:#f97316}} .green{{color:#22c55e}} .blue{{color:#3b82f6}} .purple{{color:#8b5cf6}}
+.footer{{text-align:center;color:#94a3b8;font-size:11px;padding:20px 0 30px}}
+</style>
 </head>
 <body>
-    <h1>Cisco 네트워크 장비 로그 분석 결과</h1>
-    <p><b>파일:</b> {0}</p>
-    <p><b>분석 시간:</b> {1}</p>
-""".format(self.current_file, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
-            # 요약 통계
-            f.write("<div class='section'>\n<h2>요약 통계</h2>\n<table>\n")
-            f.write("<tr><th>항목</th><th>값</th></tr>\n")
-            
-            for row in range(self.stats_table.rowCount()):
-                label = self.stats_table.item(row, 0).text()
-                value = self.stats_table.item(row, 1).text()
-                f.write(f"<tr><td>{label}</td><td>{value}</td></tr>\n")
-                
-            f.write("</table>\n</div>\n")
-            
-            # 이벤트 분석
-            f.write("<div class='section'>\n<h2>이벤트 분석</h2>\n<table>\n")
-            f.write("<tr><th>이벤트 유형</th><th>카테고리</th><th>발생 횟수</th><th>최근 발생 시간</th></tr>\n")
-            
-            for row in range(self.events_table.rowCount()):
-                event_type = self.events_table.item(row, 0).text()
-                category = self.events_table.item(row, 1).text()
-                count = self.events_table.item(row, 2).text()
-                last_time = self.events_table.item(row, 3).text()
-                
-                f.write(f"<tr><td>{event_type}</td><td>{category}</td><td>{count}</td><td>{last_time}</td></tr>\n")
-                
-            f.write("</table>\n</div>\n")
-            
-            # 로그 항목
-            f.write("<div class='section'>\n<h2>로그 항목</h2>\n<table>\n")
-            f.write("<tr><th>시간</th><th>심각도</th><th>시설</th><th>메시지</th><th>이벤트 유형</th></tr>\n")
-            
-            for log in self.filtered_data:
-                timestamp = log.get('timestamp', '')
-                severity = log.get('severity', 'INFO')
-                facility = log.get('facility', '')
-                message = log.get('message', '')
-                
-                event_type = ''
-                if 'event_type' in log and 'event_category' in log:
-                    event_type = f"{log['event_category']}: {log['event_type']}"
-                
-                # 심각도에 따른 스타일 클래스
-                severity_class = severity.lower() if severity.lower() in ['emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug'] else 'info'
-                
-                f.write(f"<tr><td>{timestamp}</td><td class='{severity_class}'>{severity}</td><td>{facility}</td><td>{message}</td><td>{event_type}</td></tr>\n")
-                
-            f.write("</table>\n</div>\n")
-            
-            # HTML 푸터
-            f.write("""
-</body>
-</html>
-""")
-    
-    def save_as_csv(self, file_path):
-        """CSV 형식으로 결과 저장"""
-        try:
-            # 로그 데이터를 데이터프레임으로 변환
-            logs_df = pd.DataFrame(self.filtered_data)
-            
-            # 이벤트 정보 추가
-            event_info = []
-            for log in self.filtered_data:
-                event_type = ''
-                if 'event_type' in log and 'event_category' in log:
-                    event_type = f"{log['event_category']}: {log['event_type']}"
-                event_info.append(event_type)
-                
-            logs_df['event_info'] = event_info
-            
-            # 필요한 컬럼만 선택
-            if 'timestamp' in logs_df.columns and 'severity' in logs_df.columns and 'facility' in logs_df.columns and 'message' in logs_df.columns:
-                logs_df = logs_df[['timestamp', 'severity', 'facility', 'message', 'event_info']]
-            
-            # CSV로 저장
-            logs_df.to_csv(file_path, index=False, encoding='utf-8')
-        
-        except Exception as e:
-            raise Exception(f"CSV 파일 저장 오류: {str(e)}")
-    
-    def save_as_text(self, file_path):
-        """텍스트 형식으로 결과 저장"""
-        with open(file_path, 'w', encoding='utf-8') as f:
-            # 헤더
-            f.write("Cisco 네트워크 장비 로그 분석 결과\n")
-            f.write(f"파일: {self.current_file}\n")
-            f.write(f"분석 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-            
-            # 요약 통계
-            f.write("===== 요약 통계 =====\n")
-            
-            for row in range(self.stats_table.rowCount()):
-                label = self.stats_table.item(row, 0).text()
-                value = self.stats_table.item(row, 1).text()
-                f.write(f"{label}: {value}\n")
-                
-            f.write("\n")
-            
-            # 이벤트 분석
-            f.write("===== 이벤트 분석 =====\n")
-            f.write("이벤트 유형\t카테고리\t발생 횟수\t최근 발생 시간\n")
-            
-            for row in range(self.events_table.rowCount()):
-                event_type = self.events_table.item(row, 0).text()
-                category = self.events_table.item(row, 1).text()
-                count = self.events_table.item(row, 2).text()
-                last_time = self.events_table.item(row, 3).text()
-                
-                f.write(f"{event_type}\t{category}\t{count}\t{last_time}\n")
-                
-            f.write("\n")
-            
-            # 로그 항목
-            f.write("===== 로그 항목 =====\n")
-            
-            for log in self.filtered_data:
-                timestamp = log.get('timestamp', '')
-                severity = log.get('severity', 'INFO')
-                facility = log.get('facility', '')
-                message = log.get('message', '')
-                
-                event_type = ''
-                if 'event_type' in log and 'event_category' in log:
-                    event_type = f"{log['event_category']}: {log['event_type']}"
-                
-                f.write(f"[{timestamp}] {severity} {facility} - {message}")
-                if event_type:
-                    f.write(f" [{event_type}]")
-                f.write("\n")
-    
-    def refresh_view(self):
-        """현재 보기 새로고침"""
-        # 현재 선택된 탭에 따라 다른 새로고침 작업 수행
-        current_tab = self.tab_widget.currentIndex()
-        
-        if current_tab == 0:  # 로그 테이블
-            self.update_log_table()
-        elif current_tab == 1:  # 요약 통계
-            self.update_statistics()
-        elif current_tab == 2:  # 이벤트 분석
-            self.update_event_analysis()
-    
-    def clear_filters(self):
-        """모든 필터 초기화"""
-        # 시간 필터 초기화
-        self.time_filter_enabled.setChecked(False)
-        self.start_time.setDateTime(QDateTime.currentDateTime().addDays(-1))
-        self.end_time.setDateTime(QDateTime.currentDateTime())
-        
-        # 키워드 필터 초기화
-        self.keyword_filter_enabled.setChecked(False)
-        self.keyword_edit.clear()
-        self.regex_checkbox.setChecked(False)
-        
-        # 심각도 필터 초기화
-        self.severity_filter_enabled.setChecked(False)
-        self.severity_all.setChecked(True)
-        
-        # 이벤트 필터 초기화
-        self.event_filter_enabled.setChecked(False)
-        self.event_combo.setCurrentIndex(0)
-        
-        # 필터 적용
-        self.apply_filters()
-        
-        # status_bar 대신 status_label 사용
-        self.status_label.setText("모든 필터가 초기화되었습니다.")
-    
-    def show_about(self):
-        """프로그램 정보 표시"""
-        QMessageBox.about(self, "프로그램 정보",
-            """<h1>Cisco 네트워크 장비 로그 분석기</h1>
-            <p>버전 1.0</p>
-            <p>이 프로그램은 다양한 Cisco 네트워크 장비의 로그 파일을 분석하기 위한 도구입니다.</p>
-            <p>지원되는 장비 유형:</p>
-            <ul>
-                <li>IOS/IOS-XE 스위치 (2960X, 3650, 3850, 9200, 9300 등)</li>
-                <li>NX-OS 스위치 (93180, 9500 등)</li>
-                <li>ASA/FTD 보안 장비</li>
-                <li>ISR/ASR 라우터</li>
-                <li>무선 컨트롤러 (9800 등)</li>
-                <li>SD-WAN (Viptela)</li>
-            </ul>
-            """
+<!-- 헤더 -->
+<div class="hdr">
+  <h1>📋 네트워크 장비 로그 분석 보고서</h1>
+  <div class="meta">생성: {gen_time} &nbsp;|&nbsp; 파일 {len(self.current_files)}개<br>
+    {_html.escape(file_list[:120]) + ("..." if len(file_list)>120 else "")}
+  </div>
+</div>
+{"" if not truncated else f'<div style="background:#fef3c7;border-bottom:2px solid #fbbf24;padding:7px 28px;font-size:12px;color:#92400e">⚠️ {truncated_note}</div>'}
+
+<!-- 탭 바 -->
+<div class="tabbar">
+  <div class="tabn active" onclick="switchTab(0)">📊 대시보드</div>
+  <div class="tabn" onclick="switchTab(1)">📋 전체 로그</div>
+  <div class="tabn" onclick="switchTab(2)">🔍 검색 / 필터</div>
+  <div class="tabn" onclick="switchTab(3)">⚠️ 오류 분석</div>
+</div>
+
+<!-- ════════════════ TAB 0: 대시보드 ════════════════ -->
+<div class="tabcontent active" id="tab0">
+
+  <!-- KPI -->
+  <div class="g4" style="margin-top:4px">
+    <div class="card kpi"><div class="kpi-n blue">{total:,}</div><div class="kpi-l">전체 로그</div></div>
+    <div class="card kpi"><div class="kpi-n red">{error_cnt:,}</div><div class="kpi-l">ERROR 이상</div></div>
+    <div class="card kpi"><div class="kpi-n orange">{warn_cnt:,}</div><div class="kpi-l">WARNING</div></div>
+    <div class="card kpi"><div class="kpi-n green">{info_cnt:,}</div><div class="kpi-l">INFO</div></div>
+  </div>
+  <div class="g4">
+    <div class="card kpi"><div class="kpi-n purple">{len(host_count):,}</div><div class="kpi-l">호스트 수</div></div>
+    <div class="card kpi"><div class="kpi-n" style="color:#0ea5e9">{len(fac_count):,}</div><div class="kpi-l">Facility 종류</div></div>
+    <div class="card kpi"><div class="kpi-n" style="color:#10b981">{len(evt_count):,}</div><div class="kpi-l">감지 이벤트 유형</div></div>
+    <div class="card kpi"><div class="kpi-n" style="color:#f59e0b">{len(self.current_files):,}</div><div class="kpi-l">분석 파일 수</div></div>
+  </div>
+
+  <!-- 분석 파일 목록 -->
+  {"" if len(self.current_files) <= 1 else f'''<div class="card" style="margin-bottom:16px">
+    <h2>📁 분석 파일 목록 ({len(self.current_files)}개)</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      {"".join(
+          f'<span style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;'
+          f'padding:4px 10px;font-size:11px;font-family:Consolas">'
+          f'{_html.escape(os.path.basename(fp))}</span>'
+          for fp in self.current_files
+      )}
+    </div>
+  </div>'''}
+
+  <!-- 심각도 + 도넛 -->
+  <div class="g2">
+    <div class="card">
+      <h2>심각도 분포</h2>
+      {sev_bars_html()}
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+      <h2 style="align-self:flex-start;width:100%">심각도 비율</h2>
+      {donut_svg()}
+      <div style="display:flex;gap:14px;font-size:11px;flex-wrap:wrap;justify-content:center">
+        <span><span class="red">●</span> ERROR+ &nbsp;<b>{error_cnt:,}</b></span>
+        <span><span class="orange">●</span> WARNING &nbsp;<b>{warn_cnt:,}</b></span>
+        <span><span class="green">●</span> 나머지 &nbsp;<b>{total-error_cnt-warn_cnt:,}</b></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 이벤트 / Facility / 호스트 -->
+  <div class="g3">
+    <div class="card"><h2>이벤트 유형 TOP 15</h2>{bar_rows(evt_count, 15, "#8b5cf6")}</div>
+    <div class="card"><h2>Facility TOP 15</h2>{bar_rows(fac_count, 15, "#0ea5e9")}</div>
+    <div class="card"><h2>호스트별 TOP 15</h2>{bar_rows(host_count, 15, "#10b981") if host_count else "<p class='empty'>호스트 정보 없음</p>"}</div>
+  </div>
+
+</div><!-- /tab0 -->
+
+<!-- ════════════════ TAB 1: 전체 로그 ════════════════ -->
+<div class="tabcontent" id="tab1">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+    <span id="all-cnt" class="blue" style="font-weight:700;font-size:13px"></span>
+    <select id="all-sev" onchange="renderAll()" style="height:28px;border:1px solid #e2e8f0;border-radius:6px;padding:0 8px;font-size:12px">
+      <option value="">전체 심각도</option>
+    </select>
+    <select id="all-host" onchange="renderAll()" style="height:28px;border:1px solid #e2e8f0;border-radius:6px;padding:0 8px;font-size:12px">
+      <option value="">전체 호스트</option>
+    </select>
+    <select id="all-file" onchange="renderAll()" style="height:28px;border:1px solid #e2e8f0;border-radius:6px;padding:0 8px;font-size:12px">
+      <option value="">전체 파일</option>
+    </select>
+    <span style="font-size:11px;color:#94a3b8">행 클릭 → 상세 보기</span>
+  </div>
+  <div style="overflow-x:auto">
+  <table id="all-table">
+    <thead><tr>
+      <th onclick="sortAll(0)" style="width:150px">시간</th>
+      <th onclick="sortAll(1)" style="width:80px">심각도</th>
+      <th onclick="sortAll(2)" style="width:120px">Facility</th>
+      <th onclick="sortAll(3)" style="width:100px">호스트</th>
+      <th>메시지</th>
+      <th onclick="sortAll(5)" style="width:110px">이벤트</th>
+      <th onclick="sortAll(6)" style="width:100px">파일</th>
+    </tr></thead>
+    <tbody id="all-body"></tbody>
+  </table>
+  </div>
+  <div class="pager" id="all-pager"></div>
+  <div id="detail-panel"></div>
+</div><!-- /tab1 -->
+
+<!-- ════════════════ TAB 2: 검색 ════════════════ -->
+<div class="tabcontent" id="tab2">
+  <div class="sbar">
+    <input type="text" id="s-kw" placeholder="🔍 키워드, IP, 메시지 검색..." oninput="runSearch()">
+    <select id="s-sev" onchange="runSearch()"><option value="">전체 심각도</option></select>
+    <select id="s-host" onchange="runSearch()"><option value="">전체 호스트</option></select>
+    <select id="s-fac" onchange="runSearch()"><option value="">전체 Facility</option></select>
+    <select id="s-evt" onchange="runSearch()"><option value="">전체 이벤트</option></select>
+    <select id="s-file" onchange="runSearch()"><option value="">전체 파일</option></select>
+    <button onclick="clearSearch()">초기화</button>
+    <span class="cnt" id="s-cnt">0 건</span>
+  </div>
+  <div style="overflow-x:auto">
+  <table id="s-table">
+    <thead><tr>
+      <th style="width:150px">시간</th>
+      <th style="width:80px">심각도</th>
+      <th style="width:120px">Facility</th>
+      <th style="width:100px">호스트</th>
+      <th>메시지</th>
+      <th style="width:110px">이벤트</th>
+      <th style="width:100px">파일</th>
+    </tr></thead>
+    <tbody id="s-body"></tbody>
+  </table>
+  </div>
+  <div class="pager" id="s-pager"></div>
+  <div id="s-detail-panel" style="background:#1e293b;color:#e2e8f0;font-family:Consolas,monospace;font-size:11px;border-radius:8px;padding:14px;margin-top:10px;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow:auto;display:none"></div>
+</div><!-- /tab2 -->
+
+<!-- ════════════════ TAB 3: 오류 분석 ════════════════ -->
+<div class="tabcontent" id="tab3">
+  <div class="g2">
+    <div class="card">
+      <h2>심각도별 집계</h2>
+      <table>
+        <tr><th>심각도</th><th style="text-align:right">건수</th><th style="text-align:right">비율</th></tr>
+        {"".join(
+            f'<tr><td><span class="badge" style="background:{SEV_MAP.get(s,"#94a3b8")}">{s}</span></td>'
+            f'<td style="text-align:right;font-weight:700">{sev_count.get(s,0):,}</td>'
+            f'<td style="text-align:right;color:#64748b">{sev_count.get(s,0)/total*100:.1f}%</td></tr>'
+            for s in _SEV_ORDER if sev_count.get(s,0)
+        )}
+      </table>
+    </div>
+    <div class="card">
+      <h2>⚠️ 빈도 높은 경보 Mnemonic TOP 20</h2>
+      <table>
+        <tr><th>Mnemonic</th><th style="text-align:right">건수</th></tr>
+        {mnem_rows}
+      </table>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <h2>Facility별 집계 (전체)</h2>
+      {bar_rows(fac_count, 30, "#0ea5e9")}
+    </div>
+    <div class="card">
+      <h2>호스트별 집계 (전체)</h2>
+      {bar_rows(host_count, 30, "#10b981") if host_count else "<p class='empty'>호스트 정보 없음</p>"}
+    </div>
+  </div>
+  <div class="card">
+    <h2>ERROR 이상 로그 — 전체 목록</h2>
+    <div style="overflow-x:auto">
+    <table id="err-table">
+      <thead><tr>
+        <th style="width:150px">시간</th><th style="width:80px">심각도</th>
+        <th style="width:100px">호스트</th><th style="width:130px">Facility</th><th>메시지</th>
+      </tr></thead>
+      <tbody id="err-body"></tbody>
+    </table>
+    </div>
+    <div class="pager" id="err-pager"></div>
+    <div id="err-detail-panel" style="background:#1e293b;color:#e2e8f0;font-family:Consolas,monospace;font-size:11px;border-radius:8px;padding:14px;margin-top:10px;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow:auto;display:none"></div>
+  </div>
+</div><!-- /tab3 -->
+
+<div class="footer">Network Automation v6.1 &nbsp;|&nbsp; {gen_time}</div>
+
+<script>
+const LOGS = {rows_json};
+const SEV_COLOR = {json.dumps(SEV_MAP)};
+const SEV_ORDER = {json.dumps(_SEV_ORDER)};
+const ALL_SEV   = {all_sev};
+const ALL_HOSTS = {all_hosts};
+const ALL_FACS  = {all_facs};
+const ALL_EVTS  = {all_evts};
+const ALL_FILES = {all_files};
+
+// ── 탭 전환 ──────────────────────────────────────────
+function switchTab(n) {{
+  document.querySelectorAll('.tabn').forEach((el,i) => el.classList.toggle('active', i===n));
+  document.querySelectorAll('.tabcontent').forEach((el,i) => el.classList.toggle('active', i===n));
+  if (n===1 && !allInited) initAll();
+  if (n===2 && !searchInited) initSearch();
+  if (n===3 && !errInited) initErr();
+}}
+
+// ── 배지 HTML ─────────────────────────────────────────
+function badge(sev) {{
+  const c = SEV_COLOR[sev] || '#94a3b8';
+  return `<span class="badge" style="background:${{c}}">${{sev}}</span>`;
+}}
+
+// ── 페이지네이션 헬퍼 ─────────────────────────────────
+function makePager(containerId, page, total, pageSize, cb) {{
+  const el = document.getElementById(containerId);
+  const pages = Math.ceil(total / pageSize) || 1;
+  if (pages <= 1) {{ el.innerHTML=''; return; }}
+  let html = '';
+  if (page > 0) html += `<button onclick="${{cb}}(${{page-1}})">‹</button>`;
+  const start = Math.max(0, page-3), end = Math.min(pages-1, page+3);
+  if (start>0) html += `<button onclick="${{cb}}(0)">1</button>${{start>1?'<span>…</span>':''}}`;
+  for (let i=start;i<=end;i++) html += `<button class="${{i===page?'cur':''}}" onclick="${{cb}}(${{i}})">${{i+1}}</button>`;
+  if (end<pages-1) html += `${{end<pages-2?'<span>…</span>':''}}<button onclick="${{cb}}(${{pages-1}})">${{pages}}</button>`;
+  if (page < pages-1) html += `<button onclick="${{cb}}(${{page+1}})">›</button>`;
+  html += `<span class="pginfo">&nbsp;${{page+1}} / ${{pages}} 페이지 (${{total.toLocaleString()}}건)</span>`;
+  el.innerHTML = html;
+}}
+
+// ── 행 렌더 공통 ──────────────────────────────────────
+function rowHtml(r, idx, detailPanelId) {{
+  const c = SEV_COLOR[r.sev] || '#94a3b8';
+  const rowBg = r.sev==='ERROR'||r.sev==='CRITICAL'||r.sev==='ALERT'||r.sev==='EMERGENCY'
+    ? '#fff5f5' : r.sev==='WARNING' ? '#fffbeb' : '';
+  return `<tr style="background:${{rowBg}};cursor:pointer" onclick="showDetail(${{JSON.stringify(r)}},'${{detailPanelId}}')">
+    <td class="mono" style="color:#64748b;white-space:nowrap">${{r.ts}}</td>
+    <td>${{badge(r.sev)}}</td>
+    <td class="mono" style="color:#6d28d9">${{r.fac}}</td>
+    <td style="color:#0f172a">${{r.host}}</td>
+    <td style="max-width:500px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${{r.msg.replace(/"/g,'&quot;')}}">${{r.msg}}</td>
+    <td style="color:#7c3aed;font-size:10px">${{r.evt}}</td>
+    <td style="color:#64748b;font-size:10px">${{r.src}}</td>
+  </tr>`;
+}}
+
+function showDetail(r, panelId) {{
+  const p = document.getElementById(panelId);
+  if (p.dataset.last === JSON.stringify(r)) {{ p.style.display = p.style.display==='none'?'block':'none'; return; }}
+  p.dataset.last = JSON.stringify(r);
+  p.style.display = 'block';
+  p.textContent = [
+    '시간     : ' + r.ts,
+    '심각도   : ' + r.sev,
+    'Facility : ' + r.fac,
+    '호스트   : ' + r.host,
+    '이벤트   : ' + r.evt,
+    '파일     : ' + r.src,
+    '',
+    '── 메시지 ──────────────────────────────────────────',
+    r.msg,
+    '',
+    '── 원본 라인 ────────────────────────────────────────',
+    r.raw,
+  ].join('\\n');
+}}
+
+// ════════════════ TAB 1: 전체 로그 ════════════════════
+let allInited=false, allFiltered=LOGS, allPage=0, allSortCol=-1, allSortAsc=true;
+const ALL_PAGE_SIZE = 200;
+
+function initAll() {{
+  allInited = true;
+  populate('all-sev', ALL_SEV);
+  populate('all-host', ALL_HOSTS);
+  populate('all-file', ALL_FILES);
+  allFiltered = LOGS;
+  renderAll();
+}}
+
+function populate(id, arr) {{
+  const sel = document.getElementById(id);
+  arr.forEach(v => {{ const o=document.createElement('option'); o.value=o.text=v; sel.appendChild(o); }});
+}}
+
+function renderAll() {{
+  const sev  = document.getElementById('all-sev').value;
+  const host = document.getElementById('all-host').value;
+  const file = document.getElementById('all-file').value;
+  allFiltered = LOGS.filter(r =>
+    (!sev  || r.sev===sev) &&
+    (!host || r.host===host) &&
+    (!file || r.src===file)
+  );
+  allPage = 0;
+  renderAllPage(0);
+}}
+
+function renderAllPage(pg) {{
+  allPage = pg;
+  const slice = allFiltered.slice(pg*ALL_PAGE_SIZE, (pg+1)*ALL_PAGE_SIZE);
+  document.getElementById('all-body').innerHTML = slice.map((r,i) => rowHtml(r,i,'detail-panel')).join('');
+  document.getElementById('all-cnt').textContent = allFiltered.length.toLocaleString() + ' 건';
+  makePager('all-pager', pg, allFiltered.length, ALL_PAGE_SIZE, 'renderAllPage');
+}}
+
+let allSortState={{}};
+function sortAll(col) {{
+  const ths = document.querySelectorAll('#all-table th');
+  const asc = allSortState[col] === undefined ? true : !allSortState[col];
+  allSortState = {{}}; allSortState[col] = asc;
+  ths.forEach((th,i)=>{{ th.classList.remove('sort-asc','sort-desc'); if(i===col) th.classList.add(asc?'sort-asc':'sort-desc'); }});
+  const keys = ['ts','sev','fac','host','msg','evt','src'];
+  const k = keys[col];
+  allFiltered.sort((a,b) => {{
+    const va=a[k]||'', vb=b[k]||'';
+    if(k==='sev') {{ const ia=SEV_ORDER.indexOf(va),ib=SEV_ORDER.indexOf(vb); return asc?ia-ib:ib-ia; }}
+    return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+  }});
+  renderAllPage(0);
+}}
+
+// ════════════════ TAB 2: 검색 ════════════════════════
+let searchInited=false, searchResult=[], searchPage=0;
+const SEARCH_PAGE_SIZE = 200;
+
+function initSearch() {{
+  searchInited = true;
+  populate('s-sev',  ALL_SEV);
+  populate('s-host', ALL_HOSTS);
+  populate('s-fac',  ALL_FACS);
+  populate('s-evt',  ALL_EVTS);
+  populate('s-file', ALL_FILES);
+  runSearch();
+}}
+
+function runSearch() {{
+  const kw   = document.getElementById('s-kw').value.toLowerCase();
+  const sev  = document.getElementById('s-sev').value;
+  const host = document.getElementById('s-host').value;
+  const fac  = document.getElementById('s-fac').value;
+  const evt  = document.getElementById('s-evt').value;
+  const file = document.getElementById('s-file').value;
+  searchResult = LOGS.filter(r =>
+    (!kw   || r.raw.toLowerCase().includes(kw) || r.msg.toLowerCase().includes(kw)) &&
+    (!sev  || r.sev===sev) &&
+    (!host || r.host===host) &&
+    (!fac  || r.fac===fac) &&
+    (!evt  || r.evt===evt) &&
+    (!file || r.src===file)
+  );
+  searchPage = 0;
+  renderSearchPage(0);
+}}
+
+function clearSearch() {{
+  ['s-kw'].forEach(id => document.getElementById(id).value='');
+  ['s-sev','s-host','s-fac','s-evt','s-file'].forEach(id => document.getElementById(id).selectedIndex=0);
+  runSearch();
+}}
+
+function renderSearchPage(pg) {{
+  searchPage = pg;
+  const slice = searchResult.slice(pg*SEARCH_PAGE_SIZE, (pg+1)*SEARCH_PAGE_SIZE);
+  document.getElementById('s-body').innerHTML = slice.map((r,i) => rowHtml(r,i,'s-detail-panel')).join('');
+  document.getElementById('s-cnt').textContent = searchResult.length.toLocaleString() + ' 건';
+  makePager('s-pager', pg, searchResult.length, SEARCH_PAGE_SIZE, 'renderSearchPage');
+}}
+
+// ════════════════ TAB 3: 오류 분석 ════════════════════
+let errInited=false, errData=[], errPage=0;
+const ERR_PAGE_SIZE = 200;
+
+function initErr() {{
+  errInited = true;
+  errData = LOGS.filter(r => ['EMERGENCY','ALERT','CRITICAL','ERROR'].includes(r.sev));
+  renderErrPage(0);
+}}
+
+function renderErrPage(pg) {{
+  errPage = pg;
+  const slice = errData.slice(pg*ERR_PAGE_SIZE, (pg+1)*ERR_PAGE_SIZE);
+  document.getElementById('err-body').innerHTML = slice.map((r,i) => {{
+    const c = SEV_COLOR[r.sev]||'#ef4444';
+    return `<tr style="background:#fff5f5;cursor:pointer" onclick="showDetail(${{JSON.stringify(r)}},'err-detail-panel')">
+      <td class="mono" style="color:#64748b;white-space:nowrap">${{r.ts}}</td>
+      <td>${{badge(r.sev)}}</td>
+      <td style="color:#0f172a">${{r.host}}</td>
+      <td class="mono" style="color:#6d28d9">${{r.fac}}</td>
+      <td style="max-width:600px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${{r.msg.replace(/"/g,'&quot;')}}">${{r.msg}}</td>
+    </tr>`;
+  }}).join('');
+  makePager('err-pager', pg, errData.length, ERR_PAGE_SIZE, 'renderErrPage');
+}}
+</script>
+</body></html>"""
+
+        default = f"log_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        path, _ = QFileDialog.getSaveFileName(
+            self, "HTML 보고서 저장", default, "HTML (*.html)"
         )
+        if not path:
+            return
+        try:
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(html_doc)
+        except Exception as e:
+            QMessageBox.critical(self, "저장 오류", str(e))
+            return
+        reply = QMessageBox.question(
+            self, "저장 완료",
+            f"저장 완료:\n{path}\n\n브라우저에서 열겠습니까?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            import sys
+            if sys.platform == "win32":
+                os.startfile(path)
+            else:
+                webbrowser.open(f'file:///{path}')
+        self.lbl_status.setText(f"HTML 보고서 저장: {path}")
+
+    # ── 내보내기 ─────────────────────────────────────────────────
+    def _export(self):
+        if not self.filtered_data:
+            return
+        path, _ = QFileDialog.getSaveFileName(
+            self, "내보내기", f"log_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "CSV (*.csv);;텍스트 (*.txt)"
+        )
+        if not path:
+            return
+        try:
+            if path.endswith('.csv'):
+                import csv
+                with open(path, 'w', newline='', encoding='utf-8-sig') as f:
+                    w = csv.writer(f)
+                    w.writerow(['시간','심각도','Facility','호스트','메시지','이벤트','파일'])
+                    for e in self.filtered_data:
+                        w.writerow([
+                            e.get('timestamp',''), e.get('severity',''),
+                            e.get('facility_name',''), e.get('hostname',''),
+                            e.get('message',''), e.get('event_type',''),
+                            e.get('source_file',''),
+                        ])
+            else:
+                with open(path, 'w', encoding='utf-8') as f:
+                    for e in self.filtered_data:
+                        f.write(e.get('raw','') + '\n')
+            QMessageBox.information(self, "완료", f"저장되었습니다:\n{path}")
+        except Exception as ex:
+            QMessageBox.warning(self, "오류", str(ex))

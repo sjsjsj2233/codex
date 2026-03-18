@@ -1,65 +1,95 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""
-NetworkAutomation PyInstaller Spec File
-모든 필요한 모듈 포함 - 최종 빌드
-"""
 
 block_cipher = None
 
 a = Analysis(
     ['main.py'],
-    pathex=[],
+    pathex=['.'],
     binaries=[],
     datas=[
-        ('icons', 'icons'),  # icons 폴더 포함
+        ('icons',           'icons'),
     ],
     hiddenimports=[
-        # PyQt5
+        # ── PyQt5 ──────────────────────────────────────────────
         'PyQt5',
         'PyQt5.QtCore',
         'PyQt5.QtGui',
         'PyQt5.QtWidgets',
+        'PyQt5.QtPrintSupport',
         'PyQt5.sip',
-        # 네트워크 라이브러리
+        # ── 네트워크 ────────────────────────────────────────────
         'paramiko',
+        'paramiko.transport',
+        'paramiko.auth_handler',
+        'paramiko.channel',
+        'paramiko.packet',
+        'paramiko.sftp_client',
+        'cryptography',
+        'cryptography.hazmat.primitives.ciphers.algorithms',
+        # ── 데이터 / 문서 ────────────────────────────────────────
         'openpyxl',
-        # 데이터 분석 라이브러리
+        'openpyxl.styles',
+        'openpyxl.utils',
         'pandas',
         'numpy',
         'matplotlib',
         'matplotlib.pyplot',
         'matplotlib.backends.backend_qt5agg',
+        'matplotlib.backends.backend_agg',
         'PIL',
-        'Pillow',
-        # UI 모듈
-        'ui',
+        'PIL.Image',
+        'PIL.ImageDraw',
+        'PIL.ImageFont',
+        'reportlab',
+        'reportlab.pdfgen',
+        'reportlab.lib',
+        'docx',
+        'docx.oxml',
+        # ── UI 모듈 ──────────────────────────────────────────────
         'ui.main_window',
         'ui.network_tab',
-        'ui.about_tab',
-        'ui.report_tab',
-        'ui.theme',
-        'ui.dogu_tab',
-        'ui.auto_analysis_tab',
-        'ui.log_analyzer_tab',
+        'ui.console_tab',
         'ui.monitoring_tab',
-        # Core 모듈
-        'core',
+        'ui.dogu_tab',
+        'ui.about_tab',
+        'ui.home_tab',
+        'ui.report_tab',
+        'ui.log_analyzer_tab',
+        'ui.config_compare_tab',
+        'ui.inspection_tab',
+        'ui.file_viewer_tab',
+        'ui.theme',
+        'ui.license_dialog',
+        'ui.disclaimer_dialog',
+        'ui.onboarding_dialog',
+        'ui.premium_popup',
+        # ── Core 모듈 ─────────────────────────────────────────────
         'core.workers',
+        'core.license_manager',
+        'core.config_diff',
+        'core.parsers',
+        'core.inspection_parser',
+        'core.i18n',
+        'core.updater',
+        'core.log_analyzer',
+        'core.log_analyzer.parser',
+        'core.log_analyzer.constants',
+        # ── 시리얼 ────────────────────────────────────────────────
+        'serial',
+        'serial.tools',
+        'serial.tools.list_ports',
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        # 정말 불필요한 모듈만 제외
-        'scipy',
         'tkinter',
         'unittest',
         'pydoc',
         'doctest',
-        'test',
-        'tests',
         '_pytest',
         'pytest',
+        'scipy',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
@@ -78,14 +108,14 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,  # UPX 압축 활성화
-    console=False,  # 콘솔 창 숨김
+    upx=False,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=r'D:\5. 개발\최신 program network auto 2025.06.25 (파일명 형식)\icons\app_icon.ico',  # 아이콘 파일
+    icon='icons/app_icon.ico',
 )
 
 coll = COLLECT(
@@ -94,7 +124,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='NetworkAutomation',
 )

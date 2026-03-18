@@ -8,10 +8,20 @@ import subprocess
 import threading
 import paramiko
 import datetime
-import telnetlib
-from concurrent.futures import ThreadPoolExecutor
+try:
+    import telnetlib
+except ImportError:
+    import telnetlib3 as telnetlib
+try:
+    import serial
+    from serial.tools import list_ports as serial_list_ports
+    SERIAL_AVAILABLE = True
+except ImportError:
+    SERIAL_AVAILABLE = False
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import queue
 import random
+import locale
 
 # PyQt5 라이브러리
 from PyQt5.QtCore import QThread, pyqtSignal, QMutex
@@ -32,7 +42,7 @@ class NetworkConfig:
     TERMINAL_WIDTH_CMD = "terminal width 132"
 
     # 연결 재시도 설정
-    MAX_RETRIES = 3
+    MAX_RETRIES = 2
     RETRY_DELAY = 2  # 초
 
     # 버퍼 설정
@@ -77,26 +87,30 @@ class NetworkWorker(QThread):
     # 기존 시그널들
     progress_updated = pyqtSignal(int)
     task_completed = pyqtSignal(str)
-    error_occurred = pyqtSignal(str)
+    error_occurred = pyqtSignal(str, str)  # message, ip
     debug_log = pyqtSignal(str)
     
     # 실시간 상태 업데이트를 위한 새로운 시그널
     status_update = pyqtSignal(str, str)  # IP, 상태 메시지
 
-    def __init__(self, ip, username, password, enable_password, use_ssh, save_path, commands, ssh_port=22):
+    def __init__(self, ip, username, password, enable_password, use_ssh, save_path, commands, ssh_port=22,
+                 use_serial=False, com_port='COM1', baud_rate=9600):
         super().__init__()
         self.ip = ip
         self.username = username
         self.password = password
         self.enable_password = enable_password
         self.use_ssh = use_ssh
+        self.use_serial = use_serial
+        self.com_port = com_port
+        self.baud_rate = baud_rate
         self.save_path = save_path
         self.commands = commands
         self.ssh_port = ssh_port
         self._stop_flag = False
         self._mutex = QMutex()
-        self.filename_format = "hostname_only"  # 기본값 설정
-        
+        self.filename_format = "hostname_only"  # UI에서 덮어씀 (main_window 참조)
+
         # 연결 재시도 설정
         self.max_retries = NetworkConfig.MAX_RETRIES
         self.retry_delay = NetworkConfig.RETRY_DELAY
@@ -150,10 +164,21 @@ class NetworkWorker(QThread):
                 
                 try:
                     if attempt > 0:
-                        self._emit_status(f"연결 재시도 {attempt + 1}/{self.max_retries}...")
-                        time.sleep(self.retry_delay)
+                        # 지수 백오프: 2s, 4s, 8s ...
+                        backoff = self.retry_delay * (2 ** (attempt - 1))
+                        self._emit_status(f"연결 재시도 {attempt + 1}/{self.max_retries} ({backoff}초 후)...")
+                        # 대기 중에도 중지 요청 감지 (0.5초 단위로 체크)
+                        elapsed = 0
+                        while elapsed < backoff:
+                            if self.is_stopped():
+                                self.task_completed.emit(f"[INFO] 작업 중지됨: {self.ip}")
+                                return
+                            time.sleep(0.5)
+                            elapsed += 0.5
                     
-                    if self.use_ssh:
+                    if self.use_serial:
+                        self.connect_via_serial()
+                    elif self.use_ssh:
                         self.connect_via_ssh()
                     else:
                         self.connect_via_telnet()
@@ -185,7 +210,7 @@ class NetworkWorker(QThread):
                 
         except Exception as e:
             logging.error(f"[ERROR] {self.ip}: {e}")
-            self.error_occurred.emit(f"[ERROR] {self.ip}: {e}")
+            self.error_occurred.emit(f"[ERROR] {self.ip}: {e}", self.ip)
 
     def enhanced_login_handler(self, connection, connection_type="ssh"):
         """
@@ -289,7 +314,7 @@ class NetworkWorker(QThread):
                 time.sleep(3)
                 login_result = self._read_until_prompt_ssh(connection, timeout=20)
             else:  # telnet
-                connection.write(self.password.encode('ascii') + b"\n")
+                connection.write(self.password.encode('utf-8', errors='replace') + b"\n")
                 time.sleep(3)
                 login_result = self._read_until_prompt_telnet(connection, timeout=20)
 
@@ -374,7 +399,7 @@ class NetworkWorker(QThread):
                         time.sleep(2)  # 대기 시간 증가
                         username_response = self._read_until_prompt_ssh(connection, timeout=15)
                     else:
-                        connection.write(self.username.encode('ascii') + b"\n")
+                        connection.write(self.username.encode('utf-8', errors='replace') + b"\n")
                         time.sleep(2)  # 대기 시간 증가
                         username_response = self._read_until_prompt_telnet(connection, timeout=15)
 
@@ -394,42 +419,49 @@ class NetworkWorker(QThread):
                 ]
                 
                 password_found = False
-                max_attempts = 10  # 최대 시도 횟수 증가
-                
+                max_attempts = 10
+
                 for attempt in range(max_attempts):
+                    # 중지 요청 시 즉시 탈출
+                    if self.is_stopped():
+                        return False
+
                     self._log_debug(f"[TACACS] Password 프롬프트 찾기 시도 {attempt + 1}/{max_attempts}")
-                    self._log_debug(f"[TACACS] 현재 누적 출력: {repr(current_output[-200:])}")  # 마지막 200자만 표시
-                    
+                    self._log_debug(f"[TACACS] 현재 누적 출력: {repr(current_output[-200:])}")
+
                     # 현재 출력에서 password 프롬프트 찾기
                     for i, pattern in enumerate(password_prompts):
                         if re.search(pattern, current_output, re.IGNORECASE):
                             password_found = True
                             self._log_debug(f"[TACACS] Password 프롬프트 발견 (패턴 {i+1}): {pattern}")
                             break
-                    
+
                     if password_found:
                         break
-                    
-                    # 추가 출력 읽기 - 더 긴 대기 시간
-                    time.sleep(1.0)  # 1초 대기
-                    if connection_type == "ssh":
-                        additional_output = self._read_until_prompt_ssh(connection, timeout=5)
-                    else:
-                        additional_output = self._read_until_prompt_telnet(connection, timeout=5)
-                    
-                    if additional_output:
-                        current_output += additional_output
-                        self._log_debug(f"[TACACS] 추가 출력 {attempt+1}: {repr(additional_output)}")
-                    else:
-                        self._log_debug(f"[TACACS] 추가 출력 없음 {attempt+1}")
-                    
-                    # 혹시 이미 로그인된 상태인지 확인
+
+                    # 이미 로그인된 상태인지 먼저 확인 (Password 없이 통과)
                     lines = current_output.strip().split('\n')
-                    for line in lines[-3:]:  # 마지막 3줄 확인
+                    for line in lines[-3:]:
                         line = line.strip()
                         if re.search(r'[#>]\s*$', line):
                             self._emit_status("Password 없이 로그인 완료")
                             return True
+
+                    # 추가 출력 읽기
+                    time.sleep(1.0)
+                    if connection_type == "ssh":
+                        additional_output = self._read_until_prompt_ssh(connection, timeout=5)
+                    else:
+                        additional_output = self._read_until_prompt_telnet(connection, timeout=5)
+
+                    if additional_output:
+                        current_output += additional_output
+                        # 누적 버퍼 크기 제한
+                        if len(current_output) > NetworkConfig.MAX_BUFFER_SIZE:
+                            current_output = current_output[-NetworkConfig.MAX_BUFFER_SIZE:]
+                        self._log_debug(f"[TACACS] 추가 출력 {attempt+1}: {repr(additional_output)}")
+                    else:
+                        self._log_debug(f"[TACACS] 추가 출력 없음 {attempt+1}")
                 
                 if not password_found:
                     # 마지막 시도: 강제로 password 입력해보기
@@ -441,7 +473,7 @@ class NetworkWorker(QThread):
                         time.sleep(3)
                         login_result = self._read_until_prompt_ssh(connection, timeout=15)
                     else:
-                        connection.write(self.password.encode('ascii') + b"\n")
+                        connection.write(self.password.encode('utf-8', errors='replace') + b"\n")
                         time.sleep(3)
                         login_result = self._read_until_prompt_telnet(connection, timeout=15)
                     
@@ -465,7 +497,7 @@ class NetworkWorker(QThread):
                     time.sleep(3)  # 대기 시간 증가
                     login_result = self._read_until_prompt_ssh(connection, timeout=20)
                 else:
-                    connection.write(self.password.encode('ascii') + b"\n")
+                    connection.write(self.password.encode('utf-8', errors='replace') + b"\n")
                     time.sleep(3)  # 대기 시간 증가
                     login_result = self._read_until_prompt_telnet(connection, timeout=20)
                 
@@ -721,7 +753,7 @@ class NetworkWorker(QThread):
                         
                         if b"Password" in enable_output or b"password" in enable_output:
                             if self.enable_password:
-                                tn.write(self.enable_password.encode('ascii') + b"\n")
+                                tn.write(self.enable_password.encode('utf-8', errors='replace') + b"\n")
                             else:
                                 tn.write(b"\n")
                             time.sleep(1)
@@ -737,9 +769,9 @@ class NetworkWorker(QThread):
                 
                 # 터미널 설정
                 self._emit_status("터미널 설정 중...")
-                tn.write(f"{NetworkConfig.TERMINAL_LENGTH_CMD}\n".encode('ascii'))
+                tn.write(f"{NetworkConfig.TERMINAL_LENGTH_CMD}\n".encode('utf-8', errors='replace'))
                 time.sleep(NetworkConfig.COMMAND_DELAY)
-                tn.write(f"{NetworkConfig.TERMINAL_WIDTH_CMD}\n".encode('ascii'))
+                tn.write(f"{NetworkConfig.TERMINAL_WIDTH_CMD}\n".encode('utf-8', errors='replace'))
                 time.sleep(NetworkConfig.COMMAND_DELAY)
                 self._read_until_prompt_telnet(tn, timeout=5)
                 
@@ -764,13 +796,147 @@ class NetworkWorker(QThread):
             raise Exception("Telnet 연결 시간 초과")
         except Exception as e:
             raise Exception(f"Telnet 연결 실패: {e}")
-        
+
         return output_data
+
+    # ── 시리얼 콘솔 ──────────────────────────────────────────────────────────
+    def connect_via_serial(self):
+        if not SERIAL_AVAILABLE:
+            raise Exception("pyserial 라이브러리가 설치되지 않았습니다. pip install pyserial")
+
+        ser = None
+        hostname = None
+        output_data = {}
+        try:
+            self._emit_status(f"시리얼 연결 시도 중... ({self.com_port}, {self.baud_rate}bps)")
+            ser = serial.Serial(
+                port=self.com_port,
+                baudrate=self.baud_rate,
+                bytesize=serial.EIGHTBITS,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                timeout=1,
+                xonxoff=False,
+                rtscts=False,
+                dsrdtr=False,
+            )
+            self._emit_status("시리얼 포트 열림")
+            time.sleep(1)
+
+            # 초기 프롬프트 유도 (Enter 전송)
+            ser.write(b"\r\n")
+            time.sleep(1)
+            initial_output = self._read_until_prompt_serial(ser, timeout=5)
+
+            # 로그인 필요 여부 확인
+            if any(k in initial_output.lower() for k in ['username:', 'login:', 'user:']):
+                self._emit_status("사용자명 입력 중...")
+                ser.write(self.username.encode('utf-8', errors='replace') + b"\r\n")
+                time.sleep(1)
+                out = self._read_until_prompt_serial(ser, timeout=5)
+                if 'password:' in out.lower():
+                    ser.write(self.password.encode('utf-8', errors='replace') + b"\r\n")
+                    time.sleep(1)
+                    self._read_until_prompt_serial(ser, timeout=5)
+            elif 'password:' in initial_output.lower():
+                self._emit_status("비밀번호 입력 중...")
+                ser.write(self.password.encode('utf-8', errors='replace') + b"\r\n")
+                time.sleep(1)
+                self._read_until_prompt_serial(ser, timeout=5)
+
+            # Enable 모드
+            if self.enable_password is not None:
+                self._emit_status("Enable 모드 진입 중...")
+                ser.write(b"enable\r\n")
+                time.sleep(1)
+                en_out = self._read_until_prompt_serial(ser, timeout=5)
+                if 'password:' in en_out.lower():
+                    pw = self.enable_password or ''
+                    ser.write(pw.encode('utf-8', errors='replace') + b"\r\n")
+                    time.sleep(1)
+                    self._read_until_prompt_serial(ser, timeout=5)
+
+            # 터미널 설정
+            self._emit_status("터미널 설정 중...")
+            for cmd in (NetworkConfig.TERMINAL_LENGTH_CMD, NetworkConfig.TERMINAL_WIDTH_CMD):
+                ser.write(cmd.encode('utf-8', errors='replace') + b"\r\n")
+                time.sleep(NetworkConfig.COMMAND_DELAY)
+            self._read_until_prompt_serial(ser, timeout=5)
+
+            # Hostname 추출
+            hostname = self._extract_hostname_serial(ser)
+            self._log_debug(f"[SERIAL] hostname: {hostname}")
+
+            # 출력 파일 (시리얼은 IP 대신 COM 포트명 사용)
+            _saved_ip = self.ip
+            self.ip = self.com_port
+            output_file_path = self.generate_output_filename(hostname, self.filename_format)
+            self.ip = _saved_ip
+            self._create_output_file_header(output_file_path, f"Serial({self.com_port})", hostname)
+
+            # 명령어 실행
+            output_data = self._execute_commands_common(
+                ser,
+                "Serial",
+                output_file_path,
+                lambda conn: self._read_until_prompt_serial(conn, timeout=30),
+            )
+
+        except serial.SerialException as e:
+            raise Exception(f"시리얼 포트 오류 ({self.com_port}): {e}")
+        except Exception as e:
+            raise Exception(f"시리얼 연결 실패: {e}")
+        finally:
+            if ser and ser.is_open:
+                ser.close()
+
+        return output_data
+
+    def _read_until_prompt_serial(self, ser, timeout=30):
+        """시리얼 포트에서 프롬프트(#/>) 또는 타임아웃까지 읽기"""
+        output = ""
+        start = time.time()
+        while time.time() - start < timeout:
+            waiting = ser.in_waiting
+            if waiting:
+                chunk = ser.read(waiting).decode('utf-8', errors='replace')
+                output += chunk
+                if re.search(r'\S+[#>]\s*$', output.rstrip()):
+                    break
+            else:
+                time.sleep(0.05)
+        return output
+
+    def _extract_hostname_serial(self, ser):
+        """시리얼에서 hostname 추출"""
+        try:
+            ser.write(b"show running-config | include hostname\r\n")
+            time.sleep(2)
+            out = self._read_until_prompt_serial(ser, timeout=15)
+            for line in out.split('\n'):
+                line = line.strip()
+                if line.lower().startswith('hostname '):
+                    parts = line.split()
+                    if len(parts) >= 2 and self._is_valid_hostname(parts[1]):
+                        return parts[1]
+        except Exception:
+            pass
+        # 프롬프트에서 hostname 추출
+        try:
+            ser.write(b"\r\n")
+            time.sleep(0.5)
+            prompt_out = self._read_until_prompt_serial(ser, timeout=5)
+            m = re.search(r'(\S+)[#>]', prompt_out.rstrip())
+            if m and self._is_valid_hostname(m.group(1)):
+                return m.group(1)
+        except Exception:
+            pass
+        return self.com_port
 
     def _extract_hostname_ssh(self, shell):
         """SSH에서 hostname 추출 (개선된 방법)"""
         hostname = None
-        
+
         # 방법 1: show running-config | include hostname (가장 확실한 방법)
         try:
             self._log_debug("[HOSTNAME] show running-config 시도")
@@ -944,17 +1110,21 @@ class NetworkWorker(QThread):
         return False
 
     def _read_until_prompt_ssh(self, shell, timeout=10):
-        """SSH 프롬프트까지 읽기"""
+        """SSH 프롬프트까지 읽기 (버퍼 최대 1MB 제한)"""
         buffer = ""
         start_time = time.time()
-        
+
         while time.time() - start_time < timeout:
             if shell.recv_ready():
                 try:
-                    chunk = shell.recv(8192).decode("utf-8", errors="replace")
+                    chunk = shell.recv(NetworkConfig.SSH_BUFFER_SIZE).decode("utf-8", errors="replace")
                     if chunk:
                         buffer += chunk
-                        
+
+                        # 버퍼 크기 초과 시 앞부분 잘라내기
+                        if len(buffer) > NetworkConfig.MAX_BUFFER_SIZE:
+                            buffer = buffer[-NetworkConfig.MAX_BUFFER_SIZE:]
+
                         # 프롬프트 감지
                         lines = buffer.split('\n')
                         for line in lines[-3:]:
@@ -963,23 +1133,28 @@ class NetworkWorker(QThread):
                                 return buffer
                 except Exception:
                     break
-            time.sleep(0.1)
-        
+            time.sleep(NetworkConfig.PROMPT_CHECK_DELAY)
+
         return buffer
 
     def _read_until_prompt_telnet(self, tn, timeout=10):
-        """향상된 Telnet 프롬프트까지 읽기"""
+        """향상된 Telnet 프롬프트까지 읽기 (버퍼 최대 1MB 제한)"""
         buffer = ""
         start_time = time.time()
-        
+
         while time.time() - start_time < timeout:
             try:
                 if tn.sock_avail():
                     data = tn.read_very_eager().decode('ascii', errors="replace")
                     if data:
                         buffer += data
+
+                        # 버퍼 크기 초과 시 앞부분 잘라내기
+                        if len(buffer) > NetworkConfig.MAX_BUFFER_SIZE:
+                            buffer = buffer[-NetworkConfig.MAX_BUFFER_SIZE:]
+
                         self._log_debug(f"[TELNET_READ] 수신 데이터: {repr(data)}")
-                    
+
                     # 다양한 프롬프트 패턴 확인
                     prompt_patterns = [
                         r'[#>]\s*$',
@@ -988,23 +1163,21 @@ class NetworkWorker(QThread):
                         r'[Pp]assword\s*:\s*$',
                         r'[Uu]sername\s*:\s*$'
                     ]
-                    
+
                     for pattern in prompt_patterns:
                         if re.search(pattern, buffer.strip(), re.MULTILINE):
                             self._log_debug(f"[TELNET_READ] 프롬프트 패턴 감지: {pattern}")
                             return buffer
-                    
-                    # 특정 문자열로 끝나는 경우도 확인
+
                     stripped = buffer.strip()
                     if stripped.endswith(('>', '#', ':', 'Password:', 'Username:')):
                         return buffer
-                        
+
             except Exception as e:
                 self._log_debug(f"[TELNET_READ] 읽기 오류: {e}")
-                pass
-            time.sleep(0.1)
-        
-        self._log_debug(f"[TELNET_READ] 타임아웃, 버퍼 내용: {repr(buffer)}")
+            time.sleep(NetworkConfig.PROMPT_CHECK_DELAY)
+
+        self._log_debug(f"[TELNET_READ] 타임아웃, 버퍼 내용: {repr(buffer[-200:])}")
         return buffer
 
     def _create_output_file_header(self, output_file_path, connection_type, hostname):
@@ -1031,55 +1204,64 @@ class NetworkWorker(QThread):
         output_data = {}
         total_commands = len(self.commands)
 
-        for idx, command in enumerate(self.commands, 1):
-            if self.is_stopped():
-                break
+        with open(output_file_path, "a", encoding="utf-8") as output_file:
+            for idx, command in enumerate(self.commands, 1):
+                if self.is_stopped():
+                    break
 
-            try:
-                self._emit_status(f"명령어 실행 중 ({idx}/{total_commands}): {command}")
+                try:
+                    self._emit_status(f"명령어 실행 중 ({idx}/{total_commands}): {command}")
 
-                # 명령어 전송 (SSH/Telnet에 따라 다름)
-                if connection_type == "SSH":
-                    connection.send(f"{command}\n")
-                else:  # Telnet
-                    connection.write(command.encode('ascii') + b"\n")
+                    # 명령어 전송 (SSH / Telnet / Serial)
+                    if connection_type == "SSH":
+                        connection.send(f"{command}\n")
+                    elif connection_type == "Serial":
+                        connection.write(command.encode('utf-8', errors='replace') + b"\r\n")
+                    else:  # Telnet
+                        connection.write(command.encode('utf-8', errors='replace') + b"\n")
 
-                time.sleep(0.5)
-                output = read_func(connection)
-                cleaned_output = self._clean_output(output, command)
+                    time.sleep(0.5)
+                    output = read_func(connection)
+                    cleaned_output = self._clean_output(output, command)
 
-                # 결과 파일에 기록
-                with open(output_file_path, "a", encoding="utf-8") as output_file:
-                    output_file.write(f"Command: {command}\n{cleaned_output}\n{'-' * 50}\n\n")
+                    output_file.write(
+                        f"Command: {command}\n{cleaned_output}\n{'-' * 50}\n\n"
+                    )
+                    output_file.flush()
 
-                self._emit_status(f"명령어 완료 ({idx}/{total_commands}): {command}")
-                output_data[command] = cleaned_output
+                    self._emit_status(f"명령어 완료 ({idx}/{total_commands}): {command}")
+                    output_data[command] = cleaned_output
 
-            except Exception as e:
-                error_msg = f"명령어 '{command}' 실행 중 오류: {e}"
-                self._emit_status(error_msg)
-
-                with open(output_file_path, "a", encoding="utf-8") as output_file:
-                    output_file.write(f"Command: {command}\nERROR: {error_msg}\n{'-' * 50}\n\n")
-
-                output_data[command] = f"ERROR: {error_msg}"
+                except Exception as e:
+                    error_msg = f"명령어 '{command}' 실행 중 오류: {e}"
+                    self._emit_status(error_msg)
+                    output_file.write(
+                        f"Command: {command}\nERROR: {error_msg}\n{'-' * 50}\n\n"
+                    )
+                    output_file.flush()
+                    output_data[command] = f"ERROR: {error_msg}"
 
         self._emit_status("모든 명령어 실행 완료")
         return output_data
 
     def generate_output_filename(self, hostname=None, filename_format="hostname_only"):
-        """출력 파일명 생성"""
+        """출력 파일명 생성 (충돌 시 IP 자동 추가)"""
         ip_part = self.ip.replace('.', '_')
-        
+
         def safe_filename(name):
             return re.sub(r'[<>:"/\\|?*]', '_', name)
-        
+
         if filename_format == "ip_only":
             filename = f"{ip_part}.txt"
         elif filename_format == "hostname_only":
             if hostname:
                 safe_hostname = safe_filename(hostname)
-                filename = f"{safe_hostname}.txt"
+                candidate = os.path.join(self.save_path, f"{safe_hostname}.txt")
+                # 동일 hostname 파일이 이미 있으면 IP를 붙여 충돌 방지
+                if os.path.exists(candidate):
+                    filename = f"{safe_hostname}_{ip_part}.txt"
+                else:
+                    filename = f"{safe_hostname}.txt"
             else:
                 filename = f"{ip_part}.txt"
         elif filename_format == "ip_hostname":
@@ -1096,28 +1278,35 @@ class NetworkWorker(QThread):
                 filename = f"{ip_part}.txt"
         else:
             filename = f"{ip_part}.txt"
-        
+
         return os.path.join(self.save_path, filename)
 
     def _clean_output(self, output, command):
-        """출력 텍스트 정리"""
+        """출력 텍스트 정리 (설정 파일의 빈 줄은 의미 있으므로 보존)"""
         lines = output.splitlines()
         clean_lines = []
         command_found = False
-        
+
         for line in lines:
-            if not line.strip():
+            # 명령어 에코 이전의 빈 줄은 스킵
+            if not command_found and not line.strip():
                 continue
-            
+
+            # 명령어 에코 줄 스킵
             if not command_found and command in line:
                 command_found = True
                 continue
-            
-            if line.strip().endswith(">") or line.strip().endswith("#"):
+
+            # 프롬프트 줄 스킵 (hostname# 또는 hostname>)
+            if re.search(r'^\S+[#>]\s*$', line.strip()):
                 continue
-            
+
             clean_lines.append(line)
-        
+
+        # 후행 빈 줄 제거
+        while clean_lines and not clean_lines[-1].strip():
+            clean_lines.pop()
+
         return "\n".join(line.rstrip() for line in clean_lines)
 
 
@@ -1259,6 +1448,7 @@ class BulkNetworkManager:
     def stop(self):
         """작업 중지 요청"""
         self._stop_flag = True
+        self.executor.shutdown(wait=False, cancel_futures=True)
     
     def execute_device(self, ip, username, password, enable_password, use_ssh, save_path, commands, ssh_port=22):
         """단일 장비에 대한 작업 실행"""
@@ -1294,15 +1484,15 @@ class BulkNetworkManager:
         Returns:
             dict: 각 IP에 대한 실행 결과
         """
-        futures = []
+        future_to_ip = {}
         self.results = {}
         self._stop_flag = False
-        
+
         # 각 장비마다 작업 제출
         for device in devices_config:
             if self._stop_flag:
                 break
-                
+
             future = self.executor.submit(
                 self.execute_device,
                 device['ip'],
@@ -1314,29 +1504,33 @@ class BulkNetworkManager:
                 device['commands'],
                 device.get('ssh_port', 22)
             )
-            futures.append((device['ip'], future))
-        
-        # 결과 수집 (완료되는 대로)
-        for ip, future in futures:
+            future_to_ip[future] = device['ip']
+
+        # 완료되는 순서대로 결과 수집 (as_completed 사용)
+        for future in as_completed(future_to_ip, timeout=None):
             if self._stop_flag:
                 break
-                
+
+            ip = future_to_ip[future]
             try:
-                result = future.result(timeout=120)  # 2분 타임아웃 설정
+                result = future.result(timeout=120)
                 self.results[ip] = result
-                
-                # 진행 상황 콜백 호출
+
                 if self.progress_callback:
                     self.progress_callback(ip, result)
-                    
+
+            except TimeoutError:
+                error_msg = f"장비 {ip} 타임아웃 (120초 초과)"
+                logging.error(error_msg)
+                self.results[ip] = {"status": "error", "message": error_msg}
+                if self.error_callback:
+                    self.error_callback(ip, error_msg)
             except Exception as e:
                 error_msg = f"장비 {ip} 작업 실패: {str(e)}"
                 self.results[ip] = {"status": "error", "message": error_msg}
-                
-                # 오류 콜백 호출
                 if self.error_callback:
                     self.error_callback(ip, str(e))
-        
+
         return self.results
     
     def process_devices_sequential(self, devices_config, save_path):
@@ -1475,35 +1669,37 @@ class PingThread(QThread):
                 # Windows
                 ping_params = ["-n", "1", "-w", str(timeout * 1000), "-l", str(packet_size)]
                 command = ["ping"] + ping_params + [ip]
-                
-                # Windows에서는 창이 보이지 않도록 creationflags 추가
-                result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
-                                    text=True, timeout=timeout+1, 
-                                    creationflags=subprocess.CREATE_NO_WINDOW)
+                result = subprocess.run(
+                    command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    timeout=timeout + 2,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+                # 시스템 인코딩 자동 감지 (한국어 Windows: cp949, 영문: cp1252 등)
+                sys_enc = locale.getpreferredencoding(False) or 'utf-8'
+                try:
+                    output = result.stdout.decode(sys_enc, errors='replace')
+                except LookupError:
+                    output = result.stdout.decode('utf-8', errors='replace')
             else:
                 # Linux/Mac
                 ping_params = ["-c", "1", "-W", str(timeout), "-s", str(packet_size)]
                 command = ["ping"] + ping_params + [ip]
-                
-                # Linux/Mac에서는 일반적인 방식으로 실행
-                result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
-                                    text=True, timeout=timeout+1)
-            
-            # 한국어 Windows에서는 '의 응답:' 문자열이 있으면 성공
-            if result.returncode == 0 and "의 응답:" in result.stdout:
-                # TTL 추출
-                ttl_match = re.search(r"TTL=(\d+)", result.stdout, re.IGNORECASE)
+                result = subprocess.run(
+                    command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    timeout=timeout + 2,
+                )
+                output = result.stdout.decode('utf-8', errors='replace')
+
+            if result.returncode == 0:
+                # TTL 추출 (공통)
+                ttl_match = re.search(r"TTL=(\d+)", output, re.IGNORECASE)
                 ttl = ttl_match.group(1) if ttl_match else "N/A"
-                
-                # 시간 추출
-                time_match = re.search(r"시간=(\d+)ms", result.stdout, re.IGNORECASE)
-                resp_time = time_match.group(1) if time_match else "N/A"
-                
-                # TTL과 시간이 모두 추출되었을 때만 성공으로 처리
-                if ttl != "N/A" and resp_time != "N/A":
-                    return f"Ping 성공 (TTL={ttl}, Time={resp_time}ms)"
-                else:
-                    return "Ping 실패 (응답 데이터 불완전)"
+
+                # 응답 시간 추출 — 한국어(시간=Xms / 시간<Xms) + 영문(time=Xms / time<Xms)
+                time_match = re.search(r"(?:시간|time)[=<](\d+)\s*ms", output, re.IGNORECASE)
+                resp_time = time_match.group(1) if time_match else "1"
+
+                return f"Ping 성공 (TTL={ttl}, Time={resp_time}ms)"
             else:
                 return "Ping 실패"
         except subprocess.TimeoutExpired:
