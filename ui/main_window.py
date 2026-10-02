@@ -17,12 +17,22 @@ from PyQt5.QtGui import QIcon, QFont, QPixmap, QTextCursor
 from PyQt5.QtCore import Qt, QTimer
 
 from ui.theme import ModernTheme
-from core.license_manager import LicenseManager
-
 def _config_path() -> str:
     d = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'NetworkAutomation')
     os.makedirs(d, exist_ok=True)
     return os.path.join(d, 'config.json')
+
+
+def _xlsx_safe(value) -> str:
+    """Excel(XML)에서 허용하지 않는 제어문자 제거.
+
+    PAN-OS의 'show system resources'/'show running resource-monitor' 같은
+    라이브 갱신형 명령은 캡처된 원문에 ANSI 이스케이프(ESC 0x1B 등) 제어문자가
+    섞여 들어오는데, openpyxl은 이 문자를 만나면 IllegalCharacterError를 던져
+    Excel 저장 단계에서 앱이 그대로 죽는다. 셀에 쓰기 전 항상 이 필터를 거친다.
+    """
+    from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+    return ILLEGAL_CHARACTERS_RE.sub('', str(value))
 
 # 내부 모듈 import
 from ui.network_tab import NetworkTab
@@ -46,24 +56,12 @@ class NetworkAutomationApp(QMainWindow):
         self.total_tasks = 0
         self.failed_tasks = 0
         self._update_download_url = ''
-        self.license_manager = LicenseManager()
+        self._excel_results = {}  # device_index -> {ip, hostname, output_data}
         self.init_ui()
         self.load_configuration()
         self.center_on_screen()
-        # 면책 조항 → 라이센스 순서로 표시
-        QTimer.singleShot(200, self._check_startup_dialogs)
         # 업데이트 체크 (3초 후 백그라운드 실행)
         QTimer.singleShot(3000, self._start_update_check)
-
-    def _check_startup_dialogs(self):
-        from ui.disclaimer_dialog import DisclaimerDialog, has_agreed
-        if not has_agreed():
-            dlg = DisclaimerDialog(self)
-            if dlg.exec_() != DisclaimerDialog.Accepted:
-                import sys
-                sys.exit(0)
-
-
 
     def translate(self, text):
         return tr(text)
@@ -79,7 +77,7 @@ class NetworkAutomationApp(QMainWindow):
         self.move(x, y)
 
     def init_ui(self):
-        self.setWindowTitle("Network Automation v8.0")
+        self.setWindowTitle(self.translate("네트워크 운영 콘솔") + "  |  Network Automation v9.9")
         self.setMinimumSize(960, 640)
         self.setGeometry(100, 100, 1280, 820)
 
@@ -91,21 +89,49 @@ class NetworkAutomationApp(QMainWindow):
         # 상태바 생성
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
-        self.translate("Ready")
+        self.statusBar.showMessage(self.translate("작업 준비 완료"))
         
         # 중앙 위젯 설정
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        brand_bar = QFrame()
+        brand_bar.setObjectName("brandBar")
+        brand_bar.setFixedHeight(70)
+        brand_bar.setStyleSheet("#brandBar{background:#ffffff;border-bottom:1px solid #e7edf5}")
+        brand_row = QHBoxLayout(brand_bar)
+        brand_row.setContentsMargins(26, 0, 28, 0)
+        brand_row.setSpacing(12)
+        mark = QLabel("N")
+        mark.setFixedSize(34, 34)
+        mark.setAlignment(Qt.AlignCenter)
+        mark.setStyleSheet("background:#152945;color:#78d5f4;border-radius:9px;font-size:17px;font-weight:800")
+        brand_row.addWidget(mark)
+        brand_text = QVBoxLayout()
+        brand_text.setSpacing(1)
+        brand_title = QLabel("NETWORK AUTOMATION")
+        brand_title.setStyleSheet("color:#152945;font-size:12px;font-weight:800;letter-spacing:1px")
+        brand_subtitle = QLabel(self.translate("Cisco 네트워크 운영 워크스페이스"))
+        brand_subtitle.setStyleSheet("color:#8293a9;font-size:9px")
+        brand_text.addWidget(brand_title)
+        brand_text.addWidget(brand_subtitle)
+        brand_row.addLayout(brand_text)
+        brand_row.addStretch()
+        version_label = QLabel("v9.9  /  DESKTOP")
+        version_label.setStyleSheet("color:#7d8fa5;background:#f3f6fb;border-radius:6px;padding:6px 10px;font-size:9px;font-weight:700")
+        brand_row.addWidget(version_label)
+        main_layout.addWidget(brand_bar)
         
         # 탭 위젯 생성
         self.tabs = QTabWidget()
         self.tabs.setObjectName("mainTabs")
         self.tabs.setDocumentMode(True)   # 탭 아래 경계선 제거 (더 깔끔)
-        main_layout.setContentsMargins(8, 4, 8, 4)
         
         # 메인 탭 생성
-        self.network_tab = NetworkTab(self, license_manager=self.license_manager)
+        self.network_tab = NetworkTab(self)
         
         # 네트워크 진단 탭
         self.diagnostic_tab = MonitoringTab()
@@ -118,21 +144,21 @@ class NetworkAutomationApp(QMainWindow):
 
 
         
-        self.about_tab = AboutTab(self, license_manager=self.license_manager)
+        self.about_tab = AboutTab(self)
 
         # 통합 도구 탭
-        self.dogu_tab = DoguTab(self, license_manager=self.license_manager)
+        self.dogu_tab = DoguTab(self)
 
         # 홈 탭
         self.home_tab = HomeTab(switch_tab_fn=self._switch_to)
 
         # 메인 탭 추가 (0:홈 1:자동화 2:콘솔 3:진단 4:도구 5:정보)
-        self.tabs.addTab(self.home_tab,       self.translate("🏠 홈"))
-        self.tabs.addTab(self.network_tab,    self.translate("네트워크 자동화"))
-        self.tabs.addTab(self.console_tab,    self.translate("콘솔"))
-        self.tabs.addTab(self.diagnostic_tab, self.translate("네트워크 진단"))
-        self.tabs.addTab(self.dogu_tab,       self.translate("도구"))
-        self.tabs.addTab(self.about_tab,      self.translate("정보"))
+        self.tabs.addTab(self.home_tab,       self.translate("개요"))
+        self.tabs.addTab(self.network_tab,    self.translate("장비 자동화"))
+        self.tabs.addTab(self.console_tab,    self.translate("실시간 콘솔"))
+        self.tabs.addTab(self.diagnostic_tab, self.translate("연결 진단"))
+        self.tabs.addTab(self.dogu_tab,       self.translate("분석 · 보고서"))
+        self.tabs.addTab(self.about_tab,      self.translate("앱 정보"))
   
 
 
@@ -210,7 +236,7 @@ class NetworkAutomationApp(QMainWindow):
         menu_bar = self.menuBar()
 
         # 📁 파일 메뉴
-        file_menu = menu_bar.addMenu("File")
+        file_menu = menu_bar.addMenu(self.translate("파일"))
 
         load_config_action = QAction(self.translate("설정 불러오기"), self)
         load_config_action.setShortcut("Ctrl+O")
@@ -236,7 +262,7 @@ class NetworkAutomationApp(QMainWindow):
         file_menu.addAction(exit_action)
 
         # 🛠 도구 메뉴
-        tools_menu = menu_bar.addMenu("Tools")
+        tools_menu = menu_bar.addMenu(self.translate("화면"))
 
         view_log_action = QAction(self.translate("로그 파일 보기"), self)
         view_log_action.triggered.connect(self.view_log_file)
@@ -257,7 +283,7 @@ class NetworkAutomationApp(QMainWindow):
         tools_menu.addAction(about_action)
 
         # 🌐 언어 메뉴
-        lang_menu = menu_bar.addMenu("Language")
+        lang_menu = menu_bar.addMenu(self.translate("언어"))
 
         ko_action = QAction('한국어', self)
         ko_action.setCheckable(True)
@@ -549,6 +575,9 @@ class NetworkAutomationApp(QMainWindow):
         if self.network_tab.enable_checkbox.isChecked():
             enable_password = self.network_tab.enable_password_input.text()  # 공백 포함하여 그대로 사용
         save_path = self.network_tab.save_path_input.text().strip()
+        vendor = self.network_tab.get_vendor()
+        output_format = self.network_tab.get_output_format()
+        txt_fmt = self.network_tab.get_config_txt_format()
         use_ssh = self.network_tab.ssh_radio.isChecked()
         use_serial = self.network_tab.serial_radio.isChecked()
         ssh_port = int(self.network_tab.ssh_port_input.text()) if use_ssh and self.network_tab.ssh_port_input.text().isdigit() else 22
@@ -611,7 +640,19 @@ class NetworkAutomationApp(QMainWindow):
         self.failed_tasks = 0
         self.total_tasks = len(ip_list)
         self._execution_stopped = False  # 중지 플래그 초기화
+        self._excel_results = {}         # Excel 결과 초기화
         self.network_tab.start_counter(self.total_tasks)
+
+        # TXT "통합 파일" 모드: 실행 전에 공유 파일 + 락을 준비 (동시 실행 시 장비 블록이 섞이지 않도록)
+        shared_txt_path = None
+        shared_txt_lock = None
+        if output_format in ("txt", "both") and txt_fmt == "single":
+            import threading
+            from datetime import datetime
+            ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+            shared_txt_path = os.path.join(save_path, f"네트워크_수집결과_통합_{ts}.txt")
+            open(shared_txt_path, 'w', encoding='utf-8').close()
+            shared_txt_lock = threading.Lock()
 
         # 상태바 업데이트
         self.statusBar.showMessage(f"명령어 실행 시작... ({len(ip_list)}개 장비)")
@@ -619,10 +660,12 @@ class NetworkAutomationApp(QMainWindow):
         # 동시 실행 또는 순차 실행
         if self.network_tab.concurrent_radio.isChecked():
             self.execute_concurrently(ip_list, username, password, enable_password, use_ssh, save_path, commands, ssh_port,
-                                      use_serial=use_serial, serial_params=serial_params)
+                                      use_serial=use_serial, serial_params=serial_params, vendor=vendor,
+                                      shared_txt_path=shared_txt_path, shared_txt_lock=shared_txt_lock)
         else:
             self.execute_sequentially(ip_list, username, password, enable_password, use_ssh, save_path, commands, ssh_port,
-                                      use_serial=use_serial, serial_params=serial_params)
+                                      use_serial=use_serial, serial_params=serial_params, vendor=vendor,
+                                      shared_txt_path=shared_txt_path, shared_txt_lock=shared_txt_lock)
 
     def toggle_inputs(self, enable=True):
         """입력 필드 활성화/비활성화"""
@@ -645,10 +688,12 @@ class NetworkAutomationApp(QMainWindow):
         self.network_tab.stop_btn.setEnabled(not enable)
 
     def execute_concurrently(self, ip_list, username, password, enable_password, use_ssh, save_path, commands, ssh_port=22,
-                             use_serial=False, serial_params=None):
+                             use_serial=False, serial_params=None, vendor='cisco',
+                             shared_txt_path=None, shared_txt_lock=None):
         """여러 장비에 대해 동시에 명령어 실행 (최대 50개 동시 스레드 제한)"""
         MAX_CONCURRENT = 50
         filename_format = self.network_tab.get_filename_format()
+        output_format = self.network_tab.get_output_format()
         serial_params = serial_params or {}
 
         # 50개 초과 시 경고
@@ -656,15 +701,18 @@ class NetworkAutomationApp(QMainWindow):
             logging.warning(f"[WARN] 장비 수({len(ip_list)})가 동시 실행 한계({MAX_CONCURRENT})를 초과. "
                             f"처음 {MAX_CONCURRENT}개만 즉시 실행, 나머지는 순차 대기.")
 
-        for ip in ip_list[:MAX_CONCURRENT]:
+        for idx, ip in enumerate(ip_list[:MAX_CONCURRENT], 1):
             com_port = ip if use_serial else serial_params.get('com_port', 'COM1')
             worker = NetworkWorker(ip, username, password, enable_password, use_ssh, save_path, commands, ssh_port,
                                    use_serial=use_serial, com_port=com_port,
-                                   baud_rate=serial_params.get('baud_rate', 9600))
+                                   baud_rate=serial_params.get('baud_rate', 9600),
+                                   device_index=idx, output_format=output_format, vendor=vendor,
+                                   shared_txt_path=shared_txt_path, shared_txt_lock=shared_txt_lock)
             worker.filename_format = filename_format
             worker.task_completed.connect(self.handle_task_completed)
             worker.error_occurred.connect(self.handle_error)
             worker.status_update.connect(self.update_execution_status)
+            worker.result_data_ready.connect(self.handle_result_data)
 
             # SSH 디버그 대화상자 연결 추가
             if use_ssh:
@@ -673,7 +721,7 @@ class NetworkAutomationApp(QMainWindow):
             # Worker 시작
             self.workers.append(worker)
             worker.start()
-            logging.info(f"[INFO] 작업 시작: {ip}")
+            logging.info(f"[INFO] 작업 시작: {ip} (순번 {idx})")
 
         # 50개 초과분은 순차 처리로 연계
         if len(ip_list) > MAX_CONCURRENT:
@@ -681,13 +729,15 @@ class NetworkAutomationApp(QMainWindow):
             self._overflow_params = dict(
                 username=username, password=password, enable_password=enable_password,
                 use_ssh=use_ssh, save_path=save_path, commands=commands, ssh_port=ssh_port,
-                use_serial=use_serial, serial_params=serial_params
+                use_serial=use_serial, serial_params=serial_params, vendor=vendor,
+                shared_txt_path=shared_txt_path, shared_txt_lock=shared_txt_lock,
             )
         else:
             self._overflow_ip_list = []
 
     def execute_sequentially(self, ip_list, username, password, enable_password, use_ssh, save_path, commands, ssh_port=22,
-                             use_serial=False, serial_params=None):
+                             use_serial=False, serial_params=None, vendor='cisco',
+                             shared_txt_path=None, shared_txt_lock=None):
         """장비별로 순차적으로 명령어 실행"""
         self.sequential_execution_list = ip_list
         self.sequential_index = 0
@@ -702,6 +752,10 @@ class NetworkAutomationApp(QMainWindow):
             "commands": commands,
             "ssh_port": ssh_port,
             "filename_format": self.network_tab.get_filename_format(),
+            "output_format": self.network_tab.get_output_format(),
+            "vendor": vendor,
+            "shared_txt_path": shared_txt_path,
+            "shared_txt_lock": shared_txt_lock,
         }
         self.start_sequential_execution()
 
@@ -713,6 +767,7 @@ class NetworkAutomationApp(QMainWindow):
             use_serial = sp.get("use_serial", False)
             serial_p = sp.get("serial_params", {})
             com_port = ip if use_serial else serial_p.get('com_port', 'COM1')
+            device_index = self.sequential_index + 1  # 1-based 순번
             worker = NetworkWorker(
                 ip,
                 sp["username"],
@@ -725,21 +780,27 @@ class NetworkAutomationApp(QMainWindow):
                 use_serial=use_serial,
                 com_port=com_port,
                 baud_rate=serial_p.get('baud_rate', 9600),
+                device_index=device_index,
+                output_format=sp.get("output_format", "txt"),
+                vendor=sp.get("vendor", "cisco"),
+                shared_txt_path=sp.get("shared_txt_path"),
+                shared_txt_lock=sp.get("shared_txt_lock"),
             )
             worker.filename_format = sp["filename_format"]
 
             worker.task_completed.connect(self.handle_sequential_task_completed)
             worker.error_occurred.connect(self.handle_error)
             worker.status_update.connect(self.update_execution_status)
+            worker.result_data_ready.connect(self.handle_result_data)
 
             # SSH 디버그 대화상자 연결 추가
             if sp["use_ssh"] and not use_serial:
                 self.network_tab.start_ssh_debug_dialog(worker)
-            
+
             self.workers.append(worker)
             worker.start()
             self.statusBar.showMessage(f"작업 진행 중: {ip} ({self.sequential_index + 1}/{len(self.sequential_execution_list)})")
-            logging.info(f"[INFO] 순차 실행 작업 시작: {ip}")
+            logging.info(f"[INFO] 순차 실행 작업 시작: {ip} (순번 {device_index})")
         else:
             self.execution_finished()
 
@@ -768,6 +829,14 @@ class NetworkAutomationApp(QMainWindow):
                 pass
         if self.completed_tasks == self.total_tasks:
             self.execution_finished()
+
+    def handle_result_data(self, device_index, ip, hostname, output_data):
+        """Excel 저장용 결과 데이터 수집"""
+        self._excel_results[device_index] = {
+            'ip': ip,
+            'hostname': hostname,
+            'output_data': output_data,
+        }
 
     def handle_error(self, message, failed_ip=''):
         """오류 처리"""
@@ -848,12 +917,268 @@ class NetworkAutomationApp(QMainWindow):
         if getattr(self, '_execution_stopped', False):
             return
         self.network_tab.stop_counter()
+
+        # Excel 저장 (excel 또는 both 형식 선택 시)
+        output_format = self.network_tab.get_output_format()
+        if output_format in ("excel", "both") and self._excel_results:
+            self._save_excel_results()
+
         QMessageBox.information(self, self.translate("작업 완료"), "모든 작업이 완료되었습니다!")
         logging.info("[INFO] 모든 작업 완료됨.")
         self.toggle_inputs(True)
         self.statusBar.showMessage("모든 작업이 완료되었습니다.")
         self.save_configuration()
         self.cleanup_workers()
+
+    def _save_excel_results(self):
+        """수집된 결과 데이터를 Excel 파일로 저장 — 시트 구성 방식에 따라 분기"""
+        try:
+            import openpyxl
+            from openpyxl.styles import Font, PatternFill, Alignment
+            from datetime import datetime
+        except ImportError:
+            QMessageBox.warning(self, "라이브러리 오류", "openpyxl 라이브러리가 없어 Excel 저장을 건너뜁니다.")
+            return
+
+        save_path  = self.network_tab.save_path_input.text().strip()
+        cfg_fmt    = self.network_tab.get_config_excel_format()   # per_device / single / by_cmd
+        timestamp  = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+        fmt_label = {'per_device': '장비별', 'single': '통합', 'by_cmd': '명령어별'}.get(cfg_fmt, cfg_fmt)
+        excel_path = os.path.join(save_path, f"네트워크_수집결과_{fmt_label}_{timestamp}.xlsx")
+
+        wb = openpyxl.Workbook()
+        wb.remove(wb.active)
+
+        # ── 공통 스타일 ────────────────────────────────────────────────────
+        S = {
+            'title':  Font(bold=True, size=10, color="FFFFFF"),
+            'fill_navy':   PatternFill(start_color="1E3A5F", end_color="1E3A5F", fill_type="solid"),
+            'fill_blue':   PatternFill(start_color="EFF6FF", end_color="EFF6FF", fill_type="solid"),
+            'fill_gray':   PatternFill(start_color="E2E8F0", end_color="E2E8F0", fill_type="solid"),
+            'fill_green':  PatternFill(start_color="F0FDF4", end_color="F0FDF4", fill_type="solid"),
+            'fill_hdr':    PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid"),
+            'cmd_font':    Font(bold=True, size=9, color="2563EB"),
+            'body_font':   Font(name='Consolas', size=9),
+            'bold10':      Font(bold=True, size=10),
+            'bold9':       Font(bold=True, size=9),
+            'al_center':   Alignment(horizontal='center', vertical='center'),
+            'al_wrap':     Alignment(wrap_text=True, vertical='top'),
+        }
+        sorted_keys = sorted(self._excel_results.keys())
+
+        try:
+            if cfg_fmt == 'single':
+                self._excel_single_sheet(wb, sorted_keys, S, datetime)
+            elif cfg_fmt == 'by_cmd':
+                self._excel_by_cmd(wb, sorted_keys, S, datetime)
+            else:
+                self._excel_per_device(wb, sorted_keys, S, datetime)
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Excel 저장 오류",
+                f"수집된 결과를 Excel 시트로 만드는 중 오류가 발생해 Excel 저장을 건너뜁니다:\n{e}\n\n"
+                "TXT 결과 파일은 정상적으로 저장되어 있습니다."
+            )
+            logging.error(f"[ERROR] Excel 시트 생성 실패: {e}")
+            return
+
+        try:
+            wb.save(excel_path)
+            logging.info(f"[INFO] Excel 저장 완료: {excel_path}")
+        except Exception as e:
+            QMessageBox.warning(self, "Excel 저장 오류", f"Excel 파일을 저장할 수 없습니다:\n{e}")
+            logging.error(f"[ERROR] Excel 저장 실패: {e}")
+
+    # ── 모드 1: 장비별 시트 ────────────────────────────────────────────────────
+    def _excel_per_device(self, wb, sorted_keys, S, datetime):
+        """장비마다 독립 시트 — 명령어 블록을 차례로 출력"""
+        from openpyxl.styles import Font, PatternFill, Alignment
+        for idx in sorted_keys:
+            data        = self._excel_results[idx]
+            ip          = data['ip']
+            hostname    = data['hostname'] or 'N/A'
+            output_data = data['output_data']
+
+            raw_name  = f"{idx:03d}_{hostname}"
+            sheet_name = raw_name[:31]
+            ws = wb.create_sheet(title=sheet_name)
+            ws.column_dimensions['A'].width = 110
+
+            for text in [
+                f"장비 순번: {idx}",
+                f"IP 주소: {ip}",
+                f"Hostname: {hostname}",
+                f"실행 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            ]:
+                ws.append([text])
+                c = ws.cell(row=ws.max_row, column=1)
+                c.font = S['title']
+                c.fill = S['fill_navy']
+            ws.append([])
+
+            for cmd, output in output_data.items():
+                ws.append([f"▶  Command: {cmd}   [Host: {hostname}]"])
+                c = ws.cell(row=ws.max_row, column=1)
+                c.font = S['cmd_font']
+                c.fill = S['fill_blue']
+                for line in _xlsx_safe(output).splitlines():
+                    ws.append([line])
+                    out_c = ws.cell(row=ws.max_row, column=1)
+                    out_c.font = S['body_font']
+                    out_c.alignment = Alignment(horizontal='left')
+                ws.append(["─" * 80])
+                ws.cell(row=ws.max_row, column=1).fill = S['fill_gray']
+                ws.append([])
+
+    # ── 모드 2: 통합 시트 (한 장) ────────────────────────────────────────────
+    def _excel_single_sheet(self, wb, sorted_keys, S, datetime):
+        """모든 장비의 출력을 한 시트에 순서대로 쌓음"""
+        from openpyxl.styles import Font, PatternFill, Alignment
+        ws = wb.create_sheet(title="전체_통합")
+        ws.column_dimensions['A'].width = 110
+
+        for idx in sorted_keys:
+            data        = self._excel_results[idx]
+            ip          = data['ip']
+            hostname    = data['hostname'] or 'N/A'
+            output_data = data['output_data']
+
+            # 장비 구분 헤더 (2행)
+            ws.append([f"{'━' * 40}  장비 {idx:03d}  {'━' * 40}"])
+            c = ws.cell(row=ws.max_row, column=1)
+            c.font = S['title']
+            c.fill = S['fill_navy']
+
+            ws.append([f"  IP: {ip}   |   Hostname: {hostname}   |   수집: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"])
+            c = ws.cell(row=ws.max_row, column=1)
+            c.font  = Font(bold=True, size=9, color="1E3A5F")
+            c.fill  = S['fill_hdr']
+            ws.append([])
+
+            for cmd, output in output_data.items():
+                ws.append([f"▶  {cmd}   [Host: {hostname}]"])
+                c = ws.cell(row=ws.max_row, column=1)
+                c.font = S['cmd_font']
+                c.fill = S['fill_blue']
+                for line in _xlsx_safe(output).splitlines():
+                    ws.append([line])
+                    out_c = ws.cell(row=ws.max_row, column=1)
+                    out_c.font = S['body_font']
+                    out_c.alignment = Alignment(horizontal='left')
+                ws.append(["─" * 80])
+                ws.cell(row=ws.max_row, column=1).fill = S['fill_gray']
+                ws.append([])
+
+            ws.append([])  # 장비 간격
+
+    # ── 모드 3: 명령어별 시트 (★추천) ────────────────────────────────────────
+    def _excel_by_cmd(self, wb, sorted_keys, S, datetime):
+        """명령어 1개 = 시트 1개.  각 행 = 장비 → 같은 명령어를 여러 장비에서 한눈에 비교"""
+        import re
+        from openpyxl.styles import Font, PatternFill, Alignment
+
+        # ── 요약 시트 (맨 앞) ────────────────────────────────────────────
+        ws_sum = wb.create_sheet(title="00_요약")
+        ws_sum.column_dimensions['A'].width = 8
+        ws_sum.column_dimensions['B'].width = 18
+        ws_sum.column_dimensions['C'].width = 22
+        ws_sum.column_dimensions['D'].width = 14
+        ws_sum.column_dimensions['E'].width = 14
+
+        hdr_cols = ["순번", "IP 주소", "Hostname", "명령어 수", "수집 시간"]
+        ws_sum.append(hdr_cols)
+        for col_i, _ in enumerate(hdr_cols, 1):
+            c = ws_sum.cell(row=1, column=col_i)
+            c.font = S['title']
+            c.fill = S['fill_navy']
+            c.alignment = S['al_center']
+        ws_sum.row_dimensions[1].height = 22
+
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        for idx in sorted_keys:
+            data     = self._excel_results[idx]
+            hostname = data['hostname'] or 'N/A'
+            n_cmds   = len(data['output_data'])
+            ws_sum.append([idx, data['ip'], hostname, n_cmds, now_str])
+            r = ws_sum.max_row
+            for col_i in range(1, 6):
+                ws_sum.cell(r, col_i).font = Font(size=9)
+                ws_sum.cell(r, col_i).alignment = Alignment(horizontal='center' if col_i in (1,4) else 'left', vertical='center')
+            ws_sum.row_dimensions[r].height = 18
+
+        # ── 모든 명령어 수집 (순서 유지) ────────────────────────────────
+        seen_cmds = {}
+        for idx in sorted_keys:
+            for cmd in self._excel_results[idx]['output_data']:
+                if cmd not in seen_cmds:
+                    seen_cmds[cmd] = []
+                seen_cmds[cmd].append(idx)
+
+        def _safe_sheet_name(cmd, n):
+            name = re.sub(r'[\\/*?:\[\]]', '_', cmd)
+            name = name.strip()[:24]
+            return f"{n:02d}_{name}"
+
+        for sheet_n, (cmd, _) in enumerate(seen_cmds.items(), 1):
+            sname = _safe_sheet_name(cmd, sheet_n)
+            ws = wb.create_sheet(title=sname)
+
+            # 시트 제목 행
+            ws.append([f"Command:  {cmd}"])
+            c = ws.cell(row=1, column=1)
+            c.font = Font(bold=True, size=11, color="FFFFFF")
+            c.fill = PatternFill(start_color="1E40AF", end_color="1E40AF", fill_type="solid")
+            ws.row_dimensions[1].height = 24
+            ws.append([])
+
+            # 컬럼 설정: A=순번(5), B=IP(16), C=Hostname(22), D=출력내용(100)
+            ws.column_dimensions['A'].width = 6
+            ws.column_dimensions['B'].width = 16
+            ws.column_dimensions['C'].width = 20
+            ws.column_dimensions['D'].width = 100
+
+            # 헤더 행
+            ws.append(["순번", "IP", "Hostname", "출력 내용"])
+            hdr_r = ws.max_row
+            for col_i, _ in enumerate(["순번","IP","Hostname","출력 내용"], 1):
+                c = ws.cell(hdr_r, col_i)
+                c.font  = Font(bold=True, size=9, color="1E3A5F")
+                c.fill  = S['fill_hdr']
+                c.alignment = S['al_center']
+            ws.row_dimensions[hdr_r].height = 20
+
+            # 장비별 한 행 — 출력이 여러 줄이면 개행 포함해서 한 셀에
+            for row_n, idx in enumerate(sorted_keys):
+                data        = self._excel_results[idx]
+                hostname    = data['hostname'] or 'N/A'
+                output_data = data['output_data']
+                output_text = _xlsx_safe(output_data.get(cmd, '(이 장비에서 실행되지 않음)'))
+
+                ws.append([idx, data['ip'], hostname, output_text])
+                r = ws.max_row
+
+                # 셀 스타일
+                ws.cell(r, 1).font = Font(bold=True, size=9)
+                ws.cell(r, 1).alignment = Alignment(horizontal='center', vertical='top')
+                ws.cell(r, 2).font = Font(size=9)
+                ws.cell(r, 2).alignment = Alignment(vertical='top')
+                ws.cell(r, 3).font = Font(bold=True, size=9)
+                ws.cell(r, 3).alignment = Alignment(vertical='top')
+
+                # 출력 셀: Consolas, wrap
+                out_cell = ws.cell(r, 4)
+                out_cell.font = Font(name='Consolas', size=8)
+                out_cell.alignment = Alignment(horizontal='left', wrap_text=True, vertical='top')
+
+                # 홀짝 행 배경 교차
+                row_fill = S['fill_blue'] if row_n % 2 == 0 else S['fill_green']
+                for col_i in range(1, 5):
+                    ws.cell(r, col_i).fill = row_fill
+
+                # 행 높이: 줄 수 기반 (최대 150pt)
+                n_lines = min(output_text.count('\n') + 1, 20)
+                ws.row_dimensions[r].height = max(18, min(n_lines * 12, 150))
 
     def stop_execution(self):
         """실행 중인 작업 중지"""

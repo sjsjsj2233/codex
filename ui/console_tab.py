@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QTabWidget, QTextEdit, QComboBox,
     QFrame, QListWidget, QListWidgetItem, QCheckBox,
     QMessageBox, QApplication, QMenu, QSplitter, QSizePolicy,
+    QDialog, QFileDialog, QProgressBar, QScrollArea,
 )
 from PyQt5.QtGui import (
     QFont, QFontDatabase, QTextCursor, QColor, QTextCharFormat,
@@ -893,6 +894,7 @@ class ConsoleTab(QWidget):
             ('⌫ Clear',      '_btn_clear',    '_clear_cur',       '#ABB2BF'),
             ('⎘ Copy All',   '_btn_copy',     '_copy_cur',        '#CE9178'),
             ('● Log',        '_btn_log',      '_toggle_log_cur',  '#E5C07B'),
+            ('🔍 점검',      '_btn_inspect',  '_open_inspection', '#C678DD'),
         ]:
             btn = QPushButton(label)
             btn.setFixedHeight(26)
@@ -1263,3 +1265,545 @@ class ConsoleTab(QWidget):
             self._saved_sessions = [s for s in self._saved_sessions if s.get('name') != d.get('name')]
             self._save_file()
             self._refresh_sess()
+
+    def _open_inspection(self):
+        w = self._cur_term()
+        params = dict(w.params) if w else {}
+        dlg = DeviceInspectionDialog(params, self)
+        dlg.exec_()
+
+
+# ── 장비 종합 점검 Worker ────────────────────────────────────────────────────
+_INSPECT_CMDS = [
+    ('terminal length 0',          '페이지 해제'),
+    ('show version',               '버전 정보'),
+    ('show running-config',        '실행 설정'),
+    ('show interfaces status',     '인터페이스 상태'),
+    ('show ip interface brief',    'IP 인터페이스'),
+    ('show environment all',       '환경 센서'),
+    ('show processes cpu',         'CPU 프로세스'),
+    ('show processes cpu history', 'CPU 히스토리'),
+    ('show processes memory sorted','메모리 프로세스'),
+    ('show memory statistics',     '메모리 통계'),
+    ('show logging',               '시스템 로그'),
+]
+
+_PROMPT_RE = re.compile(r'[A-Za-z0-9\-_()./]+[#>]\s*$')
+
+
+class DeviceInspectionWorker(QThread):
+    progress   = pyqtSignal(str)
+    cmd_result = pyqtSignal(str, str)
+    finished   = pyqtSignal(dict)
+    error      = pyqtSignal(str)
+
+    def __init__(self, params: dict):
+        super().__init__()
+        self.params   = params
+        self._running = True
+
+    def stop(self):
+        self._running = False
+
+    def run(self):
+        try:
+            if self.params.get('protocol') == 'Serial':
+                self._serial_inspect()
+            else:
+                self._ssh_inspect()
+        except Exception as e:
+            self.error.emit(str(e))
+
+    # ── SSH 점검 ──────────────────────────────────────────────────────────────
+    def _ssh_inspect(self):
+        import paramiko
+        p = self.params
+        self.progress.emit('🔌  SSH 접속 중...')
+        c = paramiko.SSHClient()
+        c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        c.connect(
+            hostname=p['host'], port=int(p.get('port', 22)),
+            username=p['username'], password=p['password'],
+            timeout=15, allow_agent=False, look_for_keys=False,
+        )
+        sh = c.invoke_shell(term='vt100', width=200, height=50)
+        sh.settimeout(0.2)
+        self.progress.emit('✅  접속 완료. 초기화 중...')
+        time.sleep(1.0)
+        self._ssh_drain(sh)
+
+        results = self._run_cmds_ssh(sh)
+        sh.close(); c.close()
+        self.progress.emit('✅  점검 완료!')
+        self.finished.emit(results)
+
+    def _run_cmds_ssh(self, sh) -> dict:
+        results = {}
+        for cmd, desc in _INSPECT_CMDS:
+            if not self._running:
+                break
+            self.progress.emit(f'▶  {desc}  ({cmd})')
+            sh.send(cmd + '\r')
+            out   = self._ssh_recv_prompt(sh)
+            clean = self._strip_cmd_echo(out, cmd)
+            results[cmd] = clean
+            self.cmd_result.emit(cmd, clean)
+        return results
+
+    def _ssh_drain(self, sh):
+        try:
+            while True: sh.recv(4096)
+        except Exception:
+            pass
+
+    def _ssh_recv_prompt(self, sh, timeout: float = 30.0) -> str:
+        buf = ''
+        t0  = time.time()
+        while self._running and (time.time() - t0) < timeout:
+            try:
+                chunk = sh.recv(4096).decode('utf-8', errors='replace')
+                buf  += chunk
+                clean = re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', buf)
+                clean = re.sub(r'\x1b\][^\x07]*\x07', '', clean)
+                clean = clean.replace('\r', '')
+                if _PROMPT_RE.search(clean.strip()):
+                    return clean
+            except Exception:
+                time.sleep(0.05)
+        return buf
+
+    # ── Serial 점검 ───────────────────────────────────────────────────────────
+    def _serial_inspect(self):
+        import serial as _serial
+        p    = self.params
+        com  = p.get('com_port', '')
+        baud = int(p.get('baud_rate', 9600))
+
+        self.progress.emit(f'🔌  시리얼 접속 중...  ({com} / {baud}bps)')
+        ser = _serial.Serial(
+            port=com, baudrate=baud,
+            bytesize=8, parity='N', stopbits=1,
+            timeout=0.1, xonxoff=False, rtscts=False, dsrdtr=False,
+        )
+        self.progress.emit('✅  포트 열림. 로그인 대기 중...')
+
+        # 장비 깨우기
+        ser.write(b'\r')
+        time.sleep(0.8)
+
+        buf = self._serial_recv_until(ser,
+            [r'[Uu]sername\s*:', r'[Ll]ogin\s*:', r'[Pp]assword\s*:', r'[#>]\s*$'],
+            timeout=12)
+
+        # Username 프롬프트
+        if re.search(r'[Uu]sername\s*:|[Ll]ogin\s*:', buf):
+            self.progress.emit('📝  Username 입력 중...')
+            ser.write((p.get('username', '') + '\r').encode())
+            buf = self._serial_recv_until(ser,
+                [r'[Pp]assword\s*:', r'[#>]\s*$'], timeout=10)
+
+        # Password 프롬프트
+        if re.search(r'[Pp]assword\s*:', buf):
+            self.progress.emit('🔑  Password 입력 중...')
+            ser.write((p.get('password', '') + '\r').encode())
+            buf = self._serial_recv_until(ser, [r'[#>]\s*$'], timeout=15)
+
+        # 프롬프트 확인
+        clean_buf = re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', buf).replace('\r', '')
+        if not _PROMPT_RE.search(clean_buf.strip()):
+            ser.close()
+            self.error.emit('로그인 실패 — 장비 프롬프트를 찾을 수 없습니다.\n'
+                            '계정 정보 또는 COM 포트를 확인하세요.')
+            return
+
+        self.progress.emit('✅  로그인 완료!')
+        results = self._run_cmds_serial(ser)
+        ser.close()
+        self.progress.emit('✅  점검 완료!')
+        self.finished.emit(results)
+
+    def _run_cmds_serial(self, ser) -> dict:
+        results = {}
+        for cmd, desc in _INSPECT_CMDS:
+            if not self._running:
+                break
+            self.progress.emit(f'▶  {desc}  ({cmd})')
+            ser.write((cmd + '\r').encode())
+            out   = self._serial_recv_until(ser, [r'[#>]\s*$'], timeout=45)
+            clean = self._strip_cmd_echo(
+                re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', out)
+                  .replace('\r\n', '\n').replace('\r', '\n'),
+                cmd
+            )
+            results[cmd] = clean
+            self.cmd_result.emit(cmd, clean)
+        return results
+
+    def _serial_recv_until(self, ser, patterns, timeout: float = 30.0) -> str:
+        buf      = ''
+        t0       = time.time()
+        compiled = [re.compile(p) for p in patterns]
+        while self._running and (time.time() - t0) < timeout:
+            waiting = ser.in_waiting
+            if waiting:
+                chunk = ser.read(waiting).decode('utf-8', errors='replace')
+                buf  += chunk
+                clean = re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', buf).replace('\r', '')
+                for pat in compiled:
+                    if pat.search(clean):
+                        return clean
+            else:
+                time.sleep(0.05)
+        return buf
+
+    # ── 공통 ──────────────────────────────────────────────────────────────────
+    @staticmethod
+    def _strip_cmd_echo(text: str, cmd: str) -> str:
+        lines = text.splitlines()
+        if lines and cmd.strip() in lines[0]:
+            lines = lines[1:]
+        return '\n'.join(lines).strip()
+
+
+# ── 장비 종합 점검 Dialog ────────────────────────────────────────────────────
+class DeviceInspectionDialog(QDialog):
+    def __init__(self, params: dict, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('장비 종합 점검')
+        self.resize(900, 640)
+        self.setModal(True)
+        self._params  = params
+        self._results = {}
+        self._worker  = None
+        self._setup_ui()
+        self._prefill(params)
+
+    def _setup_ui(self):
+        self.setStyleSheet('background:#1E2228;color:#ABB2BF;font-family:"맑은 고딕";')
+        root = QVBoxLayout(self)
+        root.setContentsMargins(16, 16, 16, 12)
+        root.setSpacing(10)
+
+        _I = ('QLineEdit{background:#252B36;color:#E5C07B;border:1px solid #2C313A;'
+              'border-radius:2px;padding:4px 8px;font-size:9pt}'
+              'QLineEdit:focus{border-color:#61AFEF}')
+        _C = ('QComboBox{background:#252B36;color:#E5C07B;border:1px solid #2C313A;'
+              'border-radius:2px;padding:3px 6px;font-size:9pt}'
+              'QComboBox::drop-down{border:none;width:16px}'
+              'QComboBox QAbstractItemView{background:#252B36;color:#ABB2BF;'
+              'selection-background-color:#2C313A;border:1px solid #444}')
+
+        # ── 접속 정보 행 ────────────────────────────────────────────────────
+        info_row = QHBoxLayout()
+        info_row.setSpacing(8)
+
+        # Protocol 콤보
+        info_row.addWidget(self._lbl('Protocol'))
+        self._e_proto = QComboBox()
+        self._e_proto.addItems(['SSH', 'Telnet', 'Serial'])
+        self._e_proto.setFixedWidth(80)
+        self._e_proto.setStyleSheet(_C)
+        self._e_proto.currentTextChanged.connect(self._proto_changed)
+        info_row.addWidget(self._e_proto)
+
+        # SSH/Telnet 전용
+        self._lbl_host = self._lbl('Host')
+        info_row.addWidget(self._lbl_host)
+        self._e_host = QLineEdit(); self._e_host.setPlaceholderText('192.168.1.1')
+        self._e_host.setFixedWidth(150); self._e_host.setStyleSheet(_I)
+        info_row.addWidget(self._e_host)
+
+        self._lbl_port = self._lbl('Port')
+        info_row.addWidget(self._lbl_port)
+        self._e_port = QLineEdit('22'); self._e_port.setFixedWidth(48)
+        self._e_port.setStyleSheet(_I)
+        info_row.addWidget(self._e_port)
+
+        # Serial 전용 — 초기엔 숨김
+        self._lbl_com = self._lbl('COM Port')
+        info_row.addWidget(self._lbl_com)
+        self._e_com = QComboBox(); self._e_com.setFixedWidth(160)
+        self._e_com.setStyleSheet(_C)
+        info_row.addWidget(self._e_com)
+
+        self._lbl_baud = self._lbl('Baud')
+        info_row.addWidget(self._lbl_baud)
+        self._e_baud = QComboBox()
+        self._e_baud.addItems(['9600', '19200', '38400', '57600', '115200'])
+        self._e_baud.setFixedWidth(80); self._e_baud.setStyleSheet(_C)
+        info_row.addWidget(self._e_baud)
+
+        self._lbl_com.hide(); self._e_com.hide()
+        self._lbl_baud.hide(); self._e_baud.hide()
+
+        # User / Pass (공통)
+        for lbl, attr, ph, w, echo in [
+            ('User', '_e_user', 'admin', 100, False),
+            ('Pass', '_e_pass', '',      100, True),
+        ]:
+            info_row.addWidget(self._lbl(lbl))
+            e = QLineEdit(); e.setPlaceholderText(ph)
+            e.setFixedWidth(w); e.setStyleSheet(_I)
+            if echo: e.setEchoMode(QLineEdit.Password)
+            setattr(self, attr, e)
+            info_row.addWidget(e)
+
+        info_row.addStretch()
+
+        _BTN = ('QPushButton{background:%s;color:#fff;border:none;'
+                'border-radius:3px;padding:5px 18px;font-size:9pt;font-weight:bold}'
+                'QPushButton:hover{opacity:0.85}'
+                'QPushButton:disabled{background:#2C313A;color:#5C6370}')
+        self._btn_start = QPushButton('▶  점검 시작')
+        self._btn_start.setStyleSheet(_BTN % '#3D8B3D')
+        self._btn_start.clicked.connect(self._start)
+        info_row.addWidget(self._btn_start)
+
+        self._btn_save = QPushButton('💾  보고서 저장')
+        self._btn_save.setStyleSheet(_BTN % '#0e639c')
+        self._btn_save.setEnabled(False)
+        self._btn_save.clicked.connect(self._save_report)
+        info_row.addWidget(self._btn_save)
+
+        root.addLayout(info_row)
+
+        # ── 진행 바 ──────────────────────────────────────────────────────────
+        self._prog = QProgressBar()
+        self._prog.setRange(0, len(_INSPECT_CMDS))
+        self._prog.setValue(0)
+        self._prog.setFixedHeight(6)
+        self._prog.setTextVisible(False)
+        self._prog.setStyleSheet(
+            'QProgressBar{background:#252B36;border:none;border-radius:3px}'
+            'QProgressBar::chunk{background:#61AFEF;border-radius:3px}'
+        )
+        root.addWidget(self._prog)
+
+        # ── 본문 (왼쪽: 진행로그 / 오른쪽: 출력) ────────────────────────────
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(1)
+        splitter.setStyleSheet('QSplitter::handle{background:#111}')
+
+        # 진행 로그
+        self._log = QTextEdit()
+        self._log.setReadOnly(True)
+        self._log.setFont(_mono_font(9))
+        self._log.setStyleSheet(
+            'QTextEdit{background:#141414;color:#98C379;border:none;padding:6px}'
+        )
+        self._log.setFixedWidth(260)
+        splitter.addWidget(self._log)
+
+        # 출력
+        self._out = QTextEdit()
+        self._out.setReadOnly(True)
+        self._out.setFont(_mono_font(9))
+        self._out.setStyleSheet(
+            'QTextEdit{background:#0D1117;color:#ABB2BF;border:none;padding:8px}'
+        )
+        splitter.addWidget(self._out)
+        splitter.setSizes([260, 9999])
+        root.addWidget(splitter, 1)
+
+        # 상태 레이블
+        self._status = QLabel('접속 정보를 입력 후 점검을 시작하세요.')
+        self._status.setFont(QFont('맑은 고딕', 8))
+        self._status.setStyleSheet('color:#5C6370;background:transparent')
+        root.addWidget(self._status)
+
+    @staticmethod
+    def _lbl(text):
+        l = QLabel(text)
+        l.setFont(QFont('맑은 고딕', 8))
+        l.setStyleSheet('color:#5C6370;background:transparent')
+        return l
+
+    def _proto_changed(self, proto: str):
+        serial = proto == 'Serial'
+        self._lbl_host.setVisible(not serial); self._e_host.setVisible(not serial)
+        self._lbl_port.setVisible(not serial); self._e_port.setVisible(not serial)
+        self._lbl_com.setVisible(serial);      self._e_com.setVisible(serial)
+        self._lbl_baud.setVisible(serial);     self._e_baud.setVisible(serial)
+        if serial:
+            self._refresh_com_ports()
+        else:
+            self._e_port.setText('23' if proto == 'Telnet' else '22')
+
+    def _refresh_com_ports(self):
+        self._e_com.clear()
+        try:
+            from serial.tools import list_ports
+            ports = list_ports.comports()
+            if ports:
+                for p in sorted(ports, key=lambda x: x.device):
+                    self._e_com.addItem(f"{p.device}  —  {p.description or p.device}", p.device)
+            else:
+                self._e_com.addItem('(감지된 COM 포트 없음)', '')
+        except Exception:
+            self._e_com.addItem('(pyserial 오류)', '')
+
+    def _prefill(self, p: dict):
+        proto = p.get('protocol', 'SSH')
+        self._e_proto.setCurrentText(proto)
+        self._e_user.setText(p.get('username', ''))
+        self._e_pass.setText(p.get('password', ''))
+        if proto == 'Serial':
+            # COM 목록 로드 후 저장된 포트 선택
+            self._refresh_com_ports()
+            com = p.get('host', '')  # Serial은 host 필드에 COM 포트 저장됨
+            for i in range(self._e_com.count()):
+                if self._e_com.itemData(i) == com:
+                    self._e_com.setCurrentIndex(i)
+                    break
+            baud = p.get('baud_rate', '9600')
+            idx = self._e_baud.findText(str(baud))
+            if idx >= 0: self._e_baud.setCurrentIndex(idx)
+        else:
+            self._e_host.setText(p.get('host', ''))
+            self._e_port.setText(str(p.get('port', '22')))
+
+    def _start(self):
+        proto = self._e_proto.currentText()
+        user  = self._e_user.text().strip()
+        pw    = self._e_pass.text()
+
+        if proto == 'Serial':
+            com = self._e_com.currentData() or self._e_com.currentText().split()[0]
+            if not com or com.startswith('('):
+                QMessageBox.warning(self, '입력 오류', 'COM 포트를 선택하세요.')
+                return
+            params = {
+                'protocol': 'Serial',
+                'com_port': com,
+                'baud_rate': self._e_baud.currentText(),
+                'username': user,
+                'password': pw,
+            }
+        else:
+            host = self._e_host.text().strip()
+            port = self._e_port.text().strip() or '22'
+            if not host or not user:
+                QMessageBox.warning(self, '입력 오류', 'Host와 User를 입력하세요.')
+                return
+            params = {
+                'protocol': proto,
+                'host': host, 'port': port,
+                'username': user, 'password': pw,
+            }
+
+        self._log.clear()
+        self._out.clear()
+        self._results = {}
+        self._prog.setValue(0)
+        self._btn_start.setEnabled(False)
+        self._btn_save.setEnabled(False)
+        self._status.setText('점검 진행 중...')
+
+        self._worker = DeviceInspectionWorker(params)
+        self._worker.progress.connect(self._on_progress)
+        self._worker.cmd_result.connect(self._on_cmd)
+        self._worker.finished.connect(self._on_done)
+        self._worker.error.connect(self._on_error)
+        self._worker.start()
+
+    def _on_progress(self, msg: str):
+        self._log.append(msg)
+        # ▶ 로 시작하면 진행바 증가
+        if msg.startswith('▶'):
+            self._prog.setValue(self._prog.value() + 1)
+
+    def _on_cmd(self, cmd: str, output: str):
+        self._results[cmd] = output
+        self._out.append(
+            f'\n{"─"*60}\n'
+            f'# {cmd}\n'
+            f'{"─"*60}\n'
+            f'{output}\n'
+        )
+
+    def _on_done(self, results: dict):
+        self._results = results
+        self._btn_start.setEnabled(True)
+        self._btn_save.setEnabled(True)
+        self._prog.setValue(self._prog.maximum())
+        self._status.setText(f'✅  점검 완료 — 명령어 {len(results)}개 수집')
+
+    def _on_error(self, msg: str):
+        self._log.append(f'❌  오류: {msg}')
+        self._btn_start.setEnabled(True)
+        self._status.setText(f'오류: {msg}')
+
+    def _save_report(self):
+        import datetime
+        if self._e_proto.currentText() == 'Serial':
+            host = self._e_com.currentData() or 'serial'
+        else:
+            host = self._e_host.text().strip() or 'device'
+        default = os.path.join(
+            os.path.expanduser('~'), 'Documents',
+            f'inspection_{host}_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
+        )
+        path, _ = QFileDialog.getSaveFileName(
+            self, '점검 보고서 저장', default,
+            'HTML (*.html);;All Files (*)'
+        )
+        if path:
+            html = self._make_html(host)
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(html)
+            QMessageBox.information(self, '저장 완료', f'보고서가 저장되었습니다:\n{path}')
+
+    def _make_html(self, host: str) -> str:
+        import datetime
+        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # 섹션별 HTML 생성
+        sections_html = ''
+        for cmd, desc in _INSPECT_CMDS:
+            if cmd == 'terminal length 0':
+                continue
+            output = self._results.get(cmd, '(데이터 없음)')
+            safe   = output.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            sections_html += f'''
+            <div class="section">
+              <div class="sec-title">
+                <span class="sec-cmd">{cmd}</span>
+                <span class="sec-desc">{desc}</span>
+              </div>
+              <pre class="output">{safe}</pre>
+            </div>'''
+
+        return f'''<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>장비 점검 보고서 — {host}</title>
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{ background: #0d1117; color: #c9d1d9; font-family: "Segoe UI", "맑은 고딕", sans-serif; padding: 32px; }}
+  h1 {{ font-size: 22px; color: #58a6ff; margin-bottom: 4px; }}
+  .meta {{ color: #8b949e; font-size: 12px; margin-bottom: 28px; }}
+  .section {{ background: #161b22; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 18px; overflow: hidden; }}
+  .sec-title {{ background: #21262d; padding: 10px 16px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 12px; }}
+  .sec-cmd {{ font-family: "Cascadia Mono", Consolas, monospace; font-size: 13px; color: #79c0ff; font-weight: bold; }}
+  .sec-desc {{ font-size: 11px; color: #8b949e; }}
+  .output {{ font-family: "Cascadia Mono", Consolas, monospace; font-size: 12px; line-height: 1.55; padding: 14px 16px; white-space: pre-wrap; word-break: break-all; color: #e6edf3; }}
+  .output:empty::after {{ content: "(출력 없음)"; color: #484f58; }}
+</style>
+</head>
+<body>
+  <h1>🖥  장비 종합 점검 보고서</h1>
+  <div class="meta">
+    Host: <strong style="color:#e6edf3">{host}</strong> &nbsp;|&nbsp;
+    점검 일시: <strong style="color:#e6edf3">{now}</strong> &nbsp;|&nbsp;
+    수집 항목: <strong style="color:#e6edf3">{len(self._results)}</strong>개
+  </div>
+  {sections_html}
+</body>
+</html>'''
+
+    def closeEvent(self, e):
+        if self._worker and self._worker.isRunning():
+            self._worker.stop()
+            self._worker.wait(2000)
+        super().closeEvent(e)

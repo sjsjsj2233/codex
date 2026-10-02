@@ -52,9 +52,8 @@ def _save_auto_update(enabled: bool):
 
 
 class AboutTab(QWidget):
-    def __init__(self, parent=None, license_manager=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self._lm = license_manager
         self._update_info = None   # 서버에서 받은 업데이트 정보 캐시
         self._build_ui()
 
@@ -129,48 +128,9 @@ class AboutTab(QWidget):
 
         bv.addWidget(upd_card)
 
-        # ── 라이센스 카드 ─────────────────────────────────────────
-        lic_card = _card()
-        lc = QVBoxLayout(lic_card)
-        lc.setContentsMargins(20, 16, 20, 16)
-        lc.setSpacing(6)
-
-        if self._lm:
-            info = self._lm.get_info()
-            if info:
-                # 정식 라이센스 활성화
-                _row(lc, tr('상태'),   tr('활성화됨'),
-                     bold_val=True, val_color='#16a34a')
-                _row(lc, tr('만료일'), info.get('expires_at', '-'))
-                mid = self._lm.get_machine_id()
-                _row(lc, tr('기기 ID'), f'{mid[:10]}···')
-            else:
-                # 미활성화
-                _row(lc, tr('상태'), tr('미활성화'),
-                     bold_val=True, val_color='#dc2626')
-                mid = self._lm.get_machine_id()
-                _row(lc, tr('기기 ID'), mid)
-                _row(lc, tr('안내'),
-                     tr('라이센스 발급은 이메일로 문의해주세요.'),
-                     val_color='#64748b')
-                _email_row(lc, tr('문의'), 'doaslove962@gmail.com')
-        else:
-            _row(lc, tr('상태'), '-', val_color='#64748b')
-
-        bv.addWidget(lic_card)
-
         # ── 버튼 행 ───────────────────────────────────────────────
         btn_row = QHBoxLayout()
         btn_row.setSpacing(10)
-
-        if self._lm and not self._lm.is_licensed():
-            b_lic = _btn(tr('🔑 라이센스 활성화'), '#2563eb')
-            b_lic.clicked.connect(self._open_license_dialog)
-            btn_row.addWidget(b_lic)
-
-        b_terms = _btn(tr('📋 이용약관'), '#475569')
-        b_terms.clicked.connect(self._show_terms)
-        btn_row.addWidget(b_terms)
 
         b_web = _btn(tr('🌐 웹사이트'), '#10b981')
         b_web.clicked.connect(lambda: webbrowser.open('https://auto-network.co.kr'))
@@ -180,17 +140,6 @@ class AboutTab(QWidget):
 
         bv.addStretch()
         root.addWidget(body, 1)
-
-    def _show_terms(self):
-        from ui.disclaimer_dialog import DisclaimerDialog
-        DisclaimerDialog(self, view_only=True).exec_()
-
-    def _open_license_dialog(self):
-        from ui.license_dialog import LicenseDialog
-        dlg = LicenseDialog(self._lm, self)
-        if dlg.exec_():
-            # 라이센스 성공 → 카드 갱신
-            self._refresh()
 
     def showEvent(self, event):
         """탭이 표시될 때마다 라이센스 상태 갱신"""
@@ -404,7 +353,7 @@ class _MiniHeader(QWidget):
 
         p.setPen(QPen(QColor('#f8fafc')))
         p.setFont(QFont('맑은 고딕', 17, QFont.Bold))
-        p.drawText(32, 52, 'Network Automation  v8.0')
+        p.drawText(32, 52, 'Network Automation  v9.9')
 
         p.setPen(QPen(QColor('#94a3b8')))
         p.setFont(QFont('맑은 고딕', 9))

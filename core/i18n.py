@@ -9,6 +9,29 @@ _LANG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.la
 _current_lang = 'ko'
 
 TRANSLATIONS: dict[str, str] = {
+    # ── 워크스페이스 ──────────────────────────────────────────────────────────
+    '네트워크 운영 콘솔': 'Network Operations Console',
+    'Cisco 네트워크 운영 워크스페이스': 'Cisco network operations workspace',
+    '작업 준비 완료': 'Ready for your next task',
+    '개요': 'Overview',
+    '장비 자동화': 'Device Automation',
+    '실시간 콘솔': 'Live Console',
+    '연결 진단': 'Connectivity',
+    '분석 · 보고서': 'Analysis & Reports',
+    '앱 정보': 'About',
+    '화면': 'View',
+    '대상 장비에 접속하고 명령 실행 결과를 수집합니다.':
+        'Connect to devices and collect command output.',
+    '호스트 응답과 TCP 포트 연결 상태를 확인합니다.':
+        'Check host response and TCP port connectivity.',
+    '구성 파일의 차이 확인': 'Compare configuration files',
+    '점검 결과를 문서로 정리': 'Document inspection results',
+    'IOS-XE · NX-OS 분석 결과': 'IOS-XE · NX-OS analysis',
+    'Syslog 이벤트 흐름 확인': 'Review Syslog events',
+    'LOG · TXT 빠른 탐색': 'Browse LOG · TXT files',
+    '변경 전후 체크리스트 비교': 'Compare before and after checklists',
+    '설정 · 점검 · 로그': 'Config · Inspection · Logs',
+    'Palo Alto 점검': 'Palo Alto Inspection',
     # ── 메뉴 ──────────────────────────────────────────────────────────────────
     '파일': 'File',
     '설정 불러오기': 'Load Settings',

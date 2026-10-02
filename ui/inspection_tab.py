@@ -10,11 +10,15 @@ from PyQt5.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QListWidget,
     QListWidgetItem, QFileDialog, QMessageBox,
     QSplitter, QProgressBar, QScrollArea, QFrame,
+    QTextEdit, QTabWidget, QApplication,
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 
-from core.inspection_parser import parse_file, DeviceInspection
+from core.inspection_parser import (
+    parse_file, DeviceInspection,
+    INSPECTION_COMMANDS_IOS, INSPECTION_COMMANDS_NXOS,
+)
 
 
 # ── 상태 색상 ──────────────────────────────────────────────────────────────
@@ -120,8 +124,9 @@ class InspectionTab:
 class _InspectionWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._worker   = None
-        self._info_rows = []
+        self._worker        = None
+        self._info_rows     = []
+        self._last_save_dir = None
         self._build_ui()
 
     def _build_ui(self):
@@ -241,9 +246,17 @@ class _InspectionWidget(QWidget):
         self.btn_clr = QPushButton("전체 제거")
         self.btn_clr.setFixedHeight(28)
         self.btn_clr.clicked.connect(self._clear_files)
+        btn_sample = QPushButton("🧪 샘플 데이터 생성")
+        btn_sample.setFixedHeight(28)
+        btn_sample.setStyleSheet(
+            "QPushButton{background:#7c3aed;color:white;border-radius:4px;font-size:10px;}"
+            "QPushButton:hover{background:#6d28d9;}"
+        )
+        btn_sample.clicked.connect(self._load_sample_data)
         fbtn_row.addWidget(self.btn_add)
         fbtn_row.addWidget(self.btn_del)
         fbtn_row.addWidget(self.btn_clr)
+        fbtn_row.addWidget(btn_sample)
         fbtn_row.addStretch()
         fv.addLayout(fbtn_row)
 
@@ -252,12 +265,53 @@ class _InspectionWidget(QWidget):
         self.file_list.setSelectionMode(QListWidget.ExtendedSelection)
         fv.addWidget(self.file_list)
 
-        hint = QLabel("※ show version / show proc cpu / show proc memory / show dir (flash) / show logging 출력이 포함된 txt 파일")
+        hint = QLabel("※ show 명령어 출력이 담긴 txt 파일을 추가하세요. 아래 점검 명령어를 장비에서 실행 후 파일로 저장하세요.")
         hint.setWordWrap(True)
         hint.setStyleSheet("color:#64748b;font-size:10px")
         fv.addWidget(hint)
 
         rv.addWidget(file_box, 1)
+
+        # ── 점검 명령어 박스 ─────────────────────────────────────
+        cmd_box = QGroupBox("📋 점검 명령어 (장비에서 실행 후 파일 저장)")
+        cmd_v = QVBoxLayout(cmd_box)
+        cmd_v.setSpacing(4)
+
+        cmd_tab = QTabWidget()
+        cmd_tab.setStyleSheet("QTabWidget::pane{border:1px solid #e2e8f0;border-radius:4px}")
+
+        for tab_name, cmd_text in [("IOS / IOS-XE", INSPECTION_COMMANDS_IOS),
+                                    ("NX-OS (Nexus)", INSPECTION_COMMANDS_NXOS)]:
+            te = QTextEdit()
+            te.setReadOnly(True)
+            te.setFont(QFont("Consolas", 9))
+            te.setPlainText(cmd_text)
+            te.setFixedHeight(90)
+            te.setStyleSheet(
+                "QTextEdit{background:#0f172a;color:#a5f3fc;"
+                "border-radius:4px;padding:6px;border:none}"
+            )
+            cmd_tab.addTab(te, tab_name)
+
+        cmd_v.addWidget(cmd_tab)
+
+        copy_row = QHBoxLayout()
+        copy_row.setContentsMargins(0, 0, 0, 0)
+        btn_copy = QPushButton("📋 명령어 복사")
+        btn_copy.setFixedHeight(26)
+        btn_copy.setStyleSheet(
+            "QPushButton{background:#334155;color:white;border-radius:4px;font-size:10px;}"
+            "QPushButton:hover{background:#475569;}"
+        )
+        btn_copy.clicked.connect(lambda: self._copy_commands(cmd_tab))
+        copy_lbl = QLabel("위 명령어를 장비에서 실행하고 출력 내용을 .txt 파일로 저장한 뒤 파일 추가 버튼으로 불러오세요")
+        copy_lbl.setStyleSheet("color:#64748b;font-size:9px")
+        copy_lbl.setWordWrap(True)
+        copy_row.addWidget(btn_copy)
+        copy_row.addWidget(copy_lbl, 1)
+        cmd_v.addLayout(copy_row)
+
+        rv.addWidget(cmd_box)
 
         splitter.addWidget(left)
         splitter.addWidget(right)
@@ -289,9 +343,19 @@ class _InspectionWidget(QWidget):
         self.lbl_status = QLabel("파일을 추가하고 보고서를 생성하세요")
         self.lbl_status.setStyleSheet("color:#64748b;font-size:11px")
 
+        self.btn_open_folder = QPushButton("📁 폴더 열기")
+        self.btn_open_folder.setFixedHeight(34)
+        self.btn_open_folder.setFont(QFont("맑은 고딕", 10, QFont.Bold))
+        self.btn_open_folder.setStyleSheet(
+            "QPushButton{background:#475569;color:#fff;border-radius:6px}"
+            "QPushButton:hover{background:#334155}"
+        )
+        self.btn_open_folder.clicked.connect(self._open_last_folder)
+
         btn_bar.addWidget(self.btn_pdf)
         btn_bar.addWidget(self.btn_word)
         btn_bar.addWidget(self.btn_excel)
+        btn_bar.addWidget(self.btn_open_folder)
         btn_bar.addStretch()
         btn_bar.addWidget(self.lbl_status)
         bv.addLayout(btn_bar)
@@ -310,6 +374,41 @@ class _InspectionWidget(QWidget):
             self._info_rows.remove(row_widget)
         self._rows_layout.removeWidget(row_widget)
         row_widget.deleteLater()
+
+    def _load_sample_data(self):
+        """샘플 장비 데이터 파일 생성 후 파일 목록에 로드"""
+        import tempfile
+        save_dir = os.path.join(tempfile.gettempdir(), 'na_sample_devices')
+        os.makedirs(save_dir, exist_ok=True)
+        paths = _create_sample_files(save_dir)
+        added = 0
+        for p in paths:
+            existing = [self.file_list.item(i).data(Qt.UserRole)
+                        for i in range(self.file_list.count())]
+            if p not in existing:
+                item = QListWidgetItem(f"  {os.path.basename(p)}")
+                item.setData(Qt.UserRole, p)
+                item.setToolTip(p)
+                self.file_list.addItem(item)
+                added += 1
+        self.lbl_status.setText(
+            f"샘플 {len(paths)}개 장비 파일 추가됨 — PDF/Word/Excel 버튼으로 보고서를 생성해 보세요"
+        )
+        QMessageBox.information(
+            self, "샘플 데이터 생성 완료",
+            f"총 {len(paths)}개의 샘플 장비 파일이 생성되었습니다.\n\n"
+            f"저장 위치: {save_dir}\n\n"
+            "• CORE-SW-01 : Cisco Catalyst 9300  [정상]\n"
+            "• DIST-NX-02 : Cisco Nexus 9300     [주의 — CPU 높음]\n"
+            "• ACCESS-SW-03: Cisco Catalyst 3850  [경고 — PSU 장애 / 메모리 부족]\n\n"
+            "이제 아래 보고서 생성 버튼을 눌러 샘플 보고서를 확인하세요."
+        )
+
+    def _copy_commands(self, tab_widget):
+        te = tab_widget.currentWidget()
+        if te:
+            QApplication.clipboard().setText(te.toPlainText())
+            self.lbl_status.setText("명령어가 클립보드에 복사되었습니다")
 
     def _reset_defaults(self):
         # 기존 행 제거
@@ -396,8 +495,17 @@ class _InspectionWidget(QWidget):
         self.progress.hide()
         for b in (self.btn_pdf, self.btn_word, self.btn_excel):
             b.setEnabled(True)
+        self._last_save_dir = os.path.dirname(path)
         self.lbl_status.setText(f"저장 완료: {os.path.basename(path)}")
         QMessageBox.information(self, "완료", f"보고서가 생성되었습니다:\n{path}")
+
+    def _open_last_folder(self):
+        import subprocess
+        folder = self._last_save_dir or os.path.expanduser('~')
+        try:
+            subprocess.Popen(f'explorer "{folder}"')
+        except Exception as e:
+            QMessageBox.warning(self, "오류", f"폴더를 열 수 없습니다:\n{e}")
 
     def _on_error(self, msg):
         self.progress.hide()
@@ -406,6 +514,241 @@ class _InspectionWidget(QWidget):
         self.lbl_status.setText(f"오류: {msg}")
         QMessageBox.critical(self, "생성 오류", f"보고서 생성 중 오류 발생:\n\n{msg}\n\n"
                              "PDF는 reportlab, Word는 python-docx, Excel은 openpyxl 설치가 필요합니다.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 샘플 장비 파일 생성
+# ═══════════════════════════════════════════════════════════════════════════
+_SAMPLE_DEVICE_1 = """\
+CORE-SW-01#terminal length 0
+CORE-SW-01#show version
+Cisco IOS XE Software, Version 17.09.04a
+Cisco IOS Software [Cupertino], Catalyst L3 Switch Software (CAT9K_IOSXE), Version 17.9.4a
+Copyright (c) 1986-2023 by Cisco Systems, Inc.
+
+cisco Catalyst 9300-48P (X86) processor
+Cisco Catalyst 9300-48P
+
+CORE-SW-01 uptime is 247 days, 6 hours, 12 minutes
+System returned to ROM by Reload Command at 03:12:05 UTC Mon Feb 06 2024
+Last reload reason: Reload Command
+
+Processor board ID FCW2148L02L
+
+CORE-SW-01#show processes cpu
+CPU utilization for five seconds: 8%/3%; one minute: 6%; five minutes: 5%
+ PID Runtime(ms)     Invoked      uSecs   5Sec   1Min   5Min TTY Process
+   1        5520       12345        447   0.00%  0.00%  0.00%   0 Chunk Manager
+   2        2340        8901        262   0.00%  0.00%  0.00%   0 Load Meter
+
+CORE-SW-01#show processes memory
+Processor Pool   Total: 1431655424  Used:  873120768  Free:  558534656
+
+CORE-SW-01#show standby brief
+                     P indicates configured to preempt.
+                     |
+Interface   Grp  Pri P State   Active          Standby         Virtual IP
+Vlan10      1    110 P Active  local           192.168.10.2    192.168.10.1
+Vlan20      1    110 P Active  local           192.168.20.2    192.168.20.1
+Vlan30      1    90    Standby 192.168.30.1    local           192.168.30.100
+
+CORE-SW-01#show spanning-tree summary
+Switch is in rapid-pvst mode
+Root bridge for: VLAN0001, VLAN0010, VLAN0020, VLAN0030
+ Name                   Blocking Listening Learning Forwarding STP Active
+ ---------------------- -------- --------- -------- ---------- ----------
+ VLAN0001                     0         0        0          4          4
+ VLAN0010                     0         0        0          8          8
+
+CORE-SW-01#show environment all
+SYSTEM TEMPERATURE is OK
+Temperature Value: 38 Celsius, Temperature State: GREEN, Yellow Threshold: 65, Red Threshold: 75
+Power Supply 0: Present, OK
+Power Supply 1: Present, OK
+Fan 0: OK
+Fan 1: OK
+Fan 2: OK
+
+CORE-SW-01#show logging
+Syslog logging: enabled (0 messages dropped, 3 messages rate-limited, 0 flushes, 0 overruns, xml disabled, filtering disabled)
+
+Log Buffer (102400 bytes):
+*Apr 10 09:23:15.001: %OSPF-5-ADJCHG: Process 1, Nbr 10.1.1.2 on GigabitEthernet1/0/1 from LOADING to FULL, Loading Done
+
+CORE-SW-01#dir flash:
+Directory of flash:/
+
+    1  -rw-    770641796  Oct 20 2023 11:52:05 +00:00  cat9k_iosxe.17.09.04a.SPA.bin
+    2  -rw-         3512  Feb 06 2024 03:10:00 +00:00  startup-config
+
+37869568000 bytes total (19456384000 bytes free)
+"""
+
+_SAMPLE_DEVICE_2 = """\
+DIST-NX-02# terminal length 0
+DIST-NX-02# show version
+Cisco Nexus Operating System (NX-OS) Software
+  NXOS: version 10.2(5)
+  NXOS image file is: bootflash:///nxos64-cs.10.2.5.M.bin
+
+  cisco Nexus9000 C9336C-FX2 Chassis
+  Intel(R) Xeon(R) CPU D-1526  with 24541184 kB of memory.
+
+  Device name: DIST-NX-02
+  bootflash:   53298520 kB
+
+Kernel uptime is 89 day(s), 14 hour(s), 52 minute(s), 3 second(s)
+
+Last reset at 215843 usecs after  Tue Sep 12 08:11:01 2023
+  Reason: Reset Requested by CLI command reload
+  System version: 10.2(3)
+
+  System serial number: FDO2248R01K
+
+DIST-NX-02# show system resources
+Load average:    1 minute: 4.82 5 minutes: 4.65 15 minutes: 4.51
+Processes   : 1024 total, 3 running
+CPU states  : 58.33% user, 14.22% kernel, 27.44% idle
+Memory usage: 24541184K total, 21002400K used, 3538784K free
+KMem usage: 24541184K total, 20543936K used, 3997248K free
+
+DIST-NX-02# show processes cpu sort
+PID    Runtime(ms) Invoked  uSecs    1Sec  Process
+ 3820   9848383   2143921    4593   42.3%  python3
+  441   6432819   5389201    1194    8.1%  bgp
+  302   3221447   8901234     361    4.7%  ospf
+
+DIST-NX-02# show hsrp brief
+*Interface    Grp  Prio P State    Active addr      Standby addr     Group addr
+Vlan10        1    100  P Active   local            10.10.10.2       10.10.10.1
+Vlan20        1    100  P Active   local            10.20.20.2       10.20.20.1
+Vlan100       1    90     Standby  172.16.100.1     local            172.16.100.254
+
+DIST-NX-02# show spanning-tree summary
+Switch is in rapid-pvst mode
+Root bridge for: VLAN0100, VLAN0200
+
+DIST-NX-02# show spanning-tree blockedports
+Name                 Blocked Interfaces List
+-------------------- ------------------------------------
+VLAN0001             Eth1/47, Eth1/48
+
+DIST-NX-02# show environment
+Fan:
+------------------------------------------------------
+Fan             Model                Hw     Status
+------------------------------------------------------
+Fan1(sys_fan1)  NXA-FAN-30CFM-F      1.0    Ok
+Fan2(sys_fan2)  NXA-FAN-30CFM-F      1.0    Ok
+Fan3(sys_fan3)  NXA-FAN-30CFM-F      1.0    Ok
+
+Power Supply:
+Voltage: 12 Volts
+                                           Actual     Total
+Supply          Model                  Output     Capacity   Status
+                                         (Watts)    (Watts)
+-------  -----------------------    ----------   --------   ------
+1        N9K-PAC-1200W                   680 W     1200 W    Ok
+2        N9K-PAC-1200W                   640 W     1200 W    Ok
+
+Temperature:
+Module   Sensor        MajorThresh   MinorThres    CurTemp     Status
+------   ------        -----------   ----------    -------     ------
+1        Inlet         75            70            42          Ok
+1        Outlet        80            75            49          Ok
+1        CPU           95            85            61          Ok
+
+DIST-NX-02# show logging last 200
+2024 Apr 10 08:13:22 DIST-NX-02 %BGP-3-NOTIFICATION: received from neighbor 10.0.0.1 (VRF default AS 65001) 4/0 (hold time expired) 0 bytes
+2024 Apr 10 08:55:31 DIST-NX-02 %BGP-3-NOTIFICATION: received from neighbor 10.0.0.1 (VRF default AS 65001) 4/0 (hold time expired) 0 bytes
+
+DIST-NX-02# dir bootflash:
+       4096    Dec 18 08:11:29 2023  .patch/
+ 1544656384    Sep 12 08:09:11 2023  nxos64-cs.10.2.5.M.bin
+       8192    Apr 08 09:22:10 2024  virtual-instance/
+
+Usage for bootflash://sup-local
+53298520 bytes used
+23456789 bytes free
+"""
+
+_SAMPLE_DEVICE_3 = """\
+ACCESS-SW-03#terminal length 0
+ACCESS-SW-03#show version
+Cisco IOS Software, Version 15.2(7)E6, RELEASE SOFTWARE (fc3)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1986-2022 by Cisco Systems, Inc.
+
+cisco WS-C3850-48P (MIPS) processor (revision T0) with 866416K bytes of memory.
+Cisco WS-C3850-48P
+
+ACCESS-SW-03 uptime is 3 days, 1 hour, 44 minutes
+System returned to ROM by  power-on
+Last reload reason: power-on
+
+Processor board ID FOC2104X0D3
+
+CORE-SW-03#show processes cpu
+CPU utilization for five seconds: 91%/72%; one minute: 88%; five minutes: 85%
+ PID Runtime(ms)     Invoked      uSecs   5Sec   1Min   5Min TTY Process
+   1    95203500     1234567      77120  72.41% 68.33% 65.12%   0 hpm_counter_pro
+
+ACCESS-SW-03#show processes memory
+Processor Pool   Total:  892338176  Used:  854720000  Free:   37618176
+
+ACCESS-SW-03#show standby brief
+                     P indicates configured to preempt.
+                     |
+Interface   Grp  Pri P State   Active          Standby         Virtual IP
+Vlan1       1    100 P Active  local           10.1.1.2        10.1.1.254
+
+ACCESS-SW-03#show spanning-tree summary
+Switch is in pvst mode
+Root bridge for: none
+
+ACCESS-SW-03#show environment all
+SYSTEM TEMPERATURE is OK
+Temperature Value: 52 Celsius, Temperature State: YELLOW, Yellow Threshold: 55, Red Threshold: 70
+Power Supply 0: Present, OK
+Power Supply 1: Not Present
+
+Fan 0: OK
+Fan 1: FAIL
+
+ACCESS-SW-03#show logging
+Syslog logging: enabled
+
+*Apr 10 01:12:33.891: %PLATFORM_ENV-1-FRU_PS_FAILED: PSU 1 Failed or Removed
+*Apr 10 01:12:33.905: %PLATFORM_ENV-1-FRU_FAN_FAILED: FAN 1 has failed
+*Apr 10 02:45:12.112: %SYS-2-MALLOCFAIL: Memory allocation of 65536 bytes failed from 0x55B3C4, alignment 0
+*Apr 10 02:45:12.116: %SYS-2-MALLOCFAIL: Memory allocation of 32768 bytes failed from 0x55B3C8, alignment 0
+*Apr 10 03:10:44.221: %BGP-3-NOTIFICATION: sent to neighbor 172.16.0.1 4/0 (hold time expired) 0 bytes
+*Apr 10 06:22:11.003: %OSPF-4-ERRRCV: Received invalid packet: mismatched area ID from backbone area from 10.0.0.5 GigabitEthernet1/0/1
+
+ACCESS-SW-03#dir flash:
+Directory of flash:/
+
+    1  -rw-    299463680  Aug 14 2022 15:00:12 +00:00  cat3k_caa-universalk9.16.09.08.SPA.bin
+    2  -rw-         5432  Apr 01 2024 09:01:22 +00:00  startup-config
+
+3758096384 bytes total (219023360 bytes free)
+"""
+
+
+def _create_sample_files(save_dir: str) -> list:
+    """샘플 장비 파일 3개 생성 후 경로 리스트 반환"""
+    files = [
+        ('CORE-SW-01_Catalyst9300.txt',  _SAMPLE_DEVICE_1),
+        ('DIST-NX-02_Nexus9300.txt',     _SAMPLE_DEVICE_2),
+        ('ACCESS-SW-03_Catalyst3850.txt', _SAMPLE_DEVICE_3),
+    ]
+    paths = []
+    for fname, content in files:
+        fpath = os.path.join(save_dir, fname)
+        with open(fpath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        paths.append(fpath)
+    return paths
 
 
 # ─── 헬퍼: info['items'] → dict ───────────────────────────────────────────
@@ -678,50 +1021,130 @@ def _build_pdf(path: str, devices: list, info: dict):
 
         story.append(Paragraph("■ 기본 정보", S_H2))
         bt = Table([
-            ['OS 버전',       d.ios_version or '-'],
-            ['Serial Number', d.serial or '-'],
-            ['업타임',        d.uptime or '-'],
-            ['마지막 재시작', d.last_reload_time or '-'],
-            ['재시작 원인',   d.reload_reason or '-'],
+            ['호스트명',       d.hostname or '-'],
+            ['플랫폼',         d.platform or '-'],
+            ['OS 버전',        d.ios_version or '-'],
+            ['Serial Number',  d.serial or '-'],
+            ['업타임',         d.uptime or '-'],
+            ['마지막 재시작',  d.last_reload_time or '-'],
+            ['재시작 원인',    d.reload_reason or '-'],
         ], colWidths=[40*mm, W - 85*mm])
         bt.setStyle(tbl_style(header=False))
         story.append(bt)
         story.append(Spacer(1, 3*mm))
 
-        story.append(Paragraph("■ CPU 현황", S_H2))
-        ct2 = Table([['구분', '사용률'],
-                     ['최근 5초', d.cpu_5sec or '-'],
-                     ['최근 1분', d.cpu_1min or '-'],
-                     ['최근 5분', d.cpu_5min or '-']], colWidths=[40*mm, 40*mm])
-        ct2.setStyle(tbl_style())
-        story.append(ct2)
-        story.append(Spacer(1, 3*mm))
+        if any([d.cpu_5sec, d.cpu_1min, d.cpu_5min,
+                 d.cpu_load_1m, d.cpu_load_5m, d.cpu_load_15m]):
+            story.append(Paragraph("■ CPU 현황", S_H2))
+            cpu_rows = [['구분', '값']]
+            if d.cpu_5sec:
+                cpu_rows += [['사용률 (5초/IOS)', d.cpu_5sec],
+                              ['사용률 (1분)',     d.cpu_1min or '-'],
+                              ['사용률 (5분)',     d.cpu_5min or '-']]
+            if d.cpu_load_1m:
+                cpu_rows += [['Load Avg (1분/NX-OS)',  d.cpu_load_1m],
+                              ['Load Avg (5분)',        d.cpu_load_5m or '-'],
+                              ['Load Avg (15분)',       d.cpu_load_15m or '-']]
+            ct2 = Table(cpu_rows, colWidths=[55*mm, 40*mm])
+            ct2.setStyle(tbl_style())
+            story.append(ct2)
+            story.append(Spacer(1, 3*mm))
 
-        story.append(Paragraph("■ 메모리 현황", S_H2))
-        mt = Table([['항목', '값'],
-                    ['전체',   d.mem_total_mb],
-                    ['여유',   d.mem_free_mb],
-                    ['사용률', f'{d.mem_pct:.1f}%' if d.mem_total else '-']],
-                   colWidths=[40*mm, 40*mm])
-        mt.setStyle(tbl_style())
-        story.append(mt)
-        story.append(Spacer(1, 3*mm))
+        if d.mem_total:
+            story.append(Paragraph("■ 메모리 현황", S_H2))
+            mt = Table([['항목', '값'],
+                        ['전체',   d.mem_total_mb],
+                        ['여유',   d.mem_free_mb],
+                        ['사용률', f'{d.mem_pct:.1f}%']],
+                       colWidths=[40*mm, 40*mm])
+            mt.setStyle(tbl_style())
+            story.append(mt)
+            story.append(Spacer(1, 3*mm))
 
-        story.append(Paragraph("■ 스토리지 현황", S_H2))
         if d.storages:
+            story.append(Paragraph("■ 스토리지 현황", S_H2))
             st_rows = [['파일시스템', '전체', '여유', '사용률']]
             for s in d.storages:
                 st_rows.append([s.filesystem or '-', s.total_mb, s.free_mb, f'{s.used_pct:.1f}%'])
             stt = Table(st_rows, colWidths=[55*mm, 30*mm, 30*mm, 25*mm])
             stt.setStyle(tbl_style())
             story.append(stt)
-        else:
-            story.append(Paragraph("정보 없음", S_SMALL))
-        story.append(Spacer(1, 3*mm))
+            story.append(Spacer(1, 3*mm))
 
-        story.append(Paragraph("■ 주요 로그 (ERROR/WARNING 이상)", S_H2))
+        if d.hsrp_groups:
+            story.append(Paragraph("■ HSRP / Standby 이중화 현황", S_H2))
+            h_rows = [['인터페이스', 'Grp', 'Pri', 'Pre', '상태', 'Active', 'Standby', 'VIP']]
+            for g in d.hsrp_groups:
+                h_rows.append([g.interface, g.group, g.priority,
+                                'Y' if g.preempt else 'N',
+                                g.state, g.active_addr, g.standby_addr, g.virtual_ip])
+            ht = Table(h_rows, colWidths=[28*mm,11*mm,10*mm,9*mm,17*mm,28*mm,28*mm,28*mm])
+            hsrp_s = tbl_style()
+            for i, g in enumerate(d.hsrp_groups, 1):
+                color = C_OK if g.state.lower() in ('active','standby') else C_ERR
+                hsrp_s.add('TEXTCOLOR', (4, i), (4, i), color)
+            ht.setStyle(hsrp_s)
+            story.append(ht)
+            story.append(Spacer(1, 3*mm))
+
+        if d.stp_mode or d.stp_root_vlans or d.stp_blocked_ports:
+            story.append(Paragraph("■ 스패닝트리 현황", S_H2))
+            stp_rows = [
+                ['STP 모드', d.stp_mode or '-'],
+                ['Root Bridge VLAN', ', '.join(d.stp_root_vlans) if d.stp_root_vlans else '-'],
+                ['블락 포트 수', str(len(d.stp_blocked_ports))],
+            ]
+            stpt = Table(stp_rows, colWidths=[45*mm, W - 90*mm])
+            stpt.setStyle(tbl_style(header=False))
+            story.append(stpt)
+            if d.stp_blocked_ports:
+                blk_rows = [['인터페이스', 'VLAN']]
+                for b in d.stp_blocked_ports:
+                    blk_rows.append([b.interface, b.vlan])
+                blkt = Table(blk_rows, colWidths=[55*mm, 30*mm])
+                blkt.setStyle(tbl_style())
+                story.append(blkt)
+            story.append(Spacer(1, 3*mm))
+
+        if d.temp_sensors or d.power_supplies or d.fans:
+            story.append(Paragraph("■ 환경 (온도 / 전원 / 팬)", S_H2))
+            if d.temp_sensors:
+                tmp_rows = [['센서', '현재 온도', '임계값', '상태']]
+                for t in d.temp_sensors:
+                    tmp_rows.append([t.name, t.current, t.threshold, t.status])
+                tmpt = Table(tmp_rows, colWidths=[45*mm, 30*mm, 30*mm, 30*mm])
+                tmpt.setStyle(tbl_style())
+                story.append(tmpt)
+                story.append(Spacer(1, 2*mm))
+            if d.power_supplies:
+                ps_rows = [['슬롯', '모델', '출력', '용량', '상태']]
+                for ps in d.power_supplies:
+                    ps_rows.append([f'PSU {ps.slot}', ps.model or '-',
+                                    ps.output or '-', ps.capacity or '-', ps.status])
+                pst = Table(ps_rows, colWidths=[18*mm, 50*mm, 25*mm, 25*mm, 25*mm])
+                ps_s = tbl_style()
+                for i, ps in enumerate(d.power_supplies, 1):
+                    ok = any(k in ps.status.lower() for k in ('ok','good','present'))
+                    ps_s.add('TEXTCOLOR', (4, i), (4, i), C_OK if ok else C_ERR)
+                pst.setStyle(ps_s)
+                story.append(pst)
+                story.append(Spacer(1, 2*mm))
+            if d.fans:
+                fan_rows = [['팬', '모델', '상태']]
+                for fan in d.fans:
+                    fan_rows.append([fan.name, fan.model or '-', fan.status])
+                fant = Table(fan_rows, colWidths=[35*mm, 80*mm, 30*mm])
+                fan_s = tbl_style()
+                for i, fan in enumerate(d.fans, 1):
+                    ok = 'ok' in fan.status.lower()
+                    fan_s.add('TEXTCOLOR', (2, i), (2, i), C_OK if ok else C_ERR)
+                fant.setStyle(fan_s)
+                story.append(fant)
+            story.append(Spacer(1, 3*mm))
+
         if d.notable_logs:
-            log_rows = [[Paragraph(l, S_BODY)] for l in d.notable_logs[-20:]]
+            story.append(Paragraph("■ 주요 로그 (ERROR/WARNING 이상)", S_H2))
+            log_rows = [[Paragraph(l, S_BODY)] for l in d.notable_logs[-30:]]
             lt = Table(log_rows, colWidths=[W - 40*mm])
             lt.setStyle(TableStyle([
                 ('FONTNAME',      (0,0), (-1,-1), font_name),
@@ -735,9 +1158,7 @@ def _build_pdf(path: str, devices: list, info: dict):
                 ('ROWBACKGROUNDS',(0,0), (-1,-1), [colors.white, colors.HexColor('#fff7ed')]),
             ]))
             story.append(lt)
-        else:
-            story.append(Paragraph("해당 없음 (주요 경보 미감지)", S_SMALL))
-        story.append(Spacer(1, 3*mm))
+            story.append(Spacer(1, 3*mm))
 
         story.append(Paragraph("■ 점검 결과 요약", S_H2))
         iss_rows = [[f'• {iss}'] for iss in d.issues] or [['• 이상 없음']]
@@ -782,6 +1203,20 @@ def _build_word(path: str, devices: list, info: dict):
     def scolor_rgb(status):
         return {'정상': rgb('#16a34a'), '주의': rgb('#ea580c'), '경고': rgb('#dc2626')}.get(status, C_GRAY)
 
+    def _set_run_font(run, name):
+        """한글 폰트 설정 — eastAsia 속성 명시로 깨짐 방지"""
+        run.font.name = name
+        r = run._element
+        rPr = r.get_or_add_rPr()
+        rFonts = rPr.find(qn('w:rFonts'))
+        if rFonts is None:
+            rFonts = OxmlElement('w:rFonts')
+            rPr.insert(0, rFonts)
+        rFonts.set(qn('w:ascii'),    name)
+        rFonts.set(qn('w:hAnsi'),    name)
+        rFonts.set(qn('w:eastAsia'), name)
+        rFonts.set(qn('w:cs'),       name)
+
     doc = Document()
     for section in doc.sections:
         section.top_margin    = Cm(2)
@@ -791,15 +1226,16 @@ def _build_word(path: str, devices: list, info: dict):
 
     def add_heading(text, level=1):
         p = doc.add_heading(text, level=level)
-        p.runs[0].font.name = '맑은 고딕'
-        p.runs[0].font.color.rgb = C_DARK
+        for run in p.runs:
+            _set_run_font(run, '맑은 고딕')
+            run.font.color.rgb = C_DARK
         return p
 
     def set_cell(cell, text, bold=False, center=False, color=None, bg=None, size=9):
         cell.text = ''
         p   = cell.paragraphs[0]
         run = p.add_run(text)
-        run.font.name = '맑은 고딕'
+        _set_run_font(run, '맑은 고딕')
         run.font.size = Pt(size)
         run.font.bold = bold
         if color:
@@ -839,7 +1275,7 @@ def _build_word(path: str, devices: list, info: dict):
     run = p.add_run('네트워크 점검 보고서')
     run.font.size = Pt(28)
     run.font.bold = True
-    run.font.name = '맑은 고딕'
+    _set_run_font(run, '맑은 고딕')
     run.font.color.rgb = C_DARK
 
     doc.add_paragraph()
@@ -916,61 +1352,133 @@ def _build_word(path: str, devices: list, info: dict):
     # 장비별 상세
     add_heading('3. 장비별 상세 점검 결과', 1)
     for idx, d in enumerate(devices):
-        p = doc.add_heading(f'{idx+1}. {d.hostname or d.filename}  [상태: {d.status}]', 2)
+        title_str = f'{idx+1}. {d.hostname or d.filename}  [상태: {d.status}]'
+        p = doc.add_heading(title_str, 2)
         for run in p.runs:
+            _set_run_font(run, '맑은 고딕')
             run.font.color.rgb = scolor_rgb(d.status)
 
         doc.add_heading('■ 기본 정보', 3)
-        add_table(['항목', '값'], [
-            ['OS 버전',       d.ios_version or '-'],
-            ['Serial Number', d.serial or '-'],
-            ['업타임',        d.uptime or '-'],
-            ['마지막 재시작', d.last_reload_time or '-'],
-            ['재시작 원인',   d.reload_reason or '-'],
-        ], [4, 12])
+        basic_rows = [
+            ['호스트명',       d.hostname or '-'],
+            ['플랫폼',         d.platform or '-'],
+            ['OS 버전',        d.ios_version or '-'],
+            ['Serial Number',  d.serial or '-'],
+            ['업타임',         d.uptime or '-'],
+            ['마지막 재시작',  d.last_reload_time or '-'],
+            ['재시작 원인',    d.reload_reason or '-'],
+        ]
+        add_table(['항목', '값'], basic_rows, [4, 12])
 
-        doc.add_heading('■ CPU 현황', 3)
-        add_table(['구분', '사용률'], [
-            ['최근 5초', d.cpu_5sec or '-'],
-            ['최근 1분', d.cpu_1min or '-'],
-            ['최근 5분', d.cpu_5min or '-'],
-        ], [4, 4])
+        if any([d.cpu_5sec, d.cpu_1min, d.cpu_5min,
+                 d.cpu_load_1m, d.cpu_load_5m, d.cpu_load_15m]):
+            doc.add_heading('■ CPU 현황', 3)
+            cpu_rows = []
+            if d.cpu_5sec:
+                cpu_rows += [['사용률 (5초/IOS)', d.cpu_5sec],
+                              ['사용률 (1분)',     d.cpu_1min or '-'],
+                              ['사용률 (5분)',     d.cpu_5min or '-']]
+            if d.cpu_load_1m:
+                cpu_rows += [['Load Avg (1분/NX-OS)', d.cpu_load_1m],
+                              ['Load Avg (5분)',       d.cpu_load_5m or '-'],
+                              ['Load Avg (15분)',      d.cpu_load_15m or '-']]
+            add_table(['구분', '값'], cpu_rows, [5, 4])
 
-        doc.add_heading('■ 메모리 현황', 3)
-        add_table(['항목', '값'], [
-            ['전체',   d.mem_total_mb],
-            ['여유',   d.mem_free_mb],
-            ['사용률', f'{d.mem_pct:.1f}%' if d.mem_total else '-'],
-        ], [4, 4])
+        if d.mem_total:
+            doc.add_heading('■ 메모리 현황', 3)
+            add_table(['항목', '값'], [
+                ['전체',   d.mem_total_mb],
+                ['여유',   d.mem_free_mb],
+                ['사용률', f'{d.mem_pct:.1f}%'],
+            ], [4, 4])
 
-        doc.add_heading('■ 스토리지 현황', 3)
         if d.storages:
+            doc.add_heading('■ 스토리지 현황', 3)
             add_table(['파일시스템', '전체', '여유', '사용률'],
                       [[s.filesystem or '-', s.total_mb, s.free_mb, f'{s.used_pct:.1f}%']
                        for s in d.storages], [5.5, 3, 3, 2.5])
-        else:
-            doc.add_paragraph('정보 없음')
 
-        doc.add_heading('■ 주요 로그 (ERROR/WARNING 이상)', 3)
+        if d.hsrp_groups:
+            doc.add_heading('■ HSRP / Standby 이중화 현황', 3)
+            hsrp_rows = []
+            for g in d.hsrp_groups:
+                pre = 'Y' if g.preempt else 'N'
+                hsrp_rows.append([g.interface, g.group, g.priority, pre,
+                                   g.state, g.active_addr, g.standby_addr, g.virtual_ip])
+            ht = add_table(
+                ['인터페이스', 'Grp', 'Pri', 'Pre', '상태', 'Active', 'Standby', 'VIP'],
+                hsrp_rows, [3.5, 1.2, 1.2, 1, 2, 3, 3, 3]
+            )
+            for i, g in enumerate(d.hsrp_groups, 1):
+                c = ht.rows[i].cells[4]
+                if c.paragraphs[0].runs:
+                    color = rgb('#16a34a') if g.state.lower() in ('active','standby') else rgb('#dc2626')
+                    c.paragraphs[0].runs[0].font.color.rgb = color
+
+        if d.stp_mode or d.stp_root_vlans or d.stp_blocked_ports:
+            doc.add_heading('■ 스패닝트리 현황', 3)
+            stp_info = [
+                ['STP 모드', d.stp_mode or '-'],
+                ['Root Bridge VLAN', ', '.join(d.stp_root_vlans) if d.stp_root_vlans else '-'],
+                ['블락 포트 수', str(len(d.stp_blocked_ports))],
+            ]
+            add_table(['항목', '값'], stp_info, [5, 11])
+            if d.stp_blocked_ports:
+                doc.add_heading('■ STP 블락 포트 목록', 3)
+                blk_rows = [[b.interface, b.vlan] for b in d.stp_blocked_ports]
+                add_table(['인터페이스', 'VLAN'], blk_rows, [6, 5])
+
+        if d.temp_sensors or d.power_supplies or d.fans:
+            doc.add_heading('■ 환경 (온도 / 전원 / 팬)', 3)
+            if d.temp_sensors:
+                add_table(['센서', '현재 온도', '임계값', '상태'],
+                          [[t.name, t.current, t.threshold, t.status]
+                           for t in d.temp_sensors], [5, 3, 3, 5])
+            if d.power_supplies:
+                ps_rows = []
+                for ps in d.power_supplies:
+                    ps_rows.append([f'PSU {ps.slot}', ps.model or '-',
+                                    ps.output or '-', ps.capacity or '-', ps.status])
+                pt = add_table(['슬롯', '모델', '출력', '용량', '상태'], ps_rows, [2, 5, 3, 3, 3])
+                for i, ps in enumerate(d.power_supplies, 1):
+                    c = pt.rows[i].cells[4]
+                    if c.paragraphs[0].runs:
+                        ok = any(k in ps.status.lower() for k in ('ok', 'good', 'present'))
+                        c.paragraphs[0].runs[0].font.color.rgb = (
+                            rgb('#16a34a') if ok else rgb('#dc2626')
+                        )
+            if d.fans:
+                fan_rows = [[f.name, f.model or '-', f.status] for f in d.fans]
+                ft = add_table(['팬', '모델', '상태'], fan_rows, [4, 8, 4])
+                for i, fan in enumerate(d.fans, 1):
+                    c = ft.rows[i].cells[2]
+                    if c.paragraphs[0].runs:
+                        ok = 'ok' in fan.status.lower()
+                        c.paragraphs[0].runs[0].font.color.rgb = (
+                            rgb('#16a34a') if ok else rgb('#dc2626')
+                        )
+
         if d.notable_logs:
-            for log in d.notable_logs[-20:]:
+            doc.add_heading('■ 주요 로그 (ERROR/WARNING 이상)', 3)
+            for log in d.notable_logs[-30:]:
                 p = doc.add_paragraph(style='List Bullet')
                 run = p.add_run(log)
                 run.font.size = Pt(8)
                 run.font.name = 'Consolas'
                 run.font.color.rgb = rgb('#7c2d12')
-        else:
-            doc.add_paragraph('해당 없음 (주요 경보 미감지)')
 
         doc.add_heading('■ 점검 결과 요약', 3)
         for iss in d.issues:
             p = doc.add_paragraph(style='List Bullet')
             run = p.add_run(iss)
             run.font.color.rgb = scolor_rgb(d.status)
-            run.font.name = '맑은 고딕'
+            _set_run_font(run, '맑은 고딕')
             run.font.size = Pt(9)
         if not d.issues:
-            doc.add_paragraph('• 이상 없음')
+            p = doc.add_paragraph()
+            run = p.add_run('• 이상 없음')
+            _set_run_font(run, '맑은 고딕')
+            run.font.size = Pt(9)
 
         if idx < len(devices) - 1:
             doc.add_page_break()
@@ -1130,91 +1638,145 @@ def _build_excel(path: str, devices: list, info: dict):
         ws.merge_cells('A1:B1')
         ws.append([])
 
-        def _section(title_txt, rows):
+        def _section(title_txt, rows, ws=ws):
             ws.append([title_txt])
             r = ws.max_row
             ws.cell(r, 1).font = _font(bold=True, size=10, color='2563eb')
             ws.cell(r, 1).alignment = _align()
             ws.merge_cells(f'A{r}:B{r}')
-
             ws.append(['항목', '값'])
-            r2 = ws.max_row
-            _header_row(ws, r2, 2)
-
+            _header_row(ws, ws.max_row, 2)
             for k, v in rows:
                 ws.append([k, str(v)])
                 rr = ws.max_row
-                ws.cell(rr, 1).fill  = _fill('f8fafc')
-                ws.cell(rr, 1).font  = _font(color='475569')
+                ws.cell(rr, 1).fill      = _fill('f8fafc')
+                ws.cell(rr, 1).font      = _font(color='475569')
                 ws.cell(rr, 1).alignment = _align('right')
-                ws.cell(rr, 1).border = _border()
-                ws.cell(rr, 2).font  = _font()
+                ws.cell(rr, 1).border    = _border()
+                ws.cell(rr, 2).font      = _font()
                 ws.cell(rr, 2).alignment = _align()
-                ws.cell(rr, 2).border = _border()
+                ws.cell(rr, 2).border    = _border()
+            ws.append([])
+
+        def _wide_section(title_txt, headers, rows, col_count, ws=ws):
+            ws.append([title_txt])
+            r = ws.max_row
+            ws.cell(r, 1).font = _font(bold=True, size=10, color='2563eb')
+            ws.cell(r, 1).alignment = _align()
+            ws.merge_cells(f'A{r}:{get_column_letter(col_count)}{r}')
+            ws.append(headers)
+            _header_row(ws, ws.max_row, col_count)
+            for row_data in rows:
+                ws.append(row_data)
+                _style_row(ws, ws.max_row, col_count)
             ws.append([])
 
         _section('■ 기본 정보', [
-            ('OS 버전',       d.ios_version or '-'),
-            ('Serial Number', d.serial or '-'),
-            ('업타임',        d.uptime or '-'),
-            ('마지막 재시작', d.last_reload_time or '-'),
-            ('재시작 원인',   d.reload_reason or '-'),
+            ('호스트명',       d.hostname or '-'),
+            ('플랫폼',         d.platform or '-'),
+            ('OS 버전',        d.ios_version or '-'),
+            ('Serial Number',  d.serial or '-'),
+            ('업타임',         d.uptime or '-'),
+            ('마지막 재시작',  d.last_reload_time or '-'),
+            ('재시작 원인',    d.reload_reason or '-'),
         ])
 
-        _section('■ CPU 현황', [
-            ('최근 5초', d.cpu_5sec or '-'),
-            ('최근 1분', d.cpu_1min or '-'),
-            ('최근 5분', d.cpu_5min or '-'),
-        ])
+        if any([d.cpu_5sec, d.cpu_1min, d.cpu_5min,
+                 d.cpu_load_1m, d.cpu_load_5m, d.cpu_load_15m]):
+            cpu_rows = []
+            if d.cpu_5sec:
+                cpu_rows += [('사용률 (5초/IOS)', d.cpu_5sec),
+                              ('사용률 (1분)',     d.cpu_1min or '-'),
+                              ('사용률 (5분)',     d.cpu_5min or '-')]
+            if d.cpu_load_1m:
+                cpu_rows += [('Load Avg (1분/NX-OS)', d.cpu_load_1m),
+                              ('Load Avg (5분)',       d.cpu_load_5m or '-'),
+                              ('Load Avg (15분)',      d.cpu_load_15m or '-')]
+            _section('■ CPU 현황', cpu_rows)
 
-        _section('■ 메모리 현황', [
-            ('전체',   d.mem_total_mb),
-            ('여유',   d.mem_free_mb),
-            ('사용률', f'{d.mem_pct:.1f}%' if d.mem_total else '-'),
-        ])
+        if d.mem_total:
+            _section('■ 메모리 현황', [
+                ('전체',   d.mem_total_mb),
+                ('여유',   d.mem_free_mb),
+                ('사용률', f'{d.mem_pct:.1f}%'),
+            ])
 
-        # 스토리지
-        ws.append(['■ 스토리지 현황'])
-        r = ws.max_row
-        ws.cell(r, 1).font = _font(bold=True, size=10, color='2563eb')
-        ws.merge_cells(f'A{r}:D{r}')
-        for col_i, header in enumerate(['파일시스템', '전체', '여유', '사용률'], 1):
-            ws.cell(r + 1, col_i).value = header
-        r2 = ws.max_row + 1
-        ws.append(['파일시스템', '전체', '여유', '사용률'])
-        _header_row(ws, ws.max_row, 4)
-        for col_i in [3, 4]:
-            ws.column_dimensions[get_column_letter(col_i)].width = 14
         if d.storages:
-            for s in d.storages:
-                ws.append([s.filesystem or '-', s.total_mb, s.free_mb, f'{s.used_pct:.1f}%'])
-                rr = ws.max_row
-                _style_row(ws, rr, 4)
-        else:
-            ws.append(['정보 없음', '', '', ''])
-        ws.append([])
+            ws.column_dimensions['C'].width = 14
+            ws.column_dimensions['D'].width = 14
+            _wide_section('■ 스토리지 현황',
+                ['파일시스템', '전체', '여유', '사용률'],
+                [[s.filesystem or '-', s.total_mb, s.free_mb, f'{s.used_pct:.1f}%']
+                 for s in d.storages], 4)
 
-        # 주요 로그
-        ws.append(['■ 주요 로그 (ERROR/WARNING 이상)'])
-        r = ws.max_row
-        ws.cell(r, 1).font = _font(bold=True, size=10, color='2563eb')
-        ws.merge_cells(f'A{r}:B{r}')
-        ws.column_dimensions['A'].width = 70
-        ws.column_dimensions['B'].width = 5
+        if d.hsrp_groups:
+            for col_i, w in zip(range(1, 9), [3.5, 1.2, 1.2, 1, 2, 3, 3, 3]):
+                ws.column_dimensions[get_column_letter(col_i)].width = w * 4
+            _wide_section('■ HSRP / Standby 이중화 현황',
+                ['인터페이스', 'Grp', 'Pri', 'Pre', '상태', 'Active', 'Standby', 'VIP'],
+                [[g.interface, g.group, g.priority, 'Y' if g.preempt else 'N',
+                  g.state, g.active_addr, g.standby_addr, g.virtual_ip]
+                 for g in d.hsrp_groups], 8)
+            # 상태 색상
+            grp_start = ws.max_row - len(d.hsrp_groups) - 1
+            for i, g in enumerate(d.hsrp_groups):
+                row_i = grp_start + i + 2
+                c = ws.cell(row_i, 5)
+                ok = g.state.lower() in ('active', 'standby')
+                c.font = _font(bold=True, color='16a34a' if ok else 'dc2626')
+
+        if d.stp_mode or d.stp_root_vlans or d.stp_blocked_ports:
+            _section('■ 스패닝트리 현황', [
+                ('STP 모드', d.stp_mode or '-'),
+                ('Root Bridge VLAN', ', '.join(d.stp_root_vlans) if d.stp_root_vlans else '-'),
+                ('블락 포트 수', str(len(d.stp_blocked_ports))),
+            ])
+            if d.stp_blocked_ports:
+                _wide_section('■ STP 블락 포트',
+                    ['인터페이스', 'VLAN'],
+                    [[b.interface, b.vlan] for b in d.stp_blocked_ports], 2)
+
+        if d.temp_sensors:
+            _wide_section('■ 온도 현황',
+                ['센서', '현재', '임계값', '상태'],
+                [[t.name, t.current, t.threshold, t.status] for t in d.temp_sensors], 4)
+
+        if d.power_supplies:
+            _wide_section('■ 전원 현황',
+                ['슬롯', '모델', '출력', '용량', '상태'],
+                [[f'PSU {p.slot}', p.model or '-', p.output or '-', p.capacity or '-', p.status]
+                 for p in d.power_supplies], 5)
+            ps_start = ws.max_row - len(d.power_supplies)
+            for i, ps in enumerate(d.power_supplies):
+                c = ws.cell(ps_start + i + 1, 5)
+                ok = any(k in ps.status.lower() for k in ('ok', 'good', 'present'))
+                c.font = _font(bold=True, color='16a34a' if ok else 'dc2626')
+
+        if d.fans:
+            _wide_section('■ 팬 현황',
+                ['팬', '모델', '상태'],
+                [[f.name, f.model or '-', f.status] for f in d.fans], 3)
+            fan_start = ws.max_row - len(d.fans)
+            for i, fan in enumerate(d.fans):
+                c = ws.cell(fan_start + i + 1, 3)
+                ok = 'ok' in fan.status.lower()
+                c.font = _font(bold=True, color='16a34a' if ok else 'dc2626')
+
         if d.notable_logs:
+            ws.append(['■ 주요 로그 (ERROR/WARNING 이상)'])
+            r = ws.max_row
+            ws.cell(r, 1).font = _font(bold=True, size=10, color='2563eb')
+            ws.merge_cells(f'A{r}:B{r}')
             for log in d.notable_logs[-30:]:
                 ws.append([log])
                 rr = ws.max_row
-                ws.cell(rr, 1).font = Font(size=8, name='Consolas', color='7c2d12')
-                ws.cell(rr, 1).fill = _fill('fff7ed')
+                ws.cell(rr, 1).font      = Font(size=8, name='Consolas', color='7c2d12')
+                ws.cell(rr, 1).fill      = _fill('fff7ed')
                 ws.cell(rr, 1).alignment = _align(wrap=True)
-                ws.cell(rr, 1).border = _border()
+                ws.cell(rr, 1).border    = _border()
                 ws.row_dimensions[rr].height = 14
-        else:
-            ws.append(['해당 없음'])
-        ws.append([])
+            ws.append([])
 
-        # 점검 결과 요약
         ws.append(['■ 점검 결과 요약'])
         r = ws.max_row
         ws.cell(r, 1).font = _font(bold=True, size=10, color='2563eb')
@@ -1222,8 +1784,8 @@ def _build_excel(path: str, devices: list, info: dict):
         for iss in (d.issues or ['이상 없음']):
             ws.append([f'• {iss}'])
             rr = ws.max_row
-            ws.cell(rr, 1).font = _font(color=sc)
-            ws.cell(rr, 1).fill = _fill('f8fafc')
+            ws.cell(rr, 1).font  = _font(color=sc)
+            ws.cell(rr, 1).fill  = _fill('f8fafc')
             ws.cell(rr, 1).border = _border()
 
     wb.save(path)

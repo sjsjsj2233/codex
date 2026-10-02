@@ -1,319 +1,209 @@
-"""
-홈 화면 탭
-"""
-import os
-from datetime import datetime
+"""Home workspace and shortcuts to the existing tools."""
 
-from core.i18n import tr
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor, QFont, QPainter, QPen
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QFrame, QScrollArea, QSizePolicy,
-)
-from PyQt5.QtCore import Qt, QTimer, QRect
-from PyQt5.QtGui import (
-    QFont, QColor, QPainter, QBrush,
-    QLinearGradient, QPen, QPainterPath, QPixmap,
+    QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+    QSizePolicy, QVBoxLayout, QWidget,
 )
 
-_BANNER_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            '..', 'icons', 'banner.jpg')
-
-# ──────────────────────────────────────────────────────────────────────────────
-_TOP3 = [
-    {
-        'num':      '01',
-        'title':    tr('네트워크 자동화'),
-        'sub':      tr('SSH / Telnet 다중 접속\n명령어 일괄 실행 및 설정 수집'),
-        'c0':       '#0f2d6b',
-        'c1':       '#1d4ed8',
-        'tab':      1,
-        'dogu_sub': None,
-    },
-    {
-        'num':      '02',
-        'title':    tr('로그 분석'),
-        'sub':      tr('Cisco Syslog 자동 파싱\n심각도 필터 · HTML 보고서 생성'),
-        'c0':       '#6b0f0f',
-        'c1':       '#dc2626',
-        'tab':      3,
-        'dogu_sub': 4,
-    },
-    {
-        'num':      '03',
-        'title':    tr('점검 보고서'),
-        'sub':      tr('show 명령어 파일 자동 분석\nPDF / Word / Excel 보고서 생성'),
-        'c0':       '#2d0f6b',
-        'c1':       '#7c3aed',
-        'tab':      3,
-        'dogu_sub': 1,
-    },
-]
-
-_OTHERS = [
-    {'title': tr('네트워크 진단'), 'sub': tr('Ping · TCPing 모니터링'),             'tab': 2, 'dogu_sub': None, 'color': '#0d9488', 'abbr': tr('진단')},
-    {'title': tr('도구'),          'sub': tr('보고서 · 파일뷰어 · 로그분석'),       'tab': 3, 'dogu_sub': None, 'color': '#d97706', 'abbr': tr('도구')},
-    {'title': tr('정보'),          'sub': tr('버전 · 라이센스'),                    'tab': 4, 'dogu_sub': None, 'color': '#4f46e5', 'abbr': tr('정보')},
-]
+from core.i18n import get_language
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# TOP 3 — 컬러 그라데이션 카드
-# ──────────────────────────────────────────────────────────────────────────────
-class _TopCard(QWidget):
-    def __init__(self, data, switch_fn, parent=None):
+def _copy(ko, en):
+    return en if get_language() == "en" else ko
+
+
+def _label(text, size=10, color="#5b6b82", bold=False):
+    label = QLabel(text)
+    label.setFont(QFont("Malgun Gothic", size, QFont.Bold if bold else QFont.Normal))
+    label.setStyleSheet(f"color:{color};background:transparent;border:none")
+    label.setWordWrap(True)
+    label.setAttribute(Qt.WA_TransparentForMouseEvents)
+    return label
+
+
+class _Hero(QFrame):
+    """Painted topology motif; all labels and actions remain normal Qt widgets."""
+
+    def __init__(self, switch, parent=None):
         super().__init__(parent)
-        self._data   = data
-        self._switch = switch_fn
-        self._hov    = False
-        self.setCursor(Qt.PointingHandCursor)
+        self.setMinimumHeight(235)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.setFixedHeight(168)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setObjectName("homeHero")
+        self.setStyleSheet("#homeHero{background:#111f38;border-radius:16px}")
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(36, 27, 36, 28)
+        layout.setSpacing(0)
+
+        eyebrow = _label(_copy("NETWORK OPERATIONS  /  WORKSPACE", "NETWORK OPERATIONS  /  WORKSPACE"),
+                         8, "#72c9ee", True)
+        layout.addWidget(eyebrow)
+        layout.addSpacing(16)
+
+        title = _label(_copy("네트워크 작업을\n한 곳에서.", "Your network work,\nin one place."),
+                       24, "#ffffff", True)
+        title.setMaximumWidth(590)
+        layout.addWidget(title)
+        layout.addSpacing(8)
+
+        subtitle = _label(_copy(
+            "Cisco 장비 접속부터 명령 실행, 진단, 보고서까지 빠르게 이어가세요.",
+            "Connect to Cisco devices, run commands, diagnose issues, and build reports."
+        ), 9, "#b8c9dd")
+        subtitle.setMaximumWidth(625)
+        layout.addWidget(subtitle)
+        layout.addStretch()
+
+        actions = QHBoxLayout()
+        actions.setSpacing(9)
+        start = QPushButton(_copy("장비 자동화 시작  →", "Start automation  →"))
+        start.setCursor(Qt.PointingHandCursor)
+        start.setFixedHeight(37)
+        start.setStyleSheet(
+            "QPushButton{background:#52bbec;color:#0d263f;border:none;border-radius:8px;"
+            "padding:0 17px;font-weight:700}"
+            "QPushButton:hover{background:#8dd8f6}"
+        )
+        start.clicked.connect(lambda: switch(1, None))
+        actions.addWidget(start)
+
+        inspect = QPushButton(_copy("진단 도구 열기", "Open diagnostics"))
+        inspect.setCursor(Qt.PointingHandCursor)
+        inspect.setFixedHeight(37)
+        inspect.setStyleSheet(
+            "QPushButton{background:#203858;color:#e8f3ff;border:1px solid #436080;"
+            "border-radius:8px;padding:0 17px;font-weight:600}"
+            "QPushButton:hover{background:#2b4b70}"
+        )
+        inspect.clicked.connect(lambda: switch(3, None))
+        actions.addWidget(inspect)
+        actions.addStretch()
+        layout.addLayout(actions)
 
     def paintEvent(self, event):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        width, height = self.width(), self.height()
+        if width < 850:
+            painter.end()
+            return
 
-        g = QLinearGradient(0, 0, self.width(), self.height())
-        g.setColorAt(0.0, QColor(self._data['c0']))
-        g.setColorAt(1.0, QColor(self._data['c1']))
-
-        path = QPainterPath()
-        path.addRoundedRect(0, 0, self.width(), self.height(), 14, 14)
-        p.fillPath(path, QBrush(g))
-
-        if self._hov:
-            p.fillPath(path, QBrush(QColor(255, 255, 255, 18)))
-
-        p.setOpacity(0.10)
-        p.setBrush(QBrush(QColor('#ffffff')))
-        p.setPen(Qt.NoPen)
-        p.drawEllipse(self.width() - 90, -40, 160, 160)
-        p.drawEllipse(self.width() - 30, self.height() - 50, 100, 100)
-        p.setOpacity(1.0)
-
-        p.setPen(QPen(QColor(255, 255, 255, 60)))
-        p.setFont(QFont('맑은 고딕', 36, QFont.Bold))
-        p.drawText(QRect(self.width() - 90, -4, 80, 60), Qt.AlignRight, self._data['num'])
-
-        p.setPen(QPen(QColor('#ffffff')))
-        p.setFont(QFont('맑은 고딕', 18, QFont.Bold))
-        p.drawText(24, 52, self._data['title'])
-
-        p.setOpacity(0.3)
-        p.setPen(QPen(QColor('#ffffff'), 1))
-        p.drawLine(24, 66, 24 + 160, 66)
-        p.setOpacity(1.0)
-
-        p.setPen(QPen(QColor(255, 255, 255, 185)))
-        p.setFont(QFont('맑은 고딕', 10))
-        y = 86
-        for line in self._data['sub'].split('\n'):
-            p.drawText(24, y, line)
-            y += 20
-
-        p.setPen(QPen(QColor(255, 255, 255, 160)))
-        p.setFont(QFont('맑은 고딕', 14, QFont.Bold))
-        p.drawText(QRect(0, self.height() - 36, self.width() - 18, 30),
-                   Qt.AlignRight | Qt.AlignVCenter, '→')
-        p.end()
-
-    def enterEvent(self, e):
-        self._hov = True;  self.update()
-
-    def leaveEvent(self, e):
-        self._hov = False; self.update()
-
-    def mousePressEvent(self, e):
-        if e.button() == Qt.LeftButton:
-            self._switch(self._data['tab'], self._data.get('dogu_sub'))
+        # Quiet network map behind the hero copy.
+        cx = width - 190
+        cy = height // 2
+        nodes = [(cx - 92, cy - 57, 6), (cx + 79, cy - 76, 7),
+                 (cx + 103, cy + 61, 6), (cx - 72, cy + 77, 7),
+                 (cx + 9, cy - 6, 14)]
+        painter.setPen(QPen(QColor(107, 177, 222, 65), 1))
+        for index in range(4):
+            painter.drawLine(nodes[index][0], nodes[index][1], nodes[4][0], nodes[4][1])
+        painter.setPen(QPen(QColor(107, 177, 222, 30), 1))
+        painter.drawEllipse(cx - 136, cy - 127, 270, 250)
+        painter.drawEllipse(cx - 96, cy - 89, 190, 177)
+        for x, y, radius in nodes:
+            painter.setPen(QPen(QColor("#67c8f2"), 1.5))
+            painter.setBrush(QColor("#172c48"))
+            painter.drawEllipse(x - radius, y - radius, radius * 2, radius * 2)
+        painter.end()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# 기타 기능 — 컬러 배지 카드
-# ──────────────────────────────────────────────────────────────────────────────
-class _MiniCard(QWidget):
-    def __init__(self, data, switch_fn, parent=None):
+class _FeatureCard(QFrame):
+    def __init__(self, number, title, detail, tag, switch, target, parent=None):
         super().__init__(parent)
-        self._data   = data
-        self._switch = switch_fn
-        self._hov    = False
+        self._switch = switch
+        self._target = target
+        self.setObjectName("featureCard")
         self.setCursor(Qt.PointingHandCursor)
+        self.setMinimumHeight(170)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.setFixedHeight(84)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self._set_hover(False)
 
-    def paintEvent(self, event):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(19, 18, 19, 18)
+        layout.setSpacing(0)
+        top = QHBoxLayout()
+        top.addWidget(_label(number, 9, "#3884c6", True))
+        top.addStretch()
+        top.addWidget(_label(tag, 8, "#8293a9", True))
+        layout.addLayout(top)
+        layout.addSpacing(24)
+        layout.addWidget(_label(title, 14, "#14243d", True))
+        layout.addSpacing(5)
+        layout.addWidget(_label(detail, 9, "#65758c"))
+        layout.addStretch()
+        layout.addWidget(_label(_copy("열기  ↗", "Open  ↗"), 9, "#2563eb", True))
 
-        accent = QColor(self._data['color'])
+    def _set_hover(self, active):
+        border = "#9bc7f3" if active else "#dfe7f0"
+        background = "#fafdff" if active else "#ffffff"
+        self.setStyleSheet(
+            f"#featureCard{{background:{background};border:1px solid {border};border-radius:12px}}"
+        )
 
-        # 카드 배경
-        bg = QColor('#eef4ff' if self._hov else '#ffffff')
-        card = QPainterPath()
-        card.addRoundedRect(0, 0, self.width(), self.height(), 12, 12)
-        p.fillPath(card, QBrush(bg))
+    def enterEvent(self, event):
+        self._set_hover(True)
+        super().enterEvent(event)
 
-        # 테두리
-        border = QColor(accent.red(), accent.green(), accent.blue(), 120 if self._hov else 50)
-        p.setPen(QPen(border, 1.5 if self._hov else 1.0))
-        p.drawPath(card)
+    def leaveEvent(self, event):
+        self._set_hover(False)
+        super().leaveEvent(event)
 
-        # 좌측 컬러 액센트 바 (5px, 카드 영역 안으로 클리핑)
-        p.setClipPath(card)
-        p.fillRect(0, 0, 5, self.height(), accent)
-        p.setClipping(False)
-
-        # 컬러 원 배지
-        cx, cy, cr = 40, self.height() // 2, 19
-        p.setPen(Qt.NoPen)
-        # 원 그림자 효과
-        p.setBrush(QBrush(QColor(accent.red(), accent.green(), accent.blue(), 30)))
-        p.drawEllipse(cx - cr - 2, cy - cr - 2, (cr + 2) * 2, (cr + 2) * 2)
-        p.setBrush(QBrush(accent))
-        p.drawEllipse(cx - cr, cy - cr, cr * 2, cr * 2)
-
-        # 배지 텍스트
-        p.setPen(QPen(QColor('#ffffff')))
-        p.setFont(QFont('맑은 고딕', 8, QFont.Bold))
-        p.drawText(QRect(cx - cr, cy - cr, cr * 2, cr * 2),
-                   Qt.AlignCenter, self._data['abbr'])
-
-        # 제목
-        p.setPen(QPen(QColor('#1e293b')))
-        p.setFont(QFont('맑은 고딕', 12, QFont.Bold))
-        p.drawText(72, cy - 4, self._data['title'])
-
-        # 부제
-        p.setPen(QPen(QColor('#94a3b8')))
-        p.setFont(QFont('맑은 고딕', 9))
-        p.drawText(72, cy + 14, self._data['sub'])
-
-        # 화살표
-        arrow_color = QColor(accent.red(), accent.green(), accent.blue(),
-                             200 if self._hov else 130)
-        p.setPen(QPen(arrow_color))
-        p.setFont(QFont('맑은 고딕', 13, QFont.Bold))
-        p.drawText(QRect(0, 0, self.width() - 16, self.height()),
-                   Qt.AlignRight | Qt.AlignVCenter, '→')
-        p.end()
-
-    def enterEvent(self, e):
-        self._hov = True;  self.update()
-
-    def leaveEvent(self, e):
-        self._hov = False; self.update()
-
-    def mousePressEvent(self, e):
-        if e.button() == Qt.LeftButton:
-            self._switch(self._data['tab'], self._data.get('dogu_sub'))
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._switch(*self._target)
+        super().mousePressEvent(event)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# 헤더 — 배너 이미지 기반
-# ──────────────────────────────────────────────────────────────────────────────
-class _Header(QWidget):
-    def __init__(self, parent=None):
+class _UtilityCard(QFrame):
+    def __init__(self, initials, title, detail, switch, target, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(180)
-        self._pixmap = QPixmap(_BANNER_PATH)
+        self._switch = switch
+        self._target = target
+        self.setObjectName("utilityCard")
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFixedHeight(82)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self._set_hover(False)
 
-    def paintEvent(self, event):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
-        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        row = QHBoxLayout(self)
+        row.setContentsMargins(14, 12, 14, 12)
+        row.setSpacing(11)
+        icon = _label(initials, 9, "#2373af", True)
+        icon.setAlignment(Qt.AlignCenter)
+        icon.setFixedSize(34, 34)
+        icon.setStyleSheet("background:#eaf5fd;color:#2373af;border-radius:8px")
+        row.addWidget(icon)
+        text = QVBoxLayout()
+        text.setSpacing(3)
+        text.addWidget(_label(title, 10, "#14243d", True))
+        text.addWidget(_label(detail, 8, "#8293a9"))
+        row.addLayout(text, 1)
+        row.addWidget(_label("↗", 12, "#92a4ba"))
 
-        # 배너 이미지 (비율 유지 채우기 + 중앙 크롭)
-        if not self._pixmap.isNull():
-            scaled = self._pixmap.scaled(
-                self.width(), self.height(),
-                Qt.KeepAspectRatioByExpanding,
-                Qt.SmoothTransformation,
-            )
-            ox = (scaled.width()  - self.width())  // 2
-            oy = (scaled.height() - self.height()) // 2
-            p.drawPixmap(0, 0, scaled, ox, oy, self.width(), self.height())
-        else:
-            g = QLinearGradient(0, 0, self.width(), self.height())
-            g.setColorAt(0.0, QColor('#0d1b2a'))
-            g.setColorAt(1.0, QColor('#1a3a6e'))
-            p.fillRect(self.rect(), QBrush(g))
+    def _set_hover(self, active):
+        border = "#9bc7f3" if active else "#dfe7f0"
+        background = "#fafdff" if active else "#ffffff"
+        self.setStyleSheet(
+            f"#utilityCard{{background:{background};border:1px solid {border};border-radius:11px}}"
+        )
 
-        # 어두운 그라데이션 오버레이 (텍스트 가독성)
-        ov = QLinearGradient(0, 0, self.width(), 0)
-        ov.setColorAt(0.0, QColor(0, 0, 0, 160))
-        ov.setColorAt(0.6, QColor(0, 0, 0, 80))
-        ov.setColorAt(1.0, QColor(0, 0, 0, 40))
-        p.fillRect(self.rect(), QBrush(ov))
+    def enterEvent(self, event):
+        self._set_hover(True)
+        super().enterEvent(event)
 
-        # 앱 이름
-        p.setPen(QPen(QColor('#f1f5f9')))
-        p.setFont(QFont('맑은 고딕', 26, QFont.Bold))
-        p.drawText(36, 72, 'Network Automation')
+    def leaveEvent(self, event):
+        self._set_hover(False)
+        super().leaveEvent(event)
 
-        # 부제
-        p.setPen(QPen(QColor(200, 220, 255, 180)))
-        p.setFont(QFont('맑은 고딕', 10))
-        p.drawText(38, 98, tr('Cisco 네트워크 장비  자동화 · 분석 · 점검'))
-
-        # 버전 배지
-        br = QRect(38, 116, 58, 22)
-        p.setBrush(QBrush(QColor(255, 255, 255, 35)))
-        p.setPen(Qt.NoPen)
-        p.drawRoundedRect(br, 11, 11)
-        p.setPen(QPen(QColor('#93c5fd')))
-        p.setFont(QFont('맑은 고딕', 9, QFont.Bold))
-        p.drawText(br, Qt.AlignCenter, 'v 8.0')
-        p.end()
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._switch(*self._target)
+        super().mousePressEvent(event)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# 하단 시계 바
-# ──────────────────────────────────────────────────────────────────────────────
-class _ClockBar(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setFixedHeight(48)
-        self.setObjectName('clockBar')
-        self.setStyleSheet('#clockBar{background:#1e293b;border-radius:10px}')
-
-        h = QHBoxLayout(self)
-        h.setContentsMargins(22, 0, 22, 0)
-
-        self.lbl_date = QLabel()
-        self.lbl_date.setFont(QFont('맑은 고딕', 10))
-        self.lbl_date.setStyleSheet('color:#94a3b8;background:transparent')
-
-        self.lbl_time = QLabel()
-        self.lbl_time.setFont(QFont('맑은 고딕', 16, QFont.Bold))
-        self.lbl_time.setStyleSheet('color:#f1f5f9;background:transparent')
-
-        h.addWidget(self.lbl_date)
-        h.addStretch()
-        h.addWidget(self.lbl_time)
-
-        t = QTimer(self)
-        t.timeout.connect(self._tick)
-        t.start(1000)
-        self._tick()
-
-    def _tick(self):
-        now = datetime.now()
-        day = [tr('월'), tr('화'), tr('수'), tr('목'), tr('금'), tr('토'), tr('일')][now.weekday()]
-        self.lbl_date.setText(f"📅  {now.strftime(f'%Y년 %m월 %d일  {day}요일')}")
-        self.lbl_time.setText(f"🕐  {now.strftime('%H : %M : %S')}")
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-def _sec(text):
-    l = QLabel(text.upper())
-    l.setFont(QFont('맑은 고딕', 9, QFont.Bold))
-    l.setStyleSheet('color:#94a3b8;background:transparent;letter-spacing:2px')
-    return l
-
-
-# ──────────────────────────────────────────────────────────────────────────────
 class HomeTab(QWidget):
     def __init__(self, switch_tab_fn, parent=None):
         super().__init__(parent)
@@ -321,74 +211,82 @@ class HomeTab(QWidget):
         self._build_ui()
 
     def _build_ui(self):
-        self.setStyleSheet('background:#f1f5f9')
+        self.setStyleSheet("background:#f4f7fb")
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
 
-        scroll = QScrollArea(self)
+        scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
-        scroll.setStyleSheet('background:transparent;border:none')
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-        ol = QVBoxLayout(self)
-        ol.setContentsMargins(0, 0, 0, 0)
-        ol.addWidget(scroll)
+        scroll.setStyleSheet("QScrollArea{border:none;background:#f4f7fb}")
+        outer.addWidget(scroll)
 
         body = QWidget()
-        body.setStyleSheet('background:transparent')
+        body.setStyleSheet("background:#f4f7fb")
         scroll.setWidget(body)
+        layout = QVBoxLayout(body)
+        layout.setContentsMargins(28, 22, 28, 28)
+        layout.setSpacing(0)
 
-        root = QVBoxLayout(body)
-        root.setContentsMargins(0, 0, 0, 32)
-        root.setSpacing(0)
+        layout.addWidget(_Hero(self._switch))
+        layout.addSpacing(24)
+        layout.addWidget(_label(_copy("주요 작업", "Core workflows"), 16, "#14243d", True))
+        layout.addSpacing(4)
+        layout.addWidget(_label(_copy(
+            "자주 쓰는 기능으로 바로 이동하세요.", "Jump directly to the work you need."
+        ), 9, "#8293a9"))
+        layout.addSpacing(13)
 
-        root.addWidget(_Header())
+        core = [
+            ("01", _copy("장비 자동화", "Device automation"),
+             _copy("여러 장비에 접속하고 명령을 한 번에 실행", "Connect to devices and run commands in bulk"),
+             "SSH  /  TELNET", (1, None)),
+            ("02", _copy("실시간 콘솔", "Live console"),
+             _copy("장비 세션을 열고 응답을 바로 확인", "Open a session and inspect responses live"),
+             "TERMINAL", (2, None)),
+            ("03", _copy("네트워크 진단", "Network diagnostics"),
+             _copy("연결 상태와 응답 시간을 빠르게 점검", "Check reachability and response times"),
+             "PING  /  TCP", (3, None)),
+        ]
+        core_row = QHBoxLayout()
+        core_row.setSpacing(12)
+        for item in core:
+            core_row.addWidget(_FeatureCard(item[0], item[1], item[2], item[3],
+                                            self._switch, item[4]))
+        layout.addLayout(core_row)
 
-        # 콘텐츠
-        w = QWidget()
-        w.setStyleSheet('background:transparent')
-        wv = QVBoxLayout(w)
-        wv.setContentsMargins(36, 26, 36, 0)
-        wv.setSpacing(0)
+        layout.addSpacing(25)
+        layout.addWidget(_label(_copy("분석 · 보고서", "Analysis & reports"), 16, "#14243d", True))
+        layout.addSpacing(4)
+        layout.addWidget(_label(_copy(
+            "설정 변경점과 장비 데이터를 결과물로 정리합니다.",
+            "Turn configuration changes and device data into clear results."
+        ), 9, "#8293a9"))
+        layout.addSpacing(13)
 
-        wv.addWidget(_sec(tr('주요 기능')))
-        wv.addSpacing(14)
+        utilities = [
+            ("DIFF", _copy("설정 비교", "Config comparison"),
+             _copy("변경점 추적", "Track changes"), (4, 0)),
+            ("RPT", _copy("점검 보고서", "Inspection reports"),
+             _copy("점검 결과 정리", "Organize findings"), (4, 1)),
+            ("LOG", _copy("로그 분석", "Log analysis"),
+             _copy("이벤트 흐름 파악", "Review event flow"), (4, 3)),
+            ("FILE", _copy("파일 뷰어", "File viewer"),
+             _copy("로그·텍스트 검색", "Search logs and text"), (4, 4)),
+        ]
+        utility_row = QHBoxLayout()
+        utility_row.setSpacing(11)
+        for item in utilities:
+            utility_row.addWidget(_UtilityCard(item[0], item[1], item[2],
+                                               self._switch, item[3]))
+        layout.addLayout(utility_row)
 
-        row1 = QHBoxLayout()
-        row1.setSpacing(14)
-        for d in _TOP3:
-            row1.addWidget(_TopCard(d, self._switch))
-        wv.addLayout(row1)
-
-        wv.addSpacing(28)
-        wv.addWidget(_sec(tr('기타 기능')))
-        wv.addSpacing(12)
-
-        row2 = QHBoxLayout()
-        row2.setSpacing(12)
-        for d in _OTHERS:
-            row2.addWidget(_MiniCard(d, self._switch))
-        wv.addLayout(row2)
-
-        wv.addSpacing(28)
-
-        sep = QFrame()
-        sep.setFrameShape(QFrame.HLine)
-        sep.setStyleSheet('color:#e2e8f0')
-        wv.addWidget(sep)
-        wv.addSpacing(10)
-
-        foot = QHBoxLayout()
-        for txt, align in [('Network Automation  v8.0', Qt.AlignLeft),
-                            (tr('카드를 클릭하면 해당 기능으로 이동합니다'), Qt.AlignRight)]:
-            l = QLabel(txt)
-            l.setFont(QFont('맑은 고딕', 9))
-            l.setStyleSheet('color:#cbd5e1;background:transparent')
-            foot.addWidget(l)
-            if align == Qt.AlignLeft:
-                foot.addStretch()
-
-        wv.addLayout(foot)
-        wv.addSpacing(12)
-        wv.addWidget(_ClockBar())
-        root.addWidget(w)
-        root.addStretch()
+        layout.addSpacing(25)
+        footer = QHBoxLayout()
+        footer.addWidget(_label("NETWORK AUTOMATION   /   v9.9", 8, "#9aa9bb", True))
+        footer.addStretch()
+        footer.addWidget(_label(_copy("Cisco 네트워크 운영 워크스페이스", "Cisco network operations workspace"),
+                                8, "#9aa9bb"))
+        layout.addLayout(footer)
+        layout.addStretch()

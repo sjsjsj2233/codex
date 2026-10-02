@@ -37,8 +37,8 @@ class _Header(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         g = QLinearGradient(0, 0, self.width(), self.height())
-        g.setColorAt(0.0, QColor('#0f172a'))
-        g.setColorAt(1.0, QColor('#0d9488'))
+        g.setColorAt(0.0, QColor('#14243d'))
+        g.setColorAt(1.0, QColor('#1b456c'))
         p.fillRect(self.rect(), QBrush(g))
         p.setOpacity(0.07)
         p.setBrush(QBrush(QColor('#ffffff')))
@@ -47,10 +47,10 @@ class _Header(QWidget):
         p.setOpacity(1.0)
         p.setPen(QPen(QColor('#f8fafc')))
         p.setFont(QFont('맑은 고딕', 16, QFont.Bold))
-        p.drawText(28, 32, tr('네트워크 진단'))
+        p.drawText(28, 32, tr('연결 진단'))
         p.setPen(QPen(QColor('#94a3b8')))
         p.setFont(QFont('맑은 고딕', 9))
-        p.drawText(30, 52, tr('Ping · TCP 포트 연결 상태 확인'))
+        p.drawText(30, 52, tr('호스트 응답과 TCP 포트 연결 상태를 확인합니다.'))
         p.end()
 
 
@@ -229,7 +229,7 @@ class MonitoringTab(QWidget):
     # ── UI 구성 ──────────────────────────────────────────────────────────────
     def _build_ui(self):
         self.setObjectName('monitoringTab')
-        self.setStyleSheet('#monitoringTab { background: #f1f5f9; }')
+        self.setStyleSheet('#monitoringTab { background: #f4f7fb; }')
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)

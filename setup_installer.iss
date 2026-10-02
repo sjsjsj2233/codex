@@ -1,8 +1,8 @@
-; Network Automation v7.0 Inno Setup Script
+; Network Automation v9.9 Inno Setup Script
 ; UTF-8 BOM encoded
 
 #define MyAppName "Network Automation"
-#define MyAppVersion "7.0"
+#define MyAppVersion "9.9"
 #define MyAppPublisher "Your Company"
 #define MyAppExeName "NetworkAutomation.exe"
 #define MyAppURL "https://auto-network.co.kr"
@@ -17,7 +17,7 @@ AppPublisherURL={#MyAppURL}
 DefaultDirName={autopf}\NetworkAutomation
 DefaultGroupName={#MyAppName}
 OutputDir=.
-OutputBaseFilename=NetworkAutomation_v7.0_Setup
+OutputBaseFilename=NetworkAutomation_v9.9_Setup
 SetupIconFile=icons\app_icon.ico
 Compression=lzma2/max
 SolidCompression=yes
@@ -60,7 +60,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    MsgBox('Network Automation v7.0 installation completed!' #13#10#13#10 +
+    MsgBox('Network Automation v9.9 installation completed!' #13#10#13#10 +
            'Thank you for using Network Automation.', mbInformation, MB_OK);
   end;
 end;

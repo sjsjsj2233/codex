@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ========================================
-echo    네트워크 자동화 프로그램 v7.0
+echo    네트워크 자동화 프로그램 v9.9
 echo    포터블 버전 빌드 스크립트
 echo ========================================
 echo.
@@ -24,16 +24,16 @@ echo 완료!
 echo.
 
 echo [3/4] 포터블 ZIP 패키지 생성 중...
-powershell -command "Compress-Archive -Path 'dist\NetworkAutomation\*' -DestinationPath 'NetworkAutomation_v7.0_Portable.zip' -Force"
+powershell -command "Compress-Archive -Path 'dist\NetworkAutomation\*' -DestinationPath 'NetworkAutomation_v9.9_Portable.zip' -Force"
 echo 완료!
 echo.
 
 echo [4/4] 빌드 결과 확인...
-if exist "NetworkAutomation_v7.0_Portable.zip" (
+if exist "NetworkAutomation_v9.9_Portable.zip" (
     echo.
     echo ========================================
     echo 빌드 성공!
-    echo 파일: NetworkAutomation_v7.0_Portable.zip
+    echo 파일: NetworkAutomation_v9.9_Portable.zip
     echo 크기: 약 105MB
     echo ========================================
 ) else (

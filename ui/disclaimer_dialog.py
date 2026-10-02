@@ -23,7 +23,7 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QPainter, QColor, QLinearGradient, QBrush, QPen
 
 # ── 설정 ─────────────────────────────────────────────────────────────────────
-AGREEMENT_VERSION = "8.0"
+AGREEMENT_VERSION = "9.0"
 SERVER_URL        = "https://auto-network.co.kr/api"
 CACHE_DAYS        = 30   # 로컬 캐시 유효 기간
 
@@ -150,7 +150,7 @@ class _Header(QWidget):
         p.drawText(62, 49, '이용 약관 및 면책 조항')
         p.setPen(QPen(QColor('#94a3b8')))
         p.setFont(QFont('맑은 고딕', 9))
-        p.drawText(63, 68, 'Network Automation v8.0  —  사용 전 반드시 읽어주세요.')
+        p.drawText(63, 68, 'Network Automation v9.9  —  사용 전 반드시 읽어주세요.')
         p.end()
 
 
@@ -343,7 +343,7 @@ _TERMS_HTML = """
 </style>
 
 <h3>제1조 (소프트웨어 성격 및 목적)</h3>
-<p>본 소프트웨어 <b>Network Automation v8.0</b>(이하 "본 소프트웨어")은
+<p>본 소프트웨어 <b>Network Automation v9.9</b>(이하 "본 소프트웨어")은
 네트워크 장비 관리 자동화를 지원하는 도구로서, <b>사용자의 책임 하에</b>
 사용됩니다. 본 소프트웨어는 현재 상태(AS-IS)로 제공되며, 어떠한 명시적
 또는 묵시적 보증도 제공하지 않습니다.</p>

@@ -65,7 +65,7 @@ class LicenseDialog(QDialog):
         app_lbl.setAlignment(Qt.AlignCenter)
         app_lbl.setObjectName("appTitle")
 
-        ver_lbl = QLabel("v8.0  —  라이센스 활성화")
+        ver_lbl = QLabel("v9.9  —  라이센스 활성화")
         ver_lbl.setAlignment(Qt.AlignCenter)
         ver_lbl.setObjectName("appSub")
 

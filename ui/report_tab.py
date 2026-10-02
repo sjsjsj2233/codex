@@ -19,6 +19,89 @@ from PyQt5.QtCore import Qt
 from openpyxl import Workbook
 
 
+# ── 공통 파서 (IOS-XE / NX-OS 공용) ──────────────────────────────────────────
+def extract_serial(content):
+    """시리얼 번호 추출 (show version)."""
+    m = re.search(r'[Ss]ystem [Ss]erial [Nn]umber\s*:\s*(\S+)', content)
+    if not m:
+        m = re.search(r'Processor board ID\s+(\S+)', content, re.IGNORECASE)
+    if not m:
+        m = re.search(r'Serial [Nn]umber\s*:\s*(\S+)', content, re.IGNORECASE)
+    return m.group(1).strip() if m else 'N/A'
+
+
+_IP_RE = r'(\d{1,3}(?:\.\d{1,3}){3})'
+
+
+def _valid_ip(ip):
+    if not ip or ip in ('0.0.0.0', '255.255.255.255') or ip.startswith('127.'):
+        return False
+    return all(0 <= int(o) <= 255 for o in ip.split('.'))
+
+
+def extract_mgmt_ip(content, filename=''):
+    """관리 IP 추출 — mgmt0/Management 설정 → Internet address → show ip int brief
+    → 첫 유효 IP → 파일명."""
+    # 1) 관리 인터페이스(mgmt0 / Management*) 설정 블록의 ip address
+    m = re.search(
+        r'interface\s+(?:mgmt0|Management\S*)[ \t]*\r?\n(?:[ \t]+[^\n]*\r?\n)*?[ \t]+ip address\s+'
+        + _IP_RE,
+        content, re.IGNORECASE)
+    if m and _valid_ip(m.group(1)):
+        return m.group(1)
+    # 2) "Internet address is X.X.X.X" (show interface mgmt0 / show ip interface)
+    for mm in re.finditer(r'[Ii]nternet\s+address\s+is\s+' + _IP_RE, content, re.IGNORECASE):
+        if _valid_ip(mm.group(1)):
+            return mm.group(1)
+    # 3) show ip interface brief 의 mgmt / Management / Vlan 행
+    m = re.search(
+        r'^(?:mgmt0|Management\S*|Vlan\d+)\s+' + _IP_RE + r'\b',
+        content, re.MULTILINE | re.IGNORECASE)
+    if m and _valid_ip(m.group(1)):
+        return m.group(1)
+    # 4) 그 외 첫 번째 유효 ip address (loopback / unassigned 제외)
+    for mm in re.finditer(r'ip address\s+' + _IP_RE, content, re.IGNORECASE):
+        if _valid_ip(mm.group(1)):
+            return mm.group(1)
+    # 5) 파일명에 IP가 포함된 경우 (예: 10.200.252.10_show.txt, 10_200_252_10.txt)
+    if filename:
+        m = re.search(r'(?<!\d)' + _IP_RE + r'(?!\d)', filename.replace('_', '.'))
+        if m and _valid_ip(m.group(1)):
+            return m.group(1)
+    return 'N/A'
+
+
+def extract_model_iosxe(content):
+    """IOS / IOS-XE 모델명 추출."""
+    m = re.search(r'Model number\s*:?\s*(\S+)', content, re.IGNORECASE)
+    if not m:
+        m = re.search(r'cisco\s+([\w-]*C\d{3,4}[\w/-]*)\s+\(', content, re.IGNORECASE)
+    if not m:
+        m = re.search(
+            r'\b(WS-C\d{3,4}\S*|C9\d{3}[\w-]*|ISR\d{3,4}\S*|ASR\d{3,4}\S*|CSR\d{3,4}\S*)\b',
+            content)
+    return m.group(1).rstrip(',').strip() if m else 'N/A'
+
+
+def extract_model_nxos(content):
+    """NX-OS 모델명 추출 (여러 show version 포맷 대응)."""
+    # "cisco NexusXXXX <PID> Chassis" / "cisco NexusXXXX Chassis"
+    m = re.search(
+        r'cisco\s+Nexus[- ]?(\S+)(?:\s+((?:C|N)\d[\w-]{2,}))?',
+        content, re.IGNORECASE)
+    if m:
+        if m.group(2):
+            return m.group(2).rstrip(',')
+        tok = m.group(1).rstrip(',')
+        return f'Nexus{tok}' if tok[:1].isdigit() else tok
+    # PID 단독 (N9K-C9396PX, N5K-C5548UP, N77-C7710 ...)
+    m = re.search(r'\b(N\d{1,2}[A-Z]?K?-[A-Z0-9-]{3,})\b', content)
+    if m:
+        return m.group(1)
+    m = re.search(r'Model\s*:?\s*(\S+)', content, re.IGNORECASE)
+    return m.group(1).rstrip(',').strip() if m else 'N/A'
+
+
 # ── 헤더 ─────────────────────────────────────────────────────────────────────
 class _Header(QWidget):
     def __init__(self, title, subtitle, c0, c1, parent=None):
@@ -86,7 +169,8 @@ _SS_CB = (
 class EnhancedInspectionReportGenerator(QWidget):
     def __init__(self):
         super().__init__()
-        self.device_data = []
+        self.device_data    = []
+        self._last_save_dir = None
         self.init_ui()
 
     # ── UI 구성 ───────────────────────────────────────────────────────────────
@@ -201,6 +285,16 @@ class EnhancedInspectionReportGenerator(QWidget):
         csv_btn.clicked.connect(self.save_to_csv)
         v.addWidget(csv_btn)
 
+        folder_btn = QPushButton('📁 폴더 열기')
+        folder_btn.setFont(QFont('맑은 고딕', 10, QFont.Bold))
+        folder_btn.setFixedHeight(34)
+        folder_btn.setStyleSheet(
+            'QPushButton{background:#475569;color:#fff;border:none;border-radius:8px}'
+            'QPushButton:hover{background:#334155}'
+        )
+        folder_btn.clicked.connect(self._open_last_folder)
+        v.addWidget(folder_btn)
+
         v.addStretch()
 
         clear_btn = QPushButton('초기화')
@@ -240,10 +334,11 @@ class EnhancedInspectionReportGenerator(QWidget):
 
         # 결과 테이블
         self.result_table = QTableWidget()
-        self.result_table.setColumnCount(10)
+        self.result_table.setColumnCount(12)
         self.result_table.setHorizontalHeaderLabels([
             '파일명', '호스트명', '모델', 'IOS 버전', 'SW 버전',
             'CPU', '메모리 총량', '메모리 사용', '사용률', '가동시간',
+            '시리얼', 'IP',
         ])
         hdr = self.result_table.horizontalHeader()
         hdr.setSectionResizeMode(0, QHeaderView.ResizeToContents)
@@ -251,6 +346,8 @@ class EnhancedInspectionReportGenerator(QWidget):
         hdr.setSectionResizeMode(2, QHeaderView.ResizeToContents)
         for i in range(3, 10):
             hdr.setSectionResizeMode(i, QHeaderView.Stretch)
+        hdr.setSectionResizeMode(10, QHeaderView.ResizeToContents)
+        hdr.setSectionResizeMode(11, QHeaderView.ResizeToContents)
 
         self.result_table.setAlternatingRowColors(True)
         self.result_table.setSortingEnabled(True)
@@ -331,13 +428,16 @@ class EnhancedInspectionReportGenerator(QWidget):
                 total_mem, used_mem, free_mem, memory_usage = self.parse_memory(content)
                 cpu_usage = self.parse_cpu(content)
                 uptime = self.parse_uptime(content)
+                serial = self.parse_serial(content)
+                mgmt_ip = self.parse_mgmt_ip(content, filename)
                 device_info = {
                     'filename': filename, 'hostname': run_hostname,
                     'cpu': cpu_usage, 'memory_total': total_mem,
                     'memory_used': used_mem, 'memory_free': free_mem,
                     'memory_usage': memory_usage, 'uptime': uptime,
                     'ios_version': ios_version, 'sw_version': sw_version,
-                    'model': model, 'raw_content': content,
+                    'model': model, 'serial': serial, 'ip': mgmt_ip,
+                    'raw_content': content,
                 }
                 self.device_data.append(device_info)
                 self.add_device_to_table(device_info)
@@ -354,6 +454,7 @@ class EnhancedInspectionReportGenerator(QWidget):
             device['ios_version'], device['sw_version'], device['cpu'],
             str(device['memory_total']), str(device['memory_used']),
             device['memory_usage'], device['uptime'],
+            device.get('serial', 'N/A'), device.get('ip', 'N/A'),
         ]
         for col, text in enumerate(items):
             item = QTableWidgetItem(text)
@@ -373,7 +474,9 @@ class EnhancedInspectionReportGenerator(QWidget):
         self.details_text.append(f'━━━  {filename}  ━━━')
         self.details_text.append(f'호스트 : {device["hostname"]}')
         self.details_text.append(f'모델   : {device["model"]}')
-        self.details_text.append(f'IOS    : {device["ios_version"]}')
+        self.details_text.append(f'OS     : {device.get("ios_version") or device.get("nxos_version", "N/A")}')
+        self.details_text.append(f'시리얼 : {device.get("serial", "N/A")}')
+        self.details_text.append(f'IP     : {device.get("ip", "N/A")}')
         self.details_text.append(f'CPU    : {device["cpu"]}')
         self.details_text.append(f'메모리 : {device["memory_usage"]}')
         self.details_text.append(f'가동   : {device["uptime"]}')
@@ -407,7 +510,7 @@ class EnhancedInspectionReportGenerator(QWidget):
             wb = Workbook()
             ws = wb.active
             ws.title = 'Report'
-            headers = ['파일명', '호스트명', '모델', 'IOS', 'SW']
+            headers = ['파일명', '호스트명', '모델', 'IOS', 'SW', '시리얼', 'IP']
             if self.include_cpu.isChecked():
                 headers.append('CPU')
             if self.include_memory.isChecked():
@@ -416,7 +519,8 @@ class EnhancedInspectionReportGenerator(QWidget):
                 headers.append('가동시간')
             ws.append(headers)
             for d in self.device_data:
-                row = [d['filename'], d['hostname'], d['model'], d['ios_version'], d['sw_version']]
+                row = [d['filename'], d['hostname'], d['model'], d['ios_version'], d['sw_version'],
+                       d.get('serial', 'N/A'), d.get('ip', 'N/A')]
                 if self.include_cpu.isChecked():
                     row.append(d['cpu'])
                 if self.include_memory.isChecked():
@@ -425,6 +529,7 @@ class EnhancedInspectionReportGenerator(QWidget):
                     row.append(d['uptime'])
                 ws.append(row)
             wb.save(path)
+            self._last_save_dir = os.path.dirname(path)
             QMessageBox.information(self, '완료', f'저장 완료:\n{path}')
         except Exception as e:
             QMessageBox.critical(self, '오류', f'저장 실패: {e}')
@@ -437,7 +542,7 @@ class EnhancedInspectionReportGenerator(QWidget):
             path, _ = QFileDialog.getSaveFileName(self, 'CSV 저장', 'Report.csv', 'CSV Files (*.csv)')
             if not path:
                 return
-            headers = ['파일명', '호스트명', '모델', 'IOS', 'SW']
+            headers = ['파일명', '호스트명', '모델', 'IOS', 'SW', '시리얼', 'IP']
             if self.include_cpu.isChecked():
                 headers.append('CPU')
             if self.include_memory.isChecked():
@@ -448,7 +553,8 @@ class EnhancedInspectionReportGenerator(QWidget):
                 w = csv.writer(f)
                 w.writerow(headers)
                 for d in self.device_data:
-                    row = [d['filename'], d['hostname'], d['model'], d['ios_version'], d['sw_version']]
+                    row = [d['filename'], d['hostname'], d['model'], d['ios_version'], d['sw_version'],
+                           d.get('serial', 'N/A'), d.get('ip', 'N/A')]
                     if self.include_cpu.isChecked():
                         row.append(d['cpu'])
                     if self.include_memory.isChecked():
@@ -456,9 +562,18 @@ class EnhancedInspectionReportGenerator(QWidget):
                     if self.include_uptime.isChecked():
                         row.append(d['uptime'])
                     w.writerow(row)
+            self._last_save_dir = os.path.dirname(path)
             QMessageBox.information(self, '완료', f'저장 완료:\n{path}')
         except Exception as e:
             QMessageBox.critical(self, '오류', f'저장 실패: {e}')
+
+    def _open_last_folder(self):
+        import subprocess
+        folder = self._last_save_dir or os.path.expanduser('~')
+        try:
+            subprocess.Popen(f'explorer "{folder}"')
+        except Exception as e:
+            QMessageBox.warning(self, '오류', f'폴더를 열 수 없습니다:\n{e}')
 
     # ── 파싱 메서드 (기존 그대로) ──────────────────────────────────────────────
     def parse_run_hostname(self, content):
@@ -468,13 +583,7 @@ class EnhancedInspectionReportGenerator(QWidget):
     def parse_show_version(self, content):
         m = re.search(r'Version\s+([\d\.\(\)A-Z]+)', content)
         ios = m.group(1) if m else 'N/A'
-        m2 = re.search(r'Model number\s+:\s+(\S+)', content, re.IGNORECASE)
-        if m2:
-            model = m2.group(1)
-        else:
-            m2 = re.search(r'\bC\d{4,}\b', content)
-            model = m2.group(0) if m2 else 'N/A'
-        return ios, ios, model
+        return ios, ios, extract_model_iosxe(content)
 
     def parse_memory(self, content):
         m = re.search(r'Processor Pool Total:\s+(\d+)\s+Used:\s+(\d+)\s+Free:\s+(\d+)', content)
@@ -495,6 +604,12 @@ class EnhancedInspectionReportGenerator(QWidget):
         m = re.search(r'uptime is (.+)', content)
         return m.group(1).strip() if m else 'N/A'
 
+    def parse_serial(self, content):
+        return extract_serial(content)
+
+    def parse_mgmt_ip(self, content, filename=''):
+        return extract_mgmt_ip(content, filename)
+
 
 # ── Nexus 보고서 ──────────────────────────────────────────────────────────────
 class EnhancedNexusReportGenerator(EnhancedInspectionReportGenerator):
@@ -504,6 +619,7 @@ class EnhancedNexusReportGenerator(EnhancedInspectionReportGenerator):
         self.result_table.setHorizontalHeaderLabels([
             '파일명', '호스트명', '모델', 'NX-OS', 'CPU',
             '메모리', '사용', '사용률', '가동시간', '재부팅',
+            '시리얼', 'IP',
         ])
         # 헤더 색상 재설정 (NX-OS 전용)
         self._update_header_color()
@@ -527,6 +643,8 @@ class EnhancedNexusReportGenerator(EnhancedInspectionReportGenerator):
                 hostname, nxos, model = self.parse_show_version_nexus(content)
                 cpu, total_mem, used_mem, free_mem, mem_usage, uptime = self.parse_system_resources(content)
                 reboot = self.parse_last_reboot(content)
+                serial = self.parse_serial(content)
+                mgmt_ip = self.parse_mgmt_ip(content, filename)
                 device_info = {
                     'filename': filename,
                     'hostname': hostname if hostname != 'N/A' else filename,
@@ -534,6 +652,7 @@ class EnhancedNexusReportGenerator(EnhancedInspectionReportGenerator):
                     'memory_used': used_mem, 'memory_free': free_mem,
                     'memory_usage': mem_usage, 'uptime': uptime,
                     'nxos_version': nxos, 'model': model,
+                    'serial': serial, 'ip': mgmt_ip,
                     'last_reboot': reboot, 'raw_content': content,
                 }
                 self.device_data.append(device_info)
@@ -550,6 +669,7 @@ class EnhancedNexusReportGenerator(EnhancedInspectionReportGenerator):
             device['nxos_version'], device['cpu'],
             str(device['memory_total']), str(device['memory_used']),
             device['memory_usage'], device['uptime'], device['last_reboot'],
+            device.get('serial', 'N/A'), device.get('ip', 'N/A'),
         ]
         for col, text in enumerate(items):
             item = QTableWidgetItem(text)
@@ -563,11 +683,7 @@ class EnhancedNexusReportGenerator(EnhancedInspectionReportGenerator):
         if not m:
             m = re.search(r'System version:\s+([\d\.\(\)A-Z]+)', content, re.IGNORECASE)
         nxos = m.group(1) if m else 'N/A'
-        m = re.search(r'Hardware\s+:\s+cisco\s+Nexus\d+\s+(\S+)', content, re.IGNORECASE)
-        if not m:
-            m = re.search(r'\b(N\d[KX]?-\S+)\b', content)
-        model = m.group(1) if m else 'N/A'
-        return hostname, nxos, model
+        return hostname, nxos, extract_model_nxos(content)
 
     def parse_system_resources(self, content):
         m = re.search(r'CPU states\s+:\s+([\d\.]+)% user,\s+([\d\.]+)% kernel', content)
@@ -721,16 +837,16 @@ class UnifiedReportGenerator(QWidget):
         v.addWidget(bar)
 
         self.result_table = QTableWidget()
-        self.result_table.setColumnCount(12)
+        self.result_table.setColumnCount(14)
         self.result_table.setHorizontalHeaderLabels([
-            '유형', '파일명', '호스트명', 'OS 버전', '시리얼',
+            '유형', '파일명', '호스트명', '모델', 'OS 버전', '시리얼', 'IP',
             'CPU 5초', 'CPU 1분', 'CPU 5분',
             '메모리 총량', '메모리 사용', '사용률', '가동시간',
         ])
         hdr = self.result_table.horizontalHeader()
-        for i in range(12):
+        for i in range(14):
             hdr.setSectionResizeMode(i, QHeaderView.ResizeToContents)
-        hdr.setSectionResizeMode(3, QHeaderView.Stretch)
+        hdr.setSectionResizeMode(4, QHeaderView.Stretch)
         self.result_table.setAlternatingRowColors(True)
         self.result_table.setSortingEnabled(True)
         self.result_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -814,11 +930,9 @@ class UnifiedReportGenerator(QWidget):
             m = re.search(r'\bVersion\s+([\d]+\.[\d][\d\.\(\)A-Za-z]*)', content)
         os_version = m.group(1).rstrip(',') if m else 'N/A'
 
-        # Serial
-        m = re.search(r'Processor board ID\s+(\S+)', content, re.IGNORECASE)
-        if not m:
-            m = re.search(r'System serial number\s*:\s*(\S+)', content, re.IGNORECASE)
-        serial = m.group(1) if m else 'N/A'
+        # Serial / 관리 IP
+        serial = extract_serial(content)
+        mgmt_ip = extract_mgmt_ip(content, filename)
 
         # Uptime — "Switch uptime is ..." 또는 "uptime is ..."
         m = re.search(r'(?:^\S+\s+)?uptime\s+is\s+(.+?)(?:\r?\n|$)', content, re.IGNORECASE | re.MULTILINE)
@@ -860,15 +974,12 @@ class UnifiedReportGenerator(QWidget):
                 mem_total = mem_used = mem_pct = 'N/A'
 
         # Model
-        m = re.search(r'Model number\s*:\s*(\S+)', content, re.IGNORECASE)
-        if not m:
-            m = re.search(r'cisco\s+(C\d{4}[^\s,]+)', content, re.IGNORECASE)
-        model = m.group(1) if m else 'N/A'
+        model = extract_model_iosxe(content)
 
         return {
             'device_type': 'IOS-XE', 'filename': filename,
             'hostname': hostname, 'os_version': os_version,
-            'serial': serial, 'uptime': uptime,
+            'serial': serial, 'ip': mgmt_ip, 'uptime': uptime,
             'cpu_5s': cpu_5s, 'cpu_1m': cpu_1m, 'cpu_5m': cpu_5m,
             'cpu_history': cpu_history,
             'mem_total': mem_total, 'mem_used': mem_used, 'mem_pct': mem_pct,
@@ -898,9 +1009,9 @@ class UnifiedReportGenerator(QWidget):
             m = re.search(r'NX-OS[^\n]*[Vv]ersion\s+([\d\.]+[\(\)A-Za-z\d]*)', content)
         os_version = m.group(1) if m else 'N/A'
 
-        # Serial
-        m = re.search(r'Processor board ID\s+(\S+)', content, re.IGNORECASE)
-        serial = m.group(1) if m else 'N/A'
+        # Serial / 관리 IP
+        serial = extract_serial(content)
+        mgmt_ip = extract_mgmt_ip(content, filename)
 
         # Uptime
         m = re.search(r'Kernel uptime is\s+(.+?)(?:\r?\n|$)', content, re.IGNORECASE)
@@ -947,15 +1058,12 @@ class UnifiedReportGenerator(QWidget):
             mem_total = mem_used = mem_pct = 'N/A'
 
         # Model
-        m = re.search(r'Hardware\s*\n\s*cisco\s+(.+?)(?:\n|Chassis)', content, re.IGNORECASE)
-        if not m:
-            m = re.search(r'cisco\s+(N\d[KX]?\S+)', content, re.IGNORECASE)
-        model = m.group(1).strip() if m else 'N/A'
+        model = extract_model_nxos(content)
 
         return {
             'device_type': 'NX-OS', 'filename': filename,
             'hostname': hostname, 'os_version': os_version,
-            'serial': serial, 'uptime': uptime,
+            'serial': serial, 'ip': mgmt_ip, 'uptime': uptime,
             'cpu_5s': cpu_5s, 'cpu_1m': cpu_1m, 'cpu_5m': cpu_5m,
             'cpu_history': '',
             'mem_total': mem_total, 'mem_used': mem_used, 'mem_pct': mem_pct,
@@ -1003,8 +1111,8 @@ class UnifiedReportGenerator(QWidget):
         self.result_table.setRowHeight(row, 38)
         dtype = device['device_type']
         row_data = [
-            dtype, device['filename'], device['hostname'],
-            device['os_version'], device['serial'],
+            dtype, device['filename'], device['hostname'], device.get('model', 'N/A'),
+            device['os_version'], device['serial'], device.get('ip', 'N/A'),
             device['cpu_5s'], device['cpu_1m'], device['cpu_5m'],
             device['mem_total'], device['mem_used'], device['mem_pct'],
             device['uptime'],
@@ -1030,8 +1138,10 @@ class UnifiedReportGenerator(QWidget):
         lines = [
             f'━━━  {filename}  [{device["device_type"]}]  ━━━',
             f'호스트명  : {device["hostname"]}',
+            f'모델      : {device.get("model", "N/A")}',
             f'OS 버전   : {device["os_version"]}',
             f'시리얼    : {device["serial"]}',
+            f'IP        : {device.get("ip", "N/A")}',
             f'CPU 5초   : {device["cpu_5s"]}',
             f'CPU 1분   : {device["cpu_1m"]}',
             f'CPU 5분   : {device["cpu_5m"]}',
@@ -1079,13 +1189,14 @@ class UnifiedReportGenerator(QWidget):
             wb = Workbook()
             ws = wb.active
             ws.title = 'Report'
-            ws.append(['유형', '파일명', '호스트명', 'OS 버전', '시리얼',
+            ws.append(['유형', '파일명', '호스트명', '모델', 'OS 버전', '시리얼', 'IP',
                         'CPU 5초', 'CPU 1분', 'CPU 5분',
                         '메모리 총량', '메모리 사용', '사용률', '가동시간'])
             for d in self.device_data:
                 ws.append([
-                    d['device_type'], d['filename'], d['hostname'], d['os_version'],
-                    d['serial'], d['cpu_5s'], d['cpu_1m'], d['cpu_5m'],
+                    d['device_type'], d['filename'], d['hostname'], d.get('model', 'N/A'),
+                    d['os_version'], d['serial'], d.get('ip', 'N/A'),
+                    d['cpu_5s'], d['cpu_1m'], d['cpu_5m'],
                     d['mem_total'], d['mem_used'], d['mem_pct'], d['uptime'],
                 ])
             wb.save(path)
@@ -1105,13 +1216,14 @@ class UnifiedReportGenerator(QWidget):
                 return
             with open(path, 'w', newline='', encoding='utf-8') as f:
                 w = csv.writer(f)
-                w.writerow(['유형', '파일명', '호스트명', 'OS 버전', '시리얼',
+                w.writerow(['유형', '파일명', '호스트명', '모델', 'OS 버전', '시리얼', 'IP',
                             'CPU 5초', 'CPU 1분', 'CPU 5분',
                             '메모리 총량', '메모리 사용', '사용률', '가동시간'])
                 for d in self.device_data:
                     w.writerow([
-                        d['device_type'], d['filename'], d['hostname'], d['os_version'],
-                        d['serial'], d['cpu_5s'], d['cpu_1m'], d['cpu_5m'],
+                        d['device_type'], d['filename'], d['hostname'], d.get('model', 'N/A'),
+                        d['os_version'], d['serial'], d.get('ip', 'N/A'),
+                        d['cpu_5s'], d['cpu_1m'], d['cpu_5m'],
                         d['mem_total'], d['mem_used'], d['mem_pct'], d['uptime'],
                     ])
             QMessageBox.information(self, '완료', f'저장 완료:\n{path}')

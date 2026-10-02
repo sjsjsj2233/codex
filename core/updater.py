@@ -13,7 +13,7 @@ import urllib.error
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
-CURRENT_VERSION = "8.0"
+CURRENT_VERSION = "9.9"
 VERSION_URL     = "https://auto-network.co.kr/version.json"
 
 

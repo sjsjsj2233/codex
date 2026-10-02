@@ -21,6 +21,7 @@ from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
 
 from core.workers import NetworkWorker
 from core.i18n import tr
+from core.paloalto_checklist import PALOALTO_INSPECTION_COMMANDS
 
 
 # ── SerialReaderThread ────────────────────────────────────────────────────────
@@ -848,8 +849,8 @@ class _Header(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         g = QLinearGradient(0, 0, self.width(), self.height())
-        g.setColorAt(0.0, QColor('#0f172a'))
-        g.setColorAt(1.0, QColor('#1d4ed8'))
+        g.setColorAt(0.0, QColor('#14243d'))
+        g.setColorAt(1.0, QColor('#1b456c'))
         p.fillRect(self.rect(), QBrush(g))
         p.setOpacity(0.07)
         p.setBrush(QBrush(QColor('#ffffff')))
@@ -858,10 +859,10 @@ class _Header(QWidget):
         p.setOpacity(1.0)
         p.setPen(QPen(QColor('#f8fafc')))
         p.setFont(QFont('맑은 고딕', 16, QFont.Bold))
-        p.drawText(28, 32, '네트워크 자동화')
+        p.drawText(28, 32, tr('장비 자동화'))
         p.setPen(QPen(QColor('#94a3b8')))
         p.setFont(QFont('맑은 고딕', 9))
-        p.drawText(30, 52, 'SSH / Telnet 다중 접속 · 명령어 일괄 실행 · 설정 수집')
+        p.drawText(30, 52, tr('대상 장비에 접속하고 명령 실행 결과를 수집합니다.'))
         p.end()
 
 
@@ -1147,12 +1148,173 @@ class _SecurityBadge(QFrame):
             dlg.exec_()
 
 
+# ── Excel 시트 구성 선택 다이얼로그 ───────────────────────────────────────────
+class _ExcelFormatDialog(QDialog):
+    """Excel 출력 시트 구성 방식을 큰 카드로 선택하는 팝업"""
+
+    _OPTIONS = [
+        (
+            'per_device',
+            '장비별 시트',
+            '📋',
+            '시트 1개 = 장비 1대',
+            '각 장비의 모든 명령어 결과가\n하나의 시트에 순서대로 출력됩니다.\n\n예) 시트: 001_CORE-SW-01\n         002_DIST-NX-02\n         003_ACCESS-SW-03',
+        ),
+        (
+            'single',
+            '통합 시트 (한 장)',
+            '📄',
+            '모든 장비를 한 시트에',
+            '전체 장비 출력을 하나의 시트에\n위→아래 순서로 쌓아서 출력합니다.\n장비 간 구분은 남색 헤더로 표시됩니다.\n\n예) 시트: 전체_통합 (1개만 생성)',
+        ),
+        (
+            'by_cmd',
+            '명령어별 시트  ★추천',
+            '🔍',
+            '시트 1개 = 명령어 1개',
+            '같은 명령어 결과를 전체 장비 행으로\n나란히 배치합니다.\n30대 장비의 show version을 한눈에\n비교할 때 가장 편리합니다.\n\n예) 시트: 00_요약\n         01_show version\n         02_show running-config',
+        ),
+    ]
+
+    def __init__(self, current_fmt: str, parent=None, dialog_title: str = 'Excel 시트 구성 선택',
+                 heading: str = 'Excel 출력 시트 구성 방식을 선택하세요', options=None):
+        super().__init__(parent)
+        self.selected_fmt = current_fmt
+        self._options = options or self._OPTIONS
+        width = max(480, len(self._options) * 208 + (len(self._options) - 1) * 12 + 40)
+        self.setWindowTitle(dialog_title)
+        self.setFixedSize(width, 380)
+        self.setStyleSheet('QDialog{background:#f8fafc;}')
+        self._heading = heading
+        self._build_ui()
+
+    def _build_ui(self):
+        root = QVBoxLayout(self)
+        root.setContentsMargins(20, 18, 20, 16)
+        root.setSpacing(14)
+
+        # 제목
+        title = QLabel(self._heading)
+        title.setFont(QFont('맑은 고딕', 12, QFont.Bold))
+        title.setStyleSheet('color:#0f172a;background:transparent')
+        root.addWidget(title)
+
+        # 카드 행
+        card_row = QHBoxLayout()
+        card_row.setSpacing(12)
+        self._card_btns = {}
+
+        for fmt_key, label, icon, subtitle, desc in self._options:
+            card = QPushButton()
+            card.setCheckable(True)
+            card.setChecked(fmt_key == self.selected_fmt)
+            card.setFixedSize(208, 260)
+            card.setCursor(Qt.PointingHandCursor)
+
+            card_layout = QVBoxLayout(card)
+            card_layout.setContentsMargins(14, 16, 14, 14)
+            card_layout.setSpacing(6)
+
+            icon_lbl = QLabel(icon)
+            icon_lbl.setFont(QFont('Segoe UI Emoji', 26))
+            icon_lbl.setAlignment(Qt.AlignCenter)
+            icon_lbl.setStyleSheet('background:transparent;border:none')
+            card_layout.addWidget(icon_lbl)
+
+            name_lbl = QLabel(label)
+            name_lbl.setFont(QFont('맑은 고딕', 10, QFont.Bold))
+            name_lbl.setAlignment(Qt.AlignCenter)
+            name_lbl.setStyleSheet('background:transparent;border:none;color:#0f172a')
+            name_lbl.setWordWrap(True)
+            card_layout.addWidget(name_lbl)
+
+            sub_lbl = QLabel(subtitle)
+            sub_lbl.setFont(QFont('맑은 고딕', 8, QFont.Bold))
+            sub_lbl.setAlignment(Qt.AlignCenter)
+            sub_lbl.setStyleSheet('background:transparent;border:none;color:#2563eb')
+            card_layout.addWidget(sub_lbl)
+
+            sep = QFrame()
+            sep.setFixedHeight(1)
+            sep.setStyleSheet('background:#e2e8f0;border:none')
+            card_layout.addWidget(sep)
+
+            desc_lbl = QLabel(desc)
+            desc_lbl.setFont(QFont('맑은 고딕', 8))
+            desc_lbl.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+            desc_lbl.setStyleSheet('background:transparent;border:none;color:#475569')
+            desc_lbl.setWordWrap(True)
+            card_layout.addWidget(desc_lbl, 1)
+
+            self._apply_card_style(card, fmt_key == self.selected_fmt)
+            card.clicked.connect(lambda checked, k=fmt_key: self._on_card_clicked(k))
+            self._card_btns[fmt_key] = card
+            card_row.addWidget(card)
+
+        root.addLayout(card_row)
+
+        # 확인/취소 버튼
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+
+        cancel_btn = QPushButton('취소')
+        cancel_btn.setFixedSize(80, 32)
+        cancel_btn.setFont(QFont('맑은 고딕', 10))
+        cancel_btn.setStyleSheet(
+            'QPushButton{background:#e2e8f0;color:#475569;border-radius:6px;border:none}'
+            'QPushButton:hover{background:#cbd5e1}'
+        )
+        cancel_btn.clicked.connect(self.reject)
+
+        ok_btn = QPushButton('선택 완료')
+        ok_btn.setFixedSize(100, 32)
+        ok_btn.setFont(QFont('맑은 고딕', 10, QFont.Bold))
+        ok_btn.setStyleSheet(
+            'QPushButton{background:#2563eb;color:white;border-radius:6px;border:none}'
+            'QPushButton:hover{background:#1d4ed8}'
+        )
+        ok_btn.clicked.connect(self.accept)
+
+        btn_row.addWidget(cancel_btn)
+        btn_row.addSpacing(8)
+        btn_row.addWidget(ok_btn)
+        root.addLayout(btn_row)
+
+    def _apply_card_style(self, card: QPushButton, selected: bool):
+        if selected:
+            card.setStyleSheet(
+                'QPushButton{'
+                '  background:#eff6ff;'
+                '  border:2px solid #2563eb;'
+                '  border-radius:12px;'
+                '  text-align:left;'
+                '}'
+            )
+        else:
+            card.setStyleSheet(
+                'QPushButton{'
+                '  background:#ffffff;'
+                '  border:1px solid #e2e8f0;'
+                '  border-radius:12px;'
+                '  text-align:left;'
+                '}'
+                'QPushButton:hover{'
+                '  background:#f8fafc;'
+                '  border:1px solid #cbd5e1;'
+                '}'
+            )
+
+    def _on_card_clicked(self, fmt_key: str):
+        self.selected_fmt = fmt_key
+        for k, btn in self._card_btns.items():
+            self._apply_card_style(btn, k == fmt_key)
+
+
 # ── 메인 탭 ───────────────────────────────────────────────────────────────────
 class NetworkTab(QWidget):
-    def __init__(self, parent, license_manager=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self._lm = license_manager
         self._log_viewers = []
         self.check_worker = None
         self.init_ui()
@@ -1254,7 +1416,7 @@ class NetworkTab(QWidget):
     # ── UI 구성 ───────────────────────────────────────────────────────────────
     def init_ui(self):
         self.setObjectName('networkTabWidget')
-        self.setStyleSheet('#networkTabWidget { background: #f1f5f9; }')
+        self.setStyleSheet('#networkTabWidget { background: #f4f7fb; }')
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
@@ -1374,7 +1536,8 @@ class NetworkTab(QWidget):
 
         self.command_template = QComboBox()
         self.command_template.addItems([
-            tr('선택하세요...'), tr('기본 정보 수집'), tr('인터페이스 정보'), tr('라우팅 정보'), tr('보안 설정 확인')
+            tr('선택하세요...'), tr('기본 정보 수집'), tr('인터페이스 정보'), tr('라우팅 정보'), tr('보안 설정 확인'),
+            tr('Palo Alto 기본 점검'),
         ])
         self.command_template.setFont(QFont('맑은 고딕', 9))
         self.command_template.setFixedWidth(150)
@@ -1626,6 +1789,22 @@ class NetworkTab(QWidget):
         ct_row.addStretch()
         v.addLayout(ct_row)
 
+        # 장비 벤더 행 (터미널 설정/hostname 추출 방식 분기용)
+        vendor_row = QHBoxLayout(); vendor_row.setSpacing(8)
+        vendor_row.addWidget(_flabel(tr('장비 벤더')))
+        self.vendor_combo = QComboBox()
+        self.vendor_combo.addItems(['Cisco (IOS/IOS-XE/NX-OS)', 'Palo Alto (PAN-OS)'])
+        self.vendor_combo.setFont(QFont('맑은 고딕', 9))
+        self.vendor_combo.setFixedHeight(28)
+        self.vendor_combo.setStyleSheet(
+            'QComboBox{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;'
+            '  padding:2px 8px;color:#1e293b}'
+            'QComboBox::drop-down{border:none;width:20px}'
+        )
+        vendor_row.addWidget(self.vendor_combo)
+        vendor_row.addStretch()
+        v.addLayout(vendor_row)
+
         # SSH 포트 행
         port_row = QHBoxLayout(); port_row.setSpacing(8)
         port_row.addWidget(_flabel(tr('SSH 포트')))
@@ -1799,6 +1978,66 @@ class NetworkTab(QWidget):
         warn.setWordWrap(True)
         v.addWidget(warn)
 
+        v.addWidget(_sep())
+
+        # ── 출력 형식 ──────────────────────────────────────────────────────────
+        v.addWidget(_sec(tr('출력 형식')))
+        self.output_format_group = QButtonGroup(self)
+        self.output_txt_radio    = QRadioButton(tr('TXT'))
+        self.output_excel_radio  = QRadioButton(tr('엑셀 (xlsx)'))
+        self.output_both_radio   = QRadioButton(tr('TXT + 엑셀'))
+        self.output_txt_radio.setChecked(True)
+
+        ofmt_row = QHBoxLayout(); ofmt_row.setSpacing(4)
+        for r in (self.output_txt_radio, self.output_excel_radio, self.output_both_radio):
+            r.setFont(QFont('맑은 고딕', 9))
+            r.setStyleSheet(_SS_RADIO)
+            self.output_format_group.addButton(r)
+            ofmt_row.addWidget(r)
+        ofmt_row.addStretch()
+        v.addLayout(ofmt_row)
+
+        # ── Excel 시트 구성 (Excel 선택 시만 표시) ─────────────────────────
+        self._cfg_excel_fmt = 'per_device'
+
+        self._btn_excel_fmt = QPushButton()
+        self._btn_excel_fmt.setFixedHeight(34)
+        self._btn_excel_fmt.setFont(QFont('맑은 고딕', 9, QFont.Bold))
+        self._btn_excel_fmt.setCursor(Qt.PointingHandCursor)
+        self._btn_excel_fmt.clicked.connect(self._open_excel_format_dialog)
+        self._update_excel_fmt_btn()          # 초기 텍스트/스타일 적용
+        v.addWidget(self._btn_excel_fmt)
+
+        # ── TXT 파일 구성 (TXT 선택 시만 표시) ──────────────────────────────
+        self._cfg_txt_fmt = 'per_device'
+
+        self._btn_txt_fmt = QPushButton()
+        self._btn_txt_fmt.setFixedHeight(34)
+        self._btn_txt_fmt.setFont(QFont('맑은 고딕', 9, QFont.Bold))
+        self._btn_txt_fmt.setCursor(Qt.PointingHandCursor)
+        self._btn_txt_fmt.clicked.connect(self._open_txt_format_dialog)
+        self._update_txt_fmt_btn()
+        v.addWidget(self._btn_txt_fmt)
+
+        def _on_fmt_toggled():
+            show_excel = self.output_excel_radio.isChecked() or self.output_both_radio.isChecked()
+            show_txt   = self.output_txt_radio.isChecked() or self.output_both_radio.isChecked()
+            self._btn_excel_fmt.setVisible(show_excel)
+            self._btn_txt_fmt.setVisible(show_txt)
+
+        for r in (self.output_txt_radio, self.output_excel_radio, self.output_both_radio):
+            r.toggled.connect(_on_fmt_toggled)
+        _on_fmt_toggled()   # 초기 표시 상태 (기본값 TXT 선택 → TXT 버튼만 보임)
+
+        btn_sample_out = QPushButton(tr('🔍 샘플 출력 미리보기'))
+        btn_sample_out.setFixedHeight(26)
+        btn_sample_out.setStyleSheet(
+            'QPushButton{background:#7c3aed;color:white;border-radius:4px;font-size:10px;}'
+            'QPushButton:hover{background:#6d28d9;}'
+        )
+        btn_sample_out.clicked.connect(self._preview_sample_output)
+        v.addWidget(btn_sample_out)
+
         v.addStretch()
 
         # 보안 안내 배지
@@ -1824,6 +2063,8 @@ class NetworkTab(QWidget):
                 'show running-config | include access-list',
                 'show crypto isakmp policy', 'show crypto ipsec sa',
                 'show ip nat translations'],
+            5: [line.strip() for line in PALOALTO_INSPECTION_COMMANDS.splitlines()
+                if line.strip() and not line.strip().startswith('!')],
         }
         if index in templates:
             current = self.command_input.toPlainText().strip()
@@ -1940,17 +2181,6 @@ class NetworkTab(QWidget):
             self.com_port_combo.addItem(tr('(포트 없음)'))
 
     def _on_serial_toggled(self, checked: bool):
-        if checked:
-            # 라이센스 확인
-            if self._lm is None or not self._lm.is_licensed():
-                from ui.premium_popup import PremiumPopup
-                PremiumPopup(self, feature='시리얼 (COM) 콘솔 접속').exec_()
-                # 라디오 버튼을 SSH로 되돌림 (시그널 블로킹)
-                self.serial_radio.blockSignals(True)
-                self.ssh_radio.setChecked(True)
-                self.serial_radio.blockSignals(False)
-                return
-
         self._serial_panel.setVisible(checked)
         # 시리얼 선택 시 SSH 포트 비활성화, 순차 실행 강제
         self.ssh_port_input.setEnabled(not checked and self.ssh_radio.isChecked())
@@ -1969,6 +2199,11 @@ class NetworkTab(QWidget):
             'baud_rate': int(self.baud_rate_combo.currentText()),
         }
 
+    # ── 장비 벤더 ─────────────────────────────────────────────────────────────
+    def get_vendor(self) -> str:
+        """UI에서 선택된 장비 벤더 반환 ('cisco' / 'paloalto')"""
+        return 'paloalto' if self.vendor_combo.currentIndex() == 1 else 'cisco'
+
     # ── 파일명 형식 ───────────────────────────────────────────────────────────
     def get_filename_format(self) -> str:
         """UI에서 선택된 파일명 형식 반환"""
@@ -1979,6 +2214,322 @@ class NetworkTab(QWidget):
         elif self.hostname_ip_radio.isChecked():
             return "hostname_ip"
         return "hostname_only"
+
+    def get_output_format(self) -> str:
+        """UI에서 선택된 출력 형식 반환 (txt / excel / both)"""
+        if self.output_excel_radio.isChecked():
+            return "excel"
+        elif self.output_both_radio.isChecked():
+            return "both"
+        return "txt"
+
+    def get_config_excel_format(self) -> str:
+        """Excel 시트 구성 방식 반환 (per_device / single / by_cmd)"""
+        return self._cfg_excel_fmt
+
+    _EXCEL_FMT_LABELS = {
+        'per_device': ('📋', '장비별 시트',       '#1d4ed8', '#dbeafe', '#93c5fd'),
+        'single':     ('📄', '통합 시트 (한 장)', '#065f46', '#d1fae5', '#6ee7b7'),
+        'by_cmd':     ('🔍', '명령어별  ★추천',   '#7c2d12', '#fff7ed', '#fdba74'),
+    }
+
+    def _update_excel_fmt_btn(self):
+        icon, label, fg, bg, border = self._EXCEL_FMT_LABELS.get(
+            self._cfg_excel_fmt, self._EXCEL_FMT_LABELS['per_device']
+        )
+        self._btn_excel_fmt.setText(f'{icon}  {label}  ▾')
+        self._btn_excel_fmt.setStyleSheet(
+            f'QPushButton{{background:{bg};color:{fg};border:1.5px solid {border};'
+            f'border-radius:6px;text-align:center;padding:0 8px}}'
+            f'QPushButton:hover{{background:{border};color:white}}'
+        )
+
+    def _open_excel_format_dialog(self):
+        """Excel 시트 구성 선택 팝업 열기"""
+        dlg = _ExcelFormatDialog(self._cfg_excel_fmt, self)
+        if dlg.exec_() == QDialog.Accepted:
+            self._cfg_excel_fmt = dlg.selected_fmt
+            self._update_excel_fmt_btn()
+
+    def get_config_txt_format(self) -> str:
+        """TXT 파일 구성 방식 반환 (per_device / single)"""
+        return self._cfg_txt_fmt
+
+    _TXT_FMT_LABELS = {
+        'per_device': ('📄', '개별 파일 (기존)',       '#1d4ed8', '#dbeafe', '#93c5fd'),
+        'single':     ('📚', '통합 파일 (전체 장비)',  '#065f46', '#d1fae5', '#6ee7b7'),
+    }
+
+    _TXT_FMT_OPTIONS = [
+        (
+            'per_device',
+            '개별 파일 (기존)',
+            '📄',
+            '장비 1대 = TXT 1개',
+            '기존 방식 그대로 유지됩니다.\n장비마다 별도의 TXT 파일이 생성됩니다.\n\n예) 001_CORE-SW-01.txt\n     002_DIST-NX-02.txt',
+        ),
+        (
+            'single',
+            '통합 파일 (전체 장비)',
+            '📚',
+            '전체 장비 = TXT 1개',
+            '모든 장비의 결과가 하나의 TXT 파일에\n장비 구분 헤더와 함께 순서대로 쌓입니다.\n\n예) 네트워크_수집결과_통합_20260707_101500.txt',
+        ),
+    ]
+
+    def _update_txt_fmt_btn(self):
+        icon, label, fg, bg, border = self._TXT_FMT_LABELS.get(
+            self._cfg_txt_fmt, self._TXT_FMT_LABELS['per_device']
+        )
+        self._btn_txt_fmt.setText(f'{icon}  {label}  ▾')
+        self._btn_txt_fmt.setStyleSheet(
+            f'QPushButton{{background:{bg};color:{fg};border:1.5px solid {border};'
+            f'border-radius:6px;text-align:center;padding:0 8px}}'
+            f'QPushButton:hover{{background:{border};color:white}}'
+        )
+
+    def _open_txt_format_dialog(self):
+        """TXT 파일 구성 선택 팝업 열기"""
+        dlg = _ExcelFormatDialog(
+            self._cfg_txt_fmt, self,
+            dialog_title='TXT 파일 구성 선택',
+            heading='TXT 출력 파일 구성 방식을 선택하세요',
+            options=self._TXT_FMT_OPTIONS,
+        )
+        if dlg.exec_() == QDialog.Accepted:
+            self._cfg_txt_fmt = dlg.selected_fmt
+            self._update_txt_fmt_btn()
+
+    # ── 샘플 출력 미리보기 ────────────────────────────────────────────────────
+    def _preview_sample_output(self):
+        """현재 선택된 출력 형식에 맞는 샘플 파일을 저장 경로에 생성 후 폴더 오픈"""
+        import subprocess, datetime as dt
+
+        save_path = self.save_path_input.text().strip()
+        if not save_path or not os.path.isdir(save_path):
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(self, tr('경로 오류'), tr('저장 경로를 먼저 지정하세요.'))
+            return
+
+        # 실제 수집 결과와 섞이지 않도록 전용 하위 폴더에 생성
+        preview_dir = os.path.join(save_path, '샘플_미리보기')
+        os.makedirs(preview_dir, exist_ok=True)
+
+        fmt = self.get_output_format()
+        now_str = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        created = []
+
+        # ── 샘플 장비 데이터 정의 ──────────────────────────────────────────
+        sample_devices = [
+            {
+                'index': 1,
+                'ip': '192.168.1.1',
+                'hostname': 'CORE-SW-01',
+                'type': 'SSH',
+                'commands': {
+                    'show version': (
+                        "Cisco IOS XE Software, Version 17.09.04a\n"
+                        "cisco Catalyst 9300-48P\n"
+                        "CORE-SW-01 uptime is 247 days, 6 hours, 12 minutes\n"
+                        "Processor board ID FCW2148L02L"
+                    ),
+                    'show ip interface brief': (
+                        "Interface              IP-Address      OK? Method Status                Protocol\n"
+                        "GigabitEthernet0/0/0   192.168.1.1     YES NVRAM  up                    up\n"
+                        "GigabitEthernet0/0/1   10.0.0.1        YES NVRAM  up                    up\n"
+                        "GigabitEthernet0/0/2   unassigned      YES NVRAM  administratively down down\n"
+                        "Vlan10                 192.168.10.1    YES NVRAM  up                    up\n"
+                        "Vlan20                 192.168.20.1    YES NVRAM  up                    up"
+                    ),
+                    'show processes cpu': (
+                        "CPU utilization for five seconds: 8%/3%; one minute: 6%; five minutes: 5%\n"
+                        " PID Runtime(ms)  Invoked    uSecs  5Sec  1Min  5Min TTY Process\n"
+                        "   1       5520     12345      447  0.00% 0.00% 0.00%   0 Chunk Manager\n"
+                        "   3     482301    980234      492  0.32% 0.28% 0.25%   0 ARP Input"
+                    ),
+                    'show standby brief': (
+                        "                     P indicates configured to preempt.\n"
+                        "Interface   Grp  Pri P State   Active          Standby         Virtual IP\n"
+                        "Vlan10      1    110 P Active  local           192.168.10.2    192.168.10.1\n"
+                        "Vlan20      1    110 P Active  local           192.168.20.2    192.168.20.1"
+                    ),
+                },
+            },
+            {
+                'index': 2,
+                'ip': '192.168.1.2',
+                'hostname': 'DIST-NX-02',
+                'type': 'SSH',
+                'commands': {
+                    'show version': (
+                        "Cisco Nexus Operating System (NX-OS) Software\n"
+                        "  NXOS: version 10.2(5)\n"
+                        "  cisco Nexus9000 C9336C-FX2 Chassis\n"
+                        "  Device name: DIST-NX-02\n"
+                        "Kernel uptime is 89 day(s), 14 hour(s), 52 minute(s)"
+                    ),
+                    'show system resources': (
+                        "Load average:    1 minute: 4.82 5 minutes: 4.65 15 minutes: 4.51\n"
+                        "Processes   : 1024 total, 3 running\n"
+                        "CPU states  : 58.33% user, 14.22% kernel, 27.44% idle\n"
+                        "Memory usage: 24541184K total, 21002400K used, 3538784K free"
+                    ),
+                    'show hsrp brief': (
+                        "*Interface    Grp  Prio P State    Active addr      Standby addr     Group addr\n"
+                        "Vlan10        1    100  P Active   local            10.10.10.2       10.10.10.1\n"
+                        "Vlan20        1    100  P Active   local            10.20.20.2       10.20.20.1"
+                    ),
+                    'show interface status': (
+                        "Port         Name               Status       Vlan       Duplex  Speed Type\n"
+                        "Eth1/1       uplink-to-core     connected    trunk      full    10G   10Gbase-SR\n"
+                        "Eth1/2       uplink-to-core2    connected    trunk      full    10G   10Gbase-SR\n"
+                        "Eth1/47      --                 notconnect   1          auto    auto  10Gbase-SR\n"
+                        "Eth1/48      --                 notconnect   1          auto    auto  10Gbase-SR"
+                    ),
+                },
+            },
+            {
+                'index': 3,
+                'ip': '192.168.1.3',
+                'hostname': 'ACCESS-SW-03',
+                'type': 'Telnet',
+                'commands': {
+                    'show version': (
+                        "Cisco IOS Software, Version 15.2(7)E6\n"
+                        "cisco WS-C3850-48P (MIPS) processor\n"
+                        "ACCESS-SW-03 uptime is 3 days, 1 hour, 44 minutes\n"
+                        "Processor board ID FOC2104X0D3"
+                    ),
+                    'show ip interface brief': (
+                        "Interface              IP-Address      OK? Method Status                Protocol\n"
+                        "GigabitEthernet0/0     192.168.1.3     YES NVRAM  up                    up\n"
+                        "Vlan1                  10.1.1.3        YES NVRAM  up                    up"
+                    ),
+                    'show processes cpu': (
+                        "CPU utilization for five seconds: 91%/72%; one minute: 88%; five minutes: 85%\n"
+                        " PID Runtime(ms)  Invoked    uSecs  5Sec   1Min   5Min TTY Process\n"
+                        "   1   95203500  1234567   77120  72.41% 68.33% 65.12%   0 hpm_counter_pro"
+                    ),
+                    'show environment all': (
+                        "SYSTEM TEMPERATURE is OK\n"
+                        "Temperature Value: 52 Celsius, Temperature State: YELLOW\n"
+                        "Power Supply 0: Present, OK\n"
+                        "Power Supply 1: Not Present\n"
+                        "Fan 0: OK\n"
+                        "Fan 1: FAIL"
+                    ),
+                },
+            },
+        ]
+
+        # ── TXT 파일 생성 ──────────────────────────────────────────────────
+        if fmt in ('txt', 'both'):
+            for dev in sample_devices:
+                filename = f"{dev['index']:03d}_{dev['hostname']}.txt"
+                fpath    = os.path.join(preview_dir, filename)
+                with open(fpath, 'w', encoding='utf-8') as f:
+                    f.write(f"--- 장비 순번: {dev['index']} ---\n")
+                    f.write(f"--- {dev['type']} 연결 결과: {dev['ip']} ---\n")
+                    f.write(f"장비 Hostname: {dev['hostname']}\n")
+                    f.write(f"실행 시간: {now_str}\n")
+                    f.write(f"{'=' * 50}\n\n")
+                    for cmd, output in dev['commands'].items():
+                        f.write(f"Command: {cmd}   [Host: {dev['hostname']}]\n")
+                        f.write(output + "\n")
+                        f.write(f"{'-' * 50}\n\n")
+                created.append(filename)
+
+        # ── Excel 파일 생성 ─────────────────────────────────────────────────
+        if fmt in ('excel', 'both'):
+            try:
+                import openpyxl
+                from openpyxl.styles import Font, PatternFill, Alignment
+            except ImportError:
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.warning(self, 'openpyxl 없음',
+                                    'openpyxl 라이브러리가 없어 Excel 샘플을 생성할 수 없습니다.')
+                return
+
+            ts = dt.datetime.now().strftime('%Y%m%d_%H%M%S')
+            excel_path = os.path.join(preview_dir, f'네트워크_수집결과_샘플_{ts}.xlsx')
+            wb = openpyxl.Workbook()
+            wb.remove(wb.active)
+
+            title_font = Font(bold=True, size=10, color='FFFFFF')
+            title_fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
+            cmd_font   = Font(bold=True, size=9, color='2563EB')
+            cmd_fill   = PatternFill(start_color='EFF6FF', end_color='EFF6FF', fill_type='solid')
+            sep_fill   = PatternFill(start_color='E2E8F0', end_color='E2E8F0', fill_type='solid')
+            body_font  = Font(name='Consolas', size=9)
+
+            for dev in sample_devices:
+                ws = wb.create_sheet(title=f"장비 {dev['index']}")
+                ws.column_dimensions['A'].width = 110
+
+                for text in [
+                    f"장비 순번: {dev['index']}",
+                    f"IP 주소: {dev['ip']}",
+                    f"Hostname: {dev['hostname']}",
+                    f"실행 시간: {now_str}",
+                ]:
+                    ws.append([text])
+                    c = ws.cell(row=ws.max_row, column=1)
+                    c.font = title_font
+                    c.fill = title_fill
+                    c.alignment = Alignment(vertical='center')
+
+                ws.append([])
+
+                for cmd, output in dev['commands'].items():
+                    ws.append([f"▶  Command: {cmd}   [Host: {dev['hostname']}]"])
+                    c = ws.cell(row=ws.max_row, column=1)
+                    c.font = cmd_font
+                    c.fill = cmd_fill
+
+                    for line in output.splitlines():
+                        ws.append([line])
+                        out_c = ws.cell(row=ws.max_row, column=1)
+                        out_c.font = body_font
+                        out_c.alignment = Alignment(horizontal='left')
+
+                    ws.append(['─' * 80])
+                    ws.cell(row=ws.max_row, column=1).fill = sep_fill
+                    ws.append([])
+
+            wb.save(excel_path)
+            created.append(os.path.basename(excel_path))
+
+        # ── 결과 안내 ─────────────────────────────────────────────────────
+        from PyQt5.QtWidgets import QMessageBox
+        txt_note  = '\n'.join(f'  • {f}' for f in created if f.endswith('.txt'))
+        xlsx_note = '\n'.join(f'  • {f}' for f in created if f.endswith('.xlsx'))
+
+        msg = f"샘플 파일이 생성되었습니다.\n저장 위치: {preview_dir}\n(실제 수집 결과와 섞이지 않도록 하위 폴더에 생성됩니다)\n\n"
+        if txt_note:
+            msg += f"[TXT 파일 — 장비별 개별 파일]\n{txt_note}\n\n"
+            msg += ("TXT 구조:\n"
+                    "  001_CORE-SW-01.txt → 001번 장비\n"
+                    "  002_DIST-NX-02.txt → 002번 장비\n"
+                    "  003_ACCESS-SW-03.txt → 003번 장비\n"
+                    "  ↳ 파일 첫 줄: '--- 장비 순번: N ---'\n"
+                    "  ↳ 각 명령어 블록: 'Command: show xxx → 출력 → -----'\n\n")
+        if xlsx_note:
+            msg += f"[Excel 파일 — 시트별 장비]\n{xlsx_note}\n\n"
+            msg += ("Excel 구조:\n"
+                    "  시트 '장비 1' → CORE-SW-01 (192.168.1.1)\n"
+                    "  시트 '장비 2' → DIST-NX-02 (192.168.1.2)\n"
+                    "  시트 '장비 3' → ACCESS-SW-03 (192.168.1.3)\n"
+                    "  ↳ 상단 헤더: 순번/IP/Hostname/시간 (남색 배경)\n"
+                    "  ↳ 명령어 행: 파란색 강조\n"
+                    "  ↳ 출력 행: Consolas 폰트")
+
+        QMessageBox.information(self, tr('샘플 출력 미리보기'), msg)
+
+        # 폴더 열기
+        try:
+            subprocess.Popen(f'explorer "{preview_dir}"')
+        except Exception:
+            pass
 
     # ── 초기화 ────────────────────────────────────────────────────────────────
     def clear_inputs(self):

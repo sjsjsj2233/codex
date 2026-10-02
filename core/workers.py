@@ -26,6 +26,11 @@ import locale
 # PyQt5 라이브러리
 from PyQt5.QtCore import QThread, pyqtSignal, QMutex
 
+# PAN-OS 등 일부 장비는 프롬프트/명령 에코를 다시 그릴 때 ANSI 이스케이프
+# (커서 이동/화면 지우기 등)를 함께 보낸다. ESC(0x1B) 바이트만 지우면 뒤따르는
+# '[K', '[7m' 같은 문자 잔재가 그대로 텍스트로 남으므로, 시퀀스 전체를 통째로 제거한다.
+_ANSI_ESCAPE_RE = re.compile(r'\x1b(?:\[[0-9;?]*[a-zA-Z]|[=>])')
+
 
 # ===== 설정 상수 =====
 class NetworkConfig:
@@ -37,9 +42,13 @@ class NetworkConfig:
     CONNECT_TIMEOUT = 15
     COMMAND_TIMEOUT = 30
 
-    # 터미널 설정 명령어
+    # 터미널 설정 명령어 (Cisco)
     TERMINAL_LENGTH_CMD = "terminal length 0"
     TERMINAL_WIDTH_CMD = "terminal width 132"
+
+    # 터미널 설정 명령어 (Palo Alto / PAN-OS)
+    PALOALTO_PAGER_OFF_CMD = "set cli pager off"
+    PALOALTO_WIDTH_CMD = "set cli terminal width 500"
 
     # 연결 재시도 설정
     MAX_RETRIES = 2
@@ -89,12 +98,16 @@ class NetworkWorker(QThread):
     task_completed = pyqtSignal(str)
     error_occurred = pyqtSignal(str, str)  # message, ip
     debug_log = pyqtSignal(str)
-    
+
     # 실시간 상태 업데이트를 위한 새로운 시그널
     status_update = pyqtSignal(str, str)  # IP, 상태 메시지
 
+    # Excel 저장용 결과 데이터 시그널 (device_index, ip, hostname, output_data)
+    result_data_ready = pyqtSignal(int, str, str, object)
+
     def __init__(self, ip, username, password, enable_password, use_ssh, save_path, commands, ssh_port=22,
-                 use_serial=False, com_port='COM1', baud_rate=9600):
+                 use_serial=False, com_port='COM1', baud_rate=9600, device_index=None, output_format="txt",
+                 vendor='cisco', shared_txt_path=None, shared_txt_lock=None):
         super().__init__()
         self.ip = ip
         self.username = username
@@ -110,10 +123,22 @@ class NetworkWorker(QThread):
         self._stop_flag = False
         self._mutex = QMutex()
         self.filename_format = "hostname_only"  # UI에서 덮어씀 (main_window 참조)
+        self.device_index = device_index   # 순번 (1, 2, 3 ...)
+        self.output_format = output_format  # "txt" / "excel" / "both"
+        self.vendor = (vendor or 'cisco').lower()  # 'cisco' / 'paloalto'
+        # TXT "통합 파일" 모드: 지정되면 장비별 개별 파일 대신 이 경로에 append
+        self.shared_txt_path = shared_txt_path
+        self.shared_txt_lock = shared_txt_lock
 
         # 연결 재시도 설정
         self.max_retries = NetworkConfig.MAX_RETRIES
         self.retry_delay = NetworkConfig.RETRY_DELAY
+
+    def _terminal_setup_commands(self):
+        """벤더별 터미널 설정(페이징 비활성화) 명령어"""
+        if self.vendor == 'paloalto':
+            return (NetworkConfig.PALOALTO_PAGER_OFF_CMD, NetworkConfig.PALOALTO_WIDTH_CMD)
+        return (NetworkConfig.TERMINAL_LENGTH_CMD, NetworkConfig.TERMINAL_WIDTH_CMD)
 
     def _emit_status(self, message):
         """상태 업데이트와 로그를 동시에 처리"""
@@ -644,8 +669,12 @@ class NetworkWorker(QThread):
                 raise Exception(f"SSH 연결 실패: {e}")
             
             # 셸 세션 생성
+            # PTY 창 높이를 넉넉하게 잡아 장비 자체 pager(더보기)가
+            # 터미널 크기 때문에 발동하는 것을 원천 차단한다 (Cisco는 terminal
+            # length 0로, PAN-OS는 set cli pager off로 각각 끄지만, 그 설정이
+            # 100% 반영되기 전에 명령이 실행되는 경우까지 대비한 이중 안전장치).
             self._emit_status("셸 세션 생성 중...")
-            shell = ssh.invoke_shell(term='vt100', width=80, height=24)
+            shell = ssh.invoke_shell(term='vt100', width=512, height=2000)
             
             # 인증이 필요한 경우 향상된 로그인 핸들러 사용
             if not auth_success:
@@ -658,19 +687,19 @@ class NetworkWorker(QThread):
                 initial_output = self._read_until_prompt_ssh(shell, timeout=10)
                 self._log_debug(f"[SSH] 초기 프롬프트: {repr(initial_output)}")
             
-            # Enable 모드 진입
-            if self.enable_password is not None:
+            # Enable 모드 진입 (PAN-OS는 enable 개념이 없으므로 스킵)
+            if self.vendor != 'paloalto' and self.enable_password is not None:
                 self._emit_status("Enable 모드 진입 중...")
                 # 현재 상태 확인
                 shell.send("\n")
                 time.sleep(0.5)
                 current_output = self._read_until_prompt_ssh(shell, timeout=5)
-                
+
                 if not self._is_enable_mode(current_output):
                     shell.send("enable\n")
                     time.sleep(1)
                     enable_output = self._read_until_prompt_ssh(shell, timeout=10)
-                    
+
                     if "Password" in enable_output or "password" in enable_output:
                         if self.enable_password:
                             shell.send(f"{self.enable_password}\n")
@@ -678,7 +707,7 @@ class NetworkWorker(QThread):
                             shell.send("\n")
                         time.sleep(1)
                         result = self._read_until_prompt_ssh(shell, timeout=10)
-                        
+
                         if not self._is_enable_mode(result):
                             raise Exception("Enable 모드 진입 실패")
                         self._emit_status("Enable 모드 진입 성공")
@@ -686,32 +715,42 @@ class NetworkWorker(QThread):
                         self._emit_status("Enable 모드 이미 활성화됨")
                 else:
                     self._emit_status("이미 Enable 모드")
-            
-            # 터미널 설정
+
+            # 터미널 설정 (벤더별 페이징 비활성화 명령)
             self._emit_status("터미널 설정 중...")
-            shell.send(f"{NetworkConfig.TERMINAL_LENGTH_CMD}\n")
-            time.sleep(NetworkConfig.COMMAND_DELAY)
-            shell.send(f"{NetworkConfig.TERMINAL_WIDTH_CMD}\n")
-            time.sleep(NetworkConfig.COMMAND_DELAY)
+            for cmd in self._terminal_setup_commands():
+                shell.send(f"{cmd}\n")
+                time.sleep(NetworkConfig.COMMAND_DELAY)
             self._read_until_prompt_ssh(shell, timeout=5)
-            
+
             # Hostname 추출
             self._emit_status("Hostname 추출 중...")
             hostname = self._extract_hostname_ssh(shell)
             self._log_debug(f"[SSH] 추출된 hostname: {hostname}")
             
-            # 출력 파일 생성
-            output_file_path = self.generate_output_filename(hostname, self.filename_format)
-            self._create_output_file_header(output_file_path, "SSH", hostname)
+            # 출력 파일 생성 (TXT 형식인 경우만, 통합 파일 모드면 개별 파일은 만들지 않음)
+            if self.output_format in ("txt", "both") and not self.shared_txt_path:
+                output_file_path = self.generate_output_filename(hostname, self.filename_format)
+                self._create_output_file_header(output_file_path, "SSH", hostname)
+            else:
+                output_file_path = None
 
             # 명령어 실행 (공통 메서드 사용)
             output_data = self._execute_commands_common(
                 shell,
                 "SSH",
                 output_file_path,
-                lambda conn: self._read_until_prompt_ssh(conn, timeout=30)
+                lambda conn: self._read_until_prompt_ssh(conn, timeout=30),
+                hostname_label=hostname,
             )
-            
+
+            if self.output_format in ("txt", "both") and self.shared_txt_path:
+                self._append_shared_txt_block("SSH", self.ip, hostname, output_data)
+
+            # Excel 결과 데이터 시그널 발송
+            if self.device_index is not None and self.output_format in ("excel", "both"):
+                self.result_data_ready.emit(self.device_index, self.ip, hostname or '', output_data)
+
         finally:
             if shell:
                 try:
@@ -743,14 +782,14 @@ class NetworkWorker(QThread):
                 time.sleep(1)
                 initial_output = self._read_until_prompt_telnet(tn, timeout=5)
                 
-                # Enable 모드 진입
-                if self.enable_password is not None:
+                # Enable 모드 진입 (PAN-OS는 enable 개념이 없으므로 스킵)
+                if self.vendor != 'paloalto' and self.enable_password is not None:
                     self._emit_status("Enable 모드 진입 중...")
                     if not self._is_enable_mode(initial_output):
                         tn.write(b"enable\n")
                         time.sleep(1)
                         enable_output = tn.read_until(b":", timeout=5)
-                        
+
                         if b"Password" in enable_output or b"password" in enable_output:
                             if self.enable_password:
                                 tn.write(self.enable_password.encode('utf-8', errors='replace') + b"\n")
@@ -758,7 +797,7 @@ class NetworkWorker(QThread):
                                 tn.write(b"\n")
                             time.sleep(1)
                             result = self._read_until_prompt_telnet(tn, timeout=10)
-                            
+
                             if not self._is_enable_mode(result):
                                 raise Exception("Enable 모드 진입 실패")
                             self._emit_status("Enable 모드 진입 성공")
@@ -766,13 +805,12 @@ class NetworkWorker(QThread):
                             self._emit_status("Enable 모드 이미 활성화됨")
                     else:
                         self._emit_status("이미 Enable 모드")
-                
-                # 터미널 설정
+
+                # 터미널 설정 (벤더별 페이징 비활성화 명령)
                 self._emit_status("터미널 설정 중...")
-                tn.write(f"{NetworkConfig.TERMINAL_LENGTH_CMD}\n".encode('utf-8', errors='replace'))
-                time.sleep(NetworkConfig.COMMAND_DELAY)
-                tn.write(f"{NetworkConfig.TERMINAL_WIDTH_CMD}\n".encode('utf-8', errors='replace'))
-                time.sleep(NetworkConfig.COMMAND_DELAY)
+                for cmd in self._terminal_setup_commands():
+                    tn.write(f"{cmd}\n".encode('utf-8', errors='replace'))
+                    time.sleep(NetworkConfig.COMMAND_DELAY)
                 self._read_until_prompt_telnet(tn, timeout=5)
                 
                 # Hostname 추출
@@ -780,18 +818,29 @@ class NetworkWorker(QThread):
                 hostname = self._extract_hostname_telnet(tn)
                 self._log_debug(f"[TELNET] 추출된 hostname: {hostname}")
                 
-                # 출력 파일 생성
-                output_file_path = self.generate_output_filename(hostname, self.filename_format)
-                self._create_output_file_header(output_file_path, "Telnet", hostname)
+                # 출력 파일 생성 (TXT 형식인 경우만, 통합 파일 모드면 개별 파일은 만들지 않음)
+                if self.output_format in ("txt", "both") and not self.shared_txt_path:
+                    output_file_path = self.generate_output_filename(hostname, self.filename_format)
+                    self._create_output_file_header(output_file_path, "Telnet", hostname)
+                else:
+                    output_file_path = None
 
                 # 명령어 실행 (공통 메서드 사용)
                 output_data = self._execute_commands_common(
                     tn,
                     "Telnet",
                     output_file_path,
-                    lambda conn: self._read_until_prompt_telnet(conn, timeout=30)
+                    lambda conn: self._read_until_prompt_telnet(conn, timeout=30),
+                    hostname_label=hostname,
                 )
-                
+
+                if self.output_format in ("txt", "both") and self.shared_txt_path:
+                    self._append_shared_txt_block("Telnet", self.ip, hostname, output_data)
+
+                # Excel 결과 데이터 시그널 발송
+                if self.device_index is not None and self.output_format in ("excel", "both"):
+                    self.result_data_ready.emit(self.device_index, self.ip, hostname or '', output_data)
+
         except socket.timeout:
             raise Exception("Telnet 연결 시간 초과")
         except Exception as e:
@@ -844,8 +893,8 @@ class NetworkWorker(QThread):
                 time.sleep(1)
                 self._read_until_prompt_serial(ser, timeout=5)
 
-            # Enable 모드
-            if self.enable_password is not None:
+            # Enable 모드 (PAN-OS는 enable 개념이 없으므로 스킵)
+            if self.vendor != 'paloalto' and self.enable_password is not None:
                 self._emit_status("Enable 모드 진입 중...")
                 ser.write(b"enable\r\n")
                 time.sleep(1)
@@ -856,9 +905,9 @@ class NetworkWorker(QThread):
                     time.sleep(1)
                     self._read_until_prompt_serial(ser, timeout=5)
 
-            # 터미널 설정
+            # 터미널 설정 (벤더별 페이징 비활성화 명령)
             self._emit_status("터미널 설정 중...")
-            for cmd in (NetworkConfig.TERMINAL_LENGTH_CMD, NetworkConfig.TERMINAL_WIDTH_CMD):
+            for cmd in self._terminal_setup_commands():
                 ser.write(cmd.encode('utf-8', errors='replace') + b"\r\n")
                 time.sleep(NetworkConfig.COMMAND_DELAY)
             self._read_until_prompt_serial(ser, timeout=5)
@@ -867,12 +916,15 @@ class NetworkWorker(QThread):
             hostname = self._extract_hostname_serial(ser)
             self._log_debug(f"[SERIAL] hostname: {hostname}")
 
-            # 출력 파일 (시리얼은 IP 대신 COM 포트명 사용)
+            # 출력 파일 (TXT 형식인 경우만, 시리얼은 IP 대신 COM 포트명 사용)
             _saved_ip = self.ip
             self.ip = self.com_port
-            output_file_path = self.generate_output_filename(hostname, self.filename_format)
+            if self.output_format in ("txt", "both") and not self.shared_txt_path:
+                output_file_path = self.generate_output_filename(hostname, self.filename_format)
+                self._create_output_file_header(output_file_path, f"Serial({self.com_port})", hostname)
+            else:
+                output_file_path = None
             self.ip = _saved_ip
-            self._create_output_file_header(output_file_path, f"Serial({self.com_port})", hostname)
 
             # 명령어 실행
             output_data = self._execute_commands_common(
@@ -880,7 +932,15 @@ class NetworkWorker(QThread):
                 "Serial",
                 output_file_path,
                 lambda conn: self._read_until_prompt_serial(conn, timeout=30),
+                hostname_label=hostname,
             )
+
+            if self.output_format in ("txt", "both") and self.shared_txt_path:
+                self._append_shared_txt_block(f"Serial({self.com_port})", self.com_port, hostname, output_data)
+
+            # Excel 결과 데이터 시그널 발송
+            if self.device_index is not None and self.output_format in ("excel", "both"):
+                self.result_data_ready.emit(self.device_index, self.com_port, hostname or '', output_data)
 
         except serial.SerialException as e:
             raise Exception(f"시리얼 포트 오류 ({self.com_port}): {e}")
@@ -909,6 +969,27 @@ class NetworkWorker(QThread):
 
     def _extract_hostname_serial(self, ser):
         """시리얼에서 hostname 추출"""
+        if self.vendor == 'paloalto':
+            try:
+                ser.write(b"show system info\r\n")
+                time.sleep(1)
+                info_output = self._read_until_prompt_serial(ser, timeout=10)
+                hostname = self._extract_hostname_paloalto(info_output)
+                if hostname:
+                    return hostname
+            except Exception:
+                pass
+            try:
+                ser.write(b"\r\n")
+                time.sleep(0.5)
+                prompt_out = self._read_until_prompt_serial(ser, timeout=5)
+                m = re.search(r'(\S+)[#>]', prompt_out.rstrip())
+                if m and self._is_valid_hostname(m.group(1)):
+                    return m.group(1)
+            except Exception:
+                pass
+            return self.com_port
+
         try:
             ser.write(b"show running-config | include hostname\r\n")
             time.sleep(2)
@@ -933,9 +1014,42 @@ class NetworkWorker(QThread):
             pass
         return self.com_port
 
+    def _extract_hostname_paloalto(self, output):
+        """PAN-OS show system info 출력에서 hostname 추출"""
+        output = _ANSI_ESCAPE_RE.sub('', output)
+        m = re.search(r'^hostname:\s*(\S+)', output, re.IGNORECASE | re.MULTILINE)
+        if m and self._is_valid_hostname(m.group(1)):
+            return m.group(1)
+        return None
+
     def _extract_hostname_ssh(self, shell):
         """SSH에서 hostname 추출 (개선된 방법)"""
         hostname = None
+
+        if self.vendor == 'paloalto':
+            try:
+                self._log_debug("[HOSTNAME] PAN-OS show system info 시도")
+                shell.send("show system info\n")
+                time.sleep(1)
+                info_output = self._read_until_prompt_ssh(shell, timeout=10)
+                hostname = self._extract_hostname_paloalto(info_output)
+                if hostname:
+                    self._log_debug(f"[HOSTNAME] show system info에서 추출 성공: {hostname}")
+                    return hostname
+            except Exception as e:
+                self._log_debug(f"[HOSTNAME] PAN-OS show system info 방법 실패: {e}")
+            # 실패 시 아래 방법 3(프롬프트 기반)으로 폴백
+            try:
+                shell.send("\n")
+                time.sleep(0.5)
+                prompt_output = self._read_until_prompt_ssh(shell, timeout=5)
+                hostname = self._extract_hostname_from_prompt(prompt_output)
+                if hostname:
+                    self._log_debug(f"[HOSTNAME] 프롬프트에서 추출 성공: {hostname}")
+                    return hostname
+            except Exception as e:
+                self._log_debug(f"[HOSTNAME] 프롬프트 방법 실패: {e}")
+            return None
 
         # 방법 1: show running-config | include hostname (가장 확실한 방법)
         try:
@@ -994,7 +1108,31 @@ class NetworkWorker(QThread):
     def _extract_hostname_telnet(self, tn):
         """Telnet에서 hostname 추출"""
         hostname = None
-        
+
+        if self.vendor == 'paloalto':
+            try:
+                self._log_debug("[HOSTNAME] Telnet - PAN-OS show system info 시도")
+                tn.write(b"show system info\n")
+                time.sleep(1)
+                info_output = self._read_until_prompt_telnet(tn, timeout=10)
+                hostname = self._extract_hostname_paloalto(info_output)
+                if hostname:
+                    self._log_debug(f"[HOSTNAME] show system info에서 추출 성공: {hostname}")
+                    return hostname
+            except Exception as e:
+                self._log_debug(f"[HOSTNAME] PAN-OS show system info 방법 실패: {e}")
+            try:
+                tn.write(b"\n")
+                time.sleep(0.5)
+                prompt_output = self._read_until_prompt_telnet(tn, timeout=5)
+                hostname = self._extract_hostname_from_prompt(prompt_output)
+                if hostname:
+                    self._log_debug(f"[HOSTNAME] 프롬프트에서 추출 성공: {hostname}")
+                    return hostname
+            except Exception as e:
+                self._log_debug(f"[HOSTNAME] 프롬프트 방법 실패: {e}")
+            return None
+
         # 방법 1: show running-config | include hostname
         try:
             self._log_debug("[HOSTNAME] Telnet - show running-config 시도")
@@ -1094,8 +1232,8 @@ class NetworkWorker(QThread):
         if hostname.lower() in invalid_names:
             return False
         
-        # 유효한 문자만 포함
-        if not re.match(r'^[a-zA-Z][a-zA-Z0-9\-_\.]*$', hostname):
+        # 유효한 문자만 포함 (숫자로 시작하는 hostname도 허용 — 예: '8F_NA12_DMZ_FW...')
+        if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9\-_\.]*$', hostname):
             return False
         
         return True
@@ -1183,28 +1321,59 @@ class NetworkWorker(QThread):
     def _create_output_file_header(self, output_file_path, connection_type, hostname):
         """출력 파일 헤더 생성 (공통 메서드)"""
         with open(output_file_path, "w", encoding="utf-8") as output_file:
+            if self.device_index is not None:
+                output_file.write(f"--- 장비 순번: {self.device_index} ---\n")
             output_file.write(f"--- {connection_type} 연결 결과: {self.ip} ---\n")
             if hostname:
                 output_file.write(f"장비 Hostname: {hostname}\n")
             output_file.write(f"실행 시간: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             output_file.write(f"{'=' * 50}\n\n")
 
-    def _execute_commands_common(self, connection, connection_type, output_file_path, read_func):
+    def _append_shared_txt_block(self, connection_type, ip_or_port, hostname, output_data):
+        """TXT '통합 파일' 모드: 이 장비의 결과 블록을 메모리에서 조립한 뒤
+        락으로 감싸 한 번에 append — concurrent 실행 중에도 장비 블록끼리 섞이지 않는다."""
+        lines = []
+        if self.device_index is not None:
+            lines.append(f"--- 장비 순번: {self.device_index} ---\n")
+        lines.append(f"--- {connection_type} 연결 결과: {ip_or_port} ---\n")
+        if hostname:
+            lines.append(f"장비 Hostname: {hostname}\n")
+        lines.append(f"실행 시간: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        lines.append(f"{'=' * 50}\n\n")
+        cmd_tag = f"  [Host: {hostname}]" if hostname else f"  [Host: {ip_or_port}]"
+        for command, output in output_data.items():
+            lines.append(f"Command: {command}{cmd_tag}\n{output}\n{'-' * 50}\n\n")
+        block = ''.join(lines)
+
+        if self.shared_txt_lock:
+            self.shared_txt_lock.acquire()
+        try:
+            with open(self.shared_txt_path, 'a', encoding='utf-8') as f:
+                f.write(block)
+        finally:
+            if self.shared_txt_lock:
+                self.shared_txt_lock.release()
+
+    def _execute_commands_common(self, connection, connection_type, output_file_path, read_func, hostname_label=None):
         """명령어 실행 공통 로직 (SSH/Telnet 통합)
 
         Args:
             connection: SSH shell 또는 Telnet 연결 객체
             connection_type: "SSH" 또는 "Telnet"
-            output_file_path: 출력 파일 경로
+            output_file_path: 출력 파일 경로 (None이면 파일 저장 안 함)
             read_func: 출력 읽기 함수 (lambda)
+            hostname_label: 지정하면 각 'Command:' 줄에 [Host: ...]로 함께 표시
+                            (통합 파일/시트에서 스크롤 중에도 어느 장비인지 바로 알 수 있게)
 
         Returns:
             dict: 각 명령어별 출력 데이터
         """
         output_data = {}
         total_commands = len(self.commands)
+        cmd_tag = f"  [Host: {hostname_label}]" if hostname_label else ""
 
-        with open(output_file_path, "a", encoding="utf-8") as output_file:
+        file_obj = open(output_file_path, "a", encoding="utf-8") if output_file_path else None
+        try:
             for idx, command in enumerate(self.commands, 1):
                 if self.is_stopped():
                     break
@@ -1224,10 +1393,9 @@ class NetworkWorker(QThread):
                     output = read_func(connection)
                     cleaned_output = self._clean_output(output, command)
 
-                    output_file.write(
-                        f"Command: {command}\n{cleaned_output}\n{'-' * 50}\n\n"
-                    )
-                    output_file.flush()
+                    if file_obj:
+                        file_obj.write(f"Command: {command}{cmd_tag}\n{cleaned_output}\n{'-' * 50}\n\n")
+                        file_obj.flush()
 
                     self._emit_status(f"명령어 완료 ({idx}/{total_commands}): {command}")
                     output_data[command] = cleaned_output
@@ -1235,66 +1403,70 @@ class NetworkWorker(QThread):
                 except Exception as e:
                     error_msg = f"명령어 '{command}' 실행 중 오류: {e}"
                     self._emit_status(error_msg)
-                    output_file.write(
-                        f"Command: {command}\nERROR: {error_msg}\n{'-' * 50}\n\n"
-                    )
-                    output_file.flush()
+                    if file_obj:
+                        file_obj.write(f"Command: {command}\nERROR: {error_msg}\n{'-' * 50}\n\n")
+                        file_obj.flush()
                     output_data[command] = f"ERROR: {error_msg}"
+        finally:
+            if file_obj:
+                file_obj.close()
 
         self._emit_status("모든 명령어 실행 완료")
         return output_data
 
     def generate_output_filename(self, hostname=None, filename_format="hostname_only"):
-        """출력 파일명 생성 (충돌 시 IP 자동 추가)"""
+        """출력 파일명 생성 (순번 prefix 포함, 충돌 시 IP 자동 추가)"""
         ip_part = self.ip.replace('.', '_')
+
+        # 순번 prefix: device_index가 있으면 001_, 002_ 형식
+        prefix = f"{self.device_index:03d}_" if self.device_index is not None else ""
 
         def safe_filename(name):
             return re.sub(r'[<>:"/\\|?*]', '_', name)
 
         if filename_format == "ip_only":
-            filename = f"{ip_part}.txt"
+            filename = f"{prefix}{ip_part}.txt"
         elif filename_format == "hostname_only":
             if hostname:
                 safe_hostname = safe_filename(hostname)
-                candidate = os.path.join(self.save_path, f"{safe_hostname}.txt")
+                candidate = os.path.join(self.save_path, f"{prefix}{safe_hostname}.txt")
                 # 동일 hostname 파일이 이미 있으면 IP를 붙여 충돌 방지
                 if os.path.exists(candidate):
-                    filename = f"{safe_hostname}_{ip_part}.txt"
+                    filename = f"{prefix}{safe_hostname}_{ip_part}.txt"
                 else:
-                    filename = f"{safe_hostname}.txt"
+                    filename = f"{prefix}{safe_hostname}.txt"
             else:
-                filename = f"{ip_part}.txt"
+                filename = f"{prefix}{ip_part}.txt"
         elif filename_format == "ip_hostname":
             if hostname:
                 safe_hostname = safe_filename(hostname)
-                filename = f"{ip_part}_{safe_hostname}.txt"
+                filename = f"{prefix}{ip_part}_{safe_hostname}.txt"
             else:
-                filename = f"{ip_part}.txt"
+                filename = f"{prefix}{ip_part}.txt"
         elif filename_format == "hostname_ip":
             if hostname:
                 safe_hostname = safe_filename(hostname)
-                filename = f"{safe_hostname}_{ip_part}.txt"
+                filename = f"{prefix}{safe_hostname}_{ip_part}.txt"
             else:
-                filename = f"{ip_part}.txt"
+                filename = f"{prefix}{ip_part}.txt"
         else:
-            filename = f"{ip_part}.txt"
+            filename = f"{prefix}{ip_part}.txt"
 
         return os.path.join(self.save_path, filename)
 
     def _clean_output(self, output, command):
         """출력 텍스트 정리 (설정 파일의 빈 줄은 의미 있으므로 보존)"""
+        output = _ANSI_ESCAPE_RE.sub('', output)
         lines = output.splitlines()
         clean_lines = []
         command_found = False
 
         for line in lines:
-            # 명령어 에코 이전의 빈 줄은 스킵
-            if not command_found and not line.strip():
-                continue
-
-            # 명령어 에코 줄 스킵
-            if not command_found and command in line:
-                command_found = True
+            # 명령어 에코를 찾기 전까지는 그 사이에 낀 모든 줄(빈 줄, 부분 에코,
+            # 이스케이프 잔재 등)이 전부 터미널 잡음이므로 통째로 스킵한다.
+            if not command_found:
+                if command in line:
+                    command_found = True
                 continue
 
             # 프롬프트 줄 스킵 (hostname# 또는 hostname>)

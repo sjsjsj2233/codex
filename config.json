@@ -1,9 +1,9 @@
 {
-    "ip_list": "192.168.0.146\n",
-    "username": "",
+    "ip_list": "192.168.0.161\n",
+    "username": "cisco",
     "save_path": "C:/Users/kim/Desktop/cdp nei",
     "commands": "sh run\nsh ver\nsh ip int b",
-    "use_ssh": false,
+    "use_ssh": true,
     "concurrent_execution": true,
     "ssh_port": "22"
 }
